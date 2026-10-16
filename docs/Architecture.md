@@ -197,7 +197,7 @@ A change that touches a term's code names brings the rules using that term up fo
 The crates in spec section 5.1, plus:
 
 - `anyhow` for command errors (usage and file errors map to exit 2);
-- dev only: `assert_cmd`, `tempfile`, `insta` for JSON snapshots of end-to-end runs.
+- dev only: `tempfile`, and `insta` for snapshots of end-to-end runs. Tests run the built binary through `CARGO_BIN_EXE_statute`.
 
 ## 10. Testing
 

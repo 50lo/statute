@@ -1,0 +1,13 @@
+- id: gap-1
+  rule: ATTR-001
+  status: open
+  opened_at: "2026-10-15T01:20:00Z"
+  note: "Local gap with a malformed ID."
+- id: FOOT-1
+  rule: ATTR-404
+  status: open
+  opened_at: "2026-10-15T01:20:00Z"
+- id: FOOT-1
+  rule: ATTR-001
+  status: closed
+  opened_at: "2026-10-15T01:20:00Z"

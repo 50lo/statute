@@ -8,7 +8,7 @@ Statute is a Rust CLI and agent plugin that keeps a product's rules written down
 
 ## Module layering
 
-Statute is one crate, so the compiler does not stop a module from importing any other. These rules keep the layers apart. Each module may import only the modules listed for it (and external crates).
+Statute is one crate, so the compiler does not stop a module from importing any other. These rules keep the layers apart. Each module may import only the modules listed for it (and external crates). `tests/layering.rs` reads this table and fails on an import it does not allow, so keep its format.
 
 | Module | May import | I/O |
 | --- | --- | --- |

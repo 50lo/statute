@@ -1,0 +1,9 @@
+- id: G261015-x4p9t
+  rule: ATTR-001
+  status: closed
+  opened_at: "2026-10-15T01:20:00Z"
+  note: "New filter in collector drops Sessions without a Repository."
+- id: FOOT-412
+  rule: ATTR-001
+  status: open
+  opened_at: "2026-10-15T02:00:00Z"

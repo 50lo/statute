@@ -1,0 +1,18 @@
+---
+source: tests/cli.rs
+expression: "&after[before.len()..]"
+---
+
+# ATTR-004 Commits without a Session are ignored
+
+State the obligation in one or two sentences: what must or must not happen, to what, and under which conditions.
+
+```yaml
+agreed: proposed          # proposed | agreed | retired
+built: planned            # planned | built
+scope: ""
+terms: []
+exceptions: []
+protects: []
+boundary: []
+```

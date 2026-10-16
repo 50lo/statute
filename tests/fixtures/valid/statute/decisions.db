@@ -1,0 +1,27 @@
+- id: D261001-a2b3c
+  timestamp: "2026-10-01T09:00:00Z"
+  actor: user
+  status: active
+  ratified_by: {name: "Pat Example", email: "pat@example.com", at: "2026-10-01T09:30:00Z"}
+  summary: "Adopt the existing attribution rules."
+  rationale: "They were written down in the contract doc; this records them."
+  establishes: [ATTR-001, ATTR-003]
+  changes: []
+  retires: []
+  terms: [Session, Commit]
+- id: D261010-k7m2q
+  timestamp: "2026-10-10T09:00:00Z"
+  actor: agent
+  status: active
+  ratified_by: {name: "Pat Example", email: "pat@example.com", at: "2026-10-10T10:00:00Z"}
+  summary: "Sessions no longer expire."
+  rationale: "Long-running agent sessions were split into several."
+  retires: [ATTR-003]
+- id: D261014-x4p9t
+  timestamp: "2026-10-14T10:26:12Z"
+  actor: agent
+  status: proposed
+  ratified_by: null
+  summary: "Context alone never links a Session to a commit."
+  rationale: "Context-based links produced false contributions."
+  establishes: [ATTR-002]

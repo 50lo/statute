@@ -1,0 +1,24 @@
+- id: D-1
+  timestamp: "2026-10-01T09:00:00Z"
+  actor: user
+  status: active
+  summary: "Active, but nobody ratified it."
+  rationale: "R."
+  establishes: [ATTR-006, ATTR-404]
+  terms: [Nobody]
+- id: D261002-aaaaa
+  timestamp: "2026-10-02T09:00:00Z"
+  actor: agent
+  status: proposed
+  summary: "This summary is longer than the forty characters the config allows."
+  rationale: "R."
+  establishes: [ATTR-006]
+  changes: [ATTR-001]
+- id: D261002-aaaaa
+  timestamp: "2026-10-02T09:00:00Z"
+  actor: agent
+  status: proposed
+  summary: "Same ID, and overlaps."
+  rationale: "R."
+  changes: [ATTR-001]
+  terms: [Session]
