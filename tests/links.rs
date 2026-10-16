@@ -529,3 +529,64 @@ fn check_all_warns_about_term_names_that_no_longer_appear() {
     // Plain `check` does not search.
     assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
 }
+
+const PUBLISHER: &str = "internal/sessioncommit/publisher.go";
+const PUBLISHER_SRC: &str = "package sessioncommit\n\ntype Publisher struct{}\n\n// Decide decides.\nfunc (p *Publisher) Decide(e string) bool {\n\treturn e != \"\"\n}\n\nfunc init() {}\n\nfunc init() {}\n";
+
+/// From the appendix, "A linked function is renamed": a Go symbol link ignores comments, goes stale
+/// when the body changes, and is missing after a rename until it is relinked.
+#[test]
+fn go_symbol_links_follow_the_symbol_not_the_file() {
+    let repo = billing_repo();
+    repo.write(PUBLISHER, PUBLISHER_SRC);
+    let target = format!("{PUBLISHER}#Publisher.Decide");
+    let linked = ok(repo.run(&["link", "BILL-001", &target, "--json"])).json();
+    assert_eq!(linked["mode"], "go-ast-sha256-v1");
+    repo.commit("Link Decide");
+
+    // A comment and an unrelated declaration change nothing.
+    repo.write(
+        PUBLISHER,
+        &PUBLISHER_SRC
+            .replace("// Decide decides.", "// Decide decides, reworded.")
+            .replace("type Publisher struct{}", "type Publisher struct{ n int }"),
+    );
+    assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
+
+    repo.write(PUBLISHER, &PUBLISHER_SRC.replace("e != \"\"", "len(e) > 3"));
+    assert_eq!(repo.run(&["check", "--json"]).codes(), ["link.stale"]);
+
+    repo.write(PUBLISHER, &PUBLISHER_SRC.replace("Decide(", "Choose("));
+    let run = repo.run(&["check", "--json"]);
+    assert_eq!(run.codes(), ["link.missing"]);
+    assert!(
+        run.json()["findings"][0]["message"]
+            .as_str()
+            .unwrap()
+            .ends_with("the symbol is not found")
+    );
+    ok(repo.run(&["link", "BILL-001", &target, "--remove"]));
+    ok(repo.run(&["link", "BILL-001", &format!("{PUBLISHER}#Publisher.Choose")]));
+    assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
+}
+
+#[test]
+fn link_refuses_an_ambiguous_unknown_or_unparseable_go_symbol() {
+    let repo = billing_repo();
+    repo.write(PUBLISHER, PUBLISHER_SRC);
+    repo.write("internal/broken.go", "package x\n\nfunc F( {\n");
+    let cases = [
+        (format!("{PUBLISHER}#init"), "more than one symbol matches"),
+        (format!("{PUBLISHER}#Nope"), "the symbol is not found"),
+        (
+            "internal/broken.go#F".to_string(),
+            "the file does not parse cleanly",
+        ),
+    ];
+    for (target, message) in cases {
+        let run = repo.run(&["link", "BILL-001", &target]);
+        assert_eq!(run.code, 2, "{target}");
+        assert!(run.stderr.contains(message), "{target}: {}", run.stderr);
+    }
+    assert_eq!(repo.read("statute.lock"), "{\"version\": 1}\n");
+}
