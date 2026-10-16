@@ -76,7 +76,7 @@ Repo::open
 Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) follows the same steps:
 
 1. Load the model.
-2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses a rule or term that is already in a proposed decision.
+2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses an unknown rule or term and one that is already in a proposed decision.
 3. Plan edits in `txn`: byte-range patches for Markdown, full rewrites for YAML and the lock.
 4. Apply the edits in memory and re-parse the touched files. A file that no longer parses is a bug in the command, which fails without writing.
 5. Write every touched file to a temp file next to it, then rename each into place.
