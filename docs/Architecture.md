@@ -19,11 +19,11 @@ src/
   lib.rs
   cli/               clap argument definitions; renderers (text, json, md)
   repo.rs            find the root, read statute.yml, fixed paths; the only module that reads files
-  model/             Rule, Term, Decision, Gap, Link, IDs, enums for agreed/built/status
+  model/             Rule, Term, Decision, Gap, Link, IDs, enums for agreed/built/status; Finding, Report
   store/             parse each file kind from text and render edits back to text (below); no I/O
   git.rs             the only module that runs `git`
   fingerprint/       Mode enum; bytes, go, python (tree-sitter); takes bytes, no I/O
-  check/             one function per check; Finding with a stable code
+  check/             one function per check, each adding findings with a stable code
   state.rs           derived state: in force, incomplete, broken, stale, missing
   impact.rs          affected rules and terms against the base; verdicts for "Rule impact"
   commands/          one module per command: its logic, without argument parsing or rendering

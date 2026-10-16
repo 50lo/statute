@@ -35,6 +35,18 @@ Rules:
 
 When a change needs an import these rules forbid, change the rules here first, with the reason, in the same PR.
 
+`tests/layering.rs` reads the table above and fails on any import it does not allow, and on `std::fs`, `std::process` or `std::env` outside `git`, `repo`, `txn`, `cli` and `main.rs`.
+
 ## Extension
 
 New fingerprint modes, link sources and impact reasons are new enum variants (docs/Architecture.md, section 8). Do not add traits, registries or plugin mechanisms for them.
+
+## Before pushing
+
+Run what CI runs:
+
+```sh
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
