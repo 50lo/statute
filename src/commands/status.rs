@@ -1,6 +1,7 @@
 use super::SCHEMA;
 use crate::fingerprint;
-use crate::model::{Agreed, Built, Link};
+use crate::impact;
+use crate::model::{Agreed, Built, Impact, Link};
 use crate::repo::Repo;
 use crate::state::{self, Health};
 use anyhow::{Result, bail};
@@ -10,6 +11,9 @@ use serde::Serialize;
 pub struct StatusReport {
     pub schema: u32,
     pub areas: Vec<AreaStatus>,
+    /// The rules and terms the branch affects (with an area, only that area's rules), and every
+    /// decision awaiting approval.
+    pub impact: Impact,
 }
 
 #[derive(Serialize)]
@@ -38,7 +42,8 @@ pub struct RuleStatus {
 }
 
 /// Per area: every rule with its agreed and built state, drafts, incomplete rules, and stale and
-/// missing links. Unlike `check`, every link is fingerprinted, as with `check --all`.
+/// missing links, and the "Rule impact" section against the base. Unlike `check`, every link is
+/// fingerprinted, as with `check --all`.
 pub fn run(area: Option<&str>) -> Result<StatusReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
@@ -85,8 +90,21 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
                 .collect(),
         })
         .collect();
+    let (_, base) = repo.load_base()?;
+    let link_health: Vec<_> = links
+        .iter()
+        .zip(&health)
+        .map(|(l, h)| (l.rule(), l.target.as_str(), *h))
+        .collect();
+    let mut impact = impact::compute(&model, &base, &link_health);
+    if let Some(area) = area {
+        let in_area = |id: &str| model.rules.iter().any(|r| r.id == id && r.area == area);
+        impact.rules.retain(|r| in_area(&r.rule));
+    }
+    impact.awaiting_approval = impact::pending(&model);
     Ok(StatusReport {
         schema: SCHEMA,
         areas,
+        impact,
     })
 }

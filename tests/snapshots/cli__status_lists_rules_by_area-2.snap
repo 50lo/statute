@@ -22,5 +22,38 @@ expression: "repo.run(&[\"status\", \"--area\", \"billing\", \"--json\"]).json()
       ]
     }
   ],
+  "impact": {
+    "awaiting_approval": [
+      {
+        "id": "D261014-x4p9t",
+        "rules": [
+          "ATTR-002"
+        ],
+        "summary": "Context alone never links a Session to a commit.",
+        "terms": []
+      }
+    ],
+    "rules": [],
+    "terms": [
+      {
+        "reasons": [
+          {
+            "decision": "D261001-a2b3c",
+            "reason": "decision_changed"
+          }
+        ],
+        "term": "Commit"
+      },
+      {
+        "reasons": [
+          {
+            "decision": "D261001-a2b3c",
+            "reason": "decision_changed"
+          }
+        ],
+        "term": "Session"
+      }
+    ]
+  },
   "schema": 1
 }

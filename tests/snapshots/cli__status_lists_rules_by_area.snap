@@ -8,3 +8,20 @@ attribution (ATTR): 3 rules
   ATTR-003  retired   planned  Sessions expire after a day
 billing (BILL): 1 rule
   BILL-001  proposed  planned  Large refunds need a second approval  (draft)
+
+## Rule impact
+
+| Rule | Verdict | Why |
+| --- | --- | --- |
+| **ATTR-001** A Session without a repository is still kept | Broken: a gap is open | decision D261001-a2b3c; gap FOOT-412; gap G261015-x4p9t |
+| **ATTR-002** Context alone creates no contribution | New | decision D261014-x4p9t |
+| **ATTR-003** Sessions expire after a day | New | decision D261001-a2b3c; decision D261010-k7m2q |
+
+| Term | Why |
+| --- | --- |
+| Commit | decision D261001-a2b3c |
+| Session | decision D261001-a2b3c |
+
+### Awaiting approval
+
+- D261014-x4p9t: Context alone never links a Session to a commit. (ATTR-002)

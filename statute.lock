@@ -1,7 +1,7 @@
 {"version": 1}
 {"source": "CORE-001", "target": "src/check/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "17267afbc0b0f4fb517b1e979fa34b6fd67387ce195ce8090673d48a99d59212"}
 {"source": "CORE-002", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}
-{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "2d21e7e87d3d6558ab66f94d435bfa6770fc105c11b355795e778a8977d32ed2"}
+{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "12fd7b9a12c927d4ae94a32a4c5ef4ecb89cacd4f5779dbea311fcb51138bd97"}
 {"source": "CORE-002", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
 {"source": "CORE-003", "target": "src/check/links.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "b5f442963e85f4e97e2b1731ebe876c71eec3539ca0c39a4a8095320c97e8bdd"}
 {"source": "CORE-003", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}

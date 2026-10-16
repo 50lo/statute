@@ -2,7 +2,8 @@ use super::SCHEMA;
 use crate::check;
 use crate::fingerprint;
 use crate::git;
-use crate::model::{Finding, Link, Severity};
+use crate::impact;
+use crate::model::{Finding, Impact, Link, Severity};
 use crate::repo::Repo;
 use crate::state;
 use anyhow::Result;
@@ -14,6 +15,9 @@ pub struct CheckReport {
     pub errors: usize,
     pub warnings: usize,
     pub findings: Vec<Finding>,
+    /// The rules and terms the branch affects; only with `--md`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub impact: Option<Impact>,
 }
 
 impl CheckReport {
@@ -25,20 +29,22 @@ impl CheckReport {
 /// Runs every check on the Statute files, and reports stale and missing links whose target file
 /// changed since the base. With `all`, every link is fingerprinted, and term `code` and `not` names
 /// are searched for across the repository.
-pub fn run(all: bool) -> Result<CheckReport> {
+/// With `md`, it also computes the "Rule impact" section against the base.
+pub fn run(all: bool, md: bool) -> Result<CheckReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
     let mut findings = check::run(&model);
-    let base = git::base(&repo.root)?;
-    if let Some(rev) = &base {
-        check::history(&model, &repo.load_at(rev)?, &mut findings);
+    let (rev, base) = repo.load_base()?;
+    if rev.is_some() {
+        check::history(&model, &base, &mut findings);
     }
+    let mut link_health = Vec::new();
 
     if let Some(links) = &model.links {
         let selected: Vec<&Link> = if all {
             links.iter().collect()
         } else {
-            let changed = git::changed_files(&repo.root, base.as_deref())?;
+            let changed = git::changed_files(&repo.root, rev.as_deref())?;
             links
                 .iter()
                 .filter(|l| changed.contains(l.file()))
@@ -51,6 +57,11 @@ pub fn run(all: bool) -> Result<CheckReport> {
             .collect();
         let health = state::health(&selected, &fingerprint::sign(&files, &targets));
         findings.extend(check::freshness(&selected, &health));
+        link_health = selected
+            .iter()
+            .zip(&health)
+            .map(|(l, h)| (l.rule(), l.target.as_str(), *h))
+            .collect();
     }
 
     if all {
@@ -63,10 +74,12 @@ pub fn run(all: bool) -> Result<CheckReport> {
         .iter()
         .filter(|f| f.severity == Severity::Error)
         .count();
+    let impact = md.then(|| impact::compute(&model, &base, &link_health));
     Ok(CheckReport {
         schema: SCHEMA,
         errors,
         warnings: findings.len() - errors,
         findings,
+        impact,
     })
 }

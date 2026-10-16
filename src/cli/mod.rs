@@ -44,6 +44,9 @@ enum Command {
         /// Fingerprint every link, and look for term `code` and `not` names across the repository
         #[arg(long)]
         all: bool,
+        /// Print the PR "Rule impact" section in Markdown instead of the findings
+        #[arg(long)]
+        md: bool,
     },
     /// Link a rule to a code or test target with its current fingerprint, or remove a link
     Link {
@@ -143,8 +146,13 @@ pub fn run() -> ExitCode {
         Command::Show { names } => {
             commands::show::run(names).map(|r| emit(json, &r, render::show(&r), 0))
         }
-        Command::Check { all } => commands::check::run(*all)
-            .map(|r| emit(json, &r, render::check(&r), u8::from(r.failed()))),
+        Command::Check { all, md } => commands::check::run(*all, *md).map(|r| {
+            let text = match &r.impact {
+                Some(impact) => render::impact(impact),
+                None => render::check(&r),
+            };
+            emit(json, &r, text, u8::from(r.failed()))
+        }),
         Command::Link {
             rule,
             target,
