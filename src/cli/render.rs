@@ -8,7 +8,9 @@ use crate::commands::ratify::RatifyReport;
 use crate::commands::review::ReviewReport;
 use crate::commands::show::{Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
-use crate::model::{Agreed, Built, DecisionStatus, GapStatus, LinkRole, Severity};
+use crate::model::{
+    Agreed, Built, DecisionStatus, GapStatus, Impact, LinkRole, Reason, Severity, Verdict,
+};
 use std::fmt::Write;
 
 pub fn init(r: &InitReport) -> String {
@@ -63,6 +65,81 @@ pub fn check(r: &CheckReport) -> String {
         );
     }
     out
+}
+
+/// The PR "Rule impact" section, in Markdown a PM or designer can follow.
+pub fn impact(r: &Impact) -> String {
+    let mut out = String::from("## Rule impact\n\n");
+    if r.rules.is_empty() && r.terms.is_empty() {
+        out.push_str("This change affects no rules or terms.\n");
+        return out;
+    }
+    if !r.rules.is_empty() {
+        out.push_str("| Rule | Verdict | Why |\n| --- | --- | --- |\n");
+        for rule in &r.rules {
+            let verdict = match rule.verdict {
+                Verdict::Unreviewed => "Not reviewed yet",
+                Verdict::Broken => "Broken: a gap is open",
+                Verdict::New => "New",
+                Verdict::Changed => "Changed",
+                Verdict::Retired => "Retired",
+                Verdict::Relinked => "Relinked",
+                Verdict::Holds => "Still holds",
+            };
+            let _ = writeln!(
+                out,
+                "| **{}** {} | {verdict} | {} |",
+                rule.rule,
+                cell(&rule.title),
+                reasons(&rule.reasons)
+            );
+        }
+    }
+    if !r.terms.is_empty() {
+        if !r.rules.is_empty() {
+            out.push('\n');
+        }
+        out.push_str("| Term | Why |\n| --- | --- |\n");
+        for term in &r.terms {
+            let _ = writeln!(out, "| {} | {} |", cell(&term.term), reasons(&term.reasons));
+        }
+    }
+    if !r.awaiting_approval.is_empty() {
+        out.push_str("\n### Awaiting approval\n\n");
+        for d in &r.awaiting_approval {
+            let mut names = d.rules.clone();
+            names.extend(d.terms.iter().map(|t| format!("term {t}")));
+            let _ = writeln!(
+                out,
+                "- {}: {} ({})",
+                d.id,
+                d.summary.trim(),
+                names.join(", ")
+            );
+        }
+    }
+    out
+}
+
+fn reasons(reasons: &[Reason]) -> String {
+    let text: Vec<String> = reasons
+        .iter()
+        .map(|r| match r {
+            Reason::LinkStale { target } => format!("`{target}` changed and is not reviewed yet"),
+            Reason::LinkMissing { target } => format!("`{target}` is missing"),
+            Reason::LinkAdded { target } => format!("now linked to `{target}`"),
+            Reason::LinkRemoved { target } => format!("no longer linked to `{target}`"),
+            Reason::LinkRefreshed { target } => format!("`{target}` changed and was reviewed"),
+            Reason::DecisionChanged { decision } => format!("decision {decision}"),
+            Reason::GapChanged { gap } => format!("gap {gap}"),
+        })
+        .collect();
+    cell(&text.join("; "))
+}
+
+/// Text safe inside a Markdown table cell.
+fn cell(text: &str) -> String {
+    text.replace('|', "\\|").replace('\n', " ")
 }
 
 pub fn decide(r: &DecideReport) -> String {

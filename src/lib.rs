@@ -8,6 +8,7 @@ mod check;
 mod commands;
 mod fingerprint;
 mod git;
+mod impact;
 mod model;
 mod repo;
 mod state;

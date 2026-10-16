@@ -1,0 +1,19 @@
+---
+source: tests/impact.rs
+expression: "run.stdout.replace(&id, \"D000000-xxxxx\")"
+---
+## Rule impact
+
+| Rule | Verdict | Why |
+| --- | --- | --- |
+| **ATTR-001** A Session without a repository is still kept | Broken: a gap is open | now linked to `src/keep.go#Kept`; no longer linked to `src/keep.go#Keep`; gap G261016-abcde |
+| **BILL-001** Large refunds need a second approval | Not reviewed yet | `billing/refund.go#Approve` changed and is not reviewed yet |
+| **BILL-002** Refunds are logged | New | decision D000000-xxxxx |
+
+| Term | Why |
+| --- | --- |
+| Commit | decision D000000-xxxxx |
+
+### Awaiting approval
+
+- D000000-xxxxx: Log refunds. (BILL-002, term Commit)

@@ -2,8 +2,10 @@
 
 mod finding;
 pub mod ids;
+mod impact;
 
 pub use finding::{Finding, Severity};
+pub use impact::{Impact, PendingDecision, Reason, RuleImpact, TermImpact, Verdict};
 
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
