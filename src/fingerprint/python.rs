@@ -1,10 +1,11 @@
 //! `python-ast-sha256-v1`: Python functions, classes and methods.
 //!
 //! Symbols are `func`, `Class` and `Class.method`, with nested classes as dotted paths such as
-//! `Outer.Inner.method`. Decorators are part of the symbol, and `#Class` covers the whole class,
-//! methods included. Comments and docstrings are dropped, and so are `;` separators. Because
-//! indentation carries meaning, every block is marked where it starts and ends, and so is the end of
-//! each statement in it.
+//! `Outer.Inner.method`. Definitions under `if`, `try` and other statements count in the scope they
+//! bind in; definitions inside functions are not symbols. Decorators are part of the symbol, and
+//! `#Class` covers the whole class, methods included. Comments, docstrings, `\` line continuations
+//! and `;` separators are dropped. Because indentation carries meaning, every block is marked where
+//! it starts and ends, and so is the end of each statement in it.
 
 use super::Missing;
 use super::syntax::{Input, Visit};
@@ -39,8 +40,9 @@ pub fn sign(source: &[u8], symbols: &[&str]) -> Vec<Result<String, Missing>> {
         .collect()
 }
 
-/// Adds the definitions directly in `scope` (a module or a class body) under `prefix`, and recurses
-/// into classes. Functions are symbols only at module level or directly in a class.
+/// Adds the definitions in `scope` (a module or a class body) under `prefix`, including those under
+/// `if`, `try`, `with`, loops and `match`, which bind names in the same scope. Recurses into classes,
+/// not into functions: a function's own definitions are not symbols.
 fn collect<'t>(
     scope: Node<'t>,
     prefix: &str,
@@ -55,7 +57,10 @@ fn collect<'t>(
                 None => continue,
             },
             "function_definition" | "class_definition" => node,
-            _ => continue,
+            _ => {
+                collect(node, prefix, source, found);
+                continue;
+            }
         };
         let Some(name) = definition
             .child_by_field_name("name")
@@ -73,11 +78,11 @@ fn collect<'t>(
     }
 }
 
-/// Comments, docstrings and `;` are not part of the hash input; blocks and their statements are
-/// marked.
+/// Comments, docstrings, `;` and `\` line continuations are not part of the hash input; blocks and
+/// their statements are marked.
 fn visit(node: Node) -> Visit {
     match node.kind() {
-        "comment" => Visit::Skip,
+        "comment" | "line_continuation" => Visit::Skip,
         ";" if node.child_count() == 0 => Visit::Skip,
         "block" => Visit::Block,
         _ if is_docstring(node) => Visit::Skip,
@@ -85,9 +90,17 @@ fn visit(node: Node) -> Visit {
     }
 }
 
-/// A string literal that is the first statement of a function or class body.
+/// A constant string that is the first statement of a function or class body. A string with
+/// interpolated expressions runs code, so it is not one.
 fn is_docstring(node: Node) -> bool {
-    let is_string = |n: Node| matches!(n.kind(), "string" | "concatenated_string");
+    let constant = |n: Node| n.kind() == "string" && !has_child(n, "interpolation");
+    let is_string = |n: Node| {
+        constant(n)
+            || n.kind() == "concatenated_string"
+                && (0..n.named_child_count() as u32)
+                    .filter_map(|i| n.named_child(i))
+                    .all(constant)
+    };
     node.kind() == "expression_statement"
         && node.named_child_count() == 1
         && node.named_child(0).is_some_and(is_string)
@@ -98,6 +111,12 @@ fn is_docstring(node: Node) -> bool {
                     .parent()
                     .is_some_and(|d| matches!(d.kind(), "function_definition" | "class_definition"))
         })
+}
+
+fn has_child(node: Node, kind: &str) -> bool {
+    (0..node.child_count())
+        .filter_map(|i| node.child(i))
+        .any(|c| c.kind() == kind)
 }
 
 #[cfg(test)]
@@ -206,6 +225,40 @@ mod tests {
         assert_eq!(
             sign(fixture("parse_error.py"), &["other"]),
             vec![Err(Missing::ParseError)]
+        );
+    }
+
+    fn one(source: &str, symbol: &str) -> Result<String, Missing> {
+        sign(source.as_bytes(), &[symbol]).remove(0)
+    }
+
+    #[test]
+    fn a_first_string_with_expressions_is_code_not_a_docstring() {
+        let f = |arg: &str| {
+            one(
+                &format!("def f():\n    f\"{{print({arg})}}\"\n    return 0\n"),
+                "f",
+            )
+        };
+        assert_ne!(f("1"), f("2"));
+        let doc = |text: &str| one(&format!("def f():\n    \"{text}\"\n    return 0\n"), "f");
+        assert_eq!(doc("one"), doc("two"));
+    }
+
+    #[test]
+    fn definitions_under_control_flow_belong_to_the_enclosing_scope() {
+        let source = "def f():\n    return 0\n\nif True:\n    def f():\n        return 1\n\ntry:\n    import x\nexcept ImportError:\n    class C:\n        def m(self): pass\n\ndef g():\n    if True:\n        def h(): pass\n";
+        let results = sign(source.as_bytes(), &["f", "C", "C.m", "h"]);
+        assert_eq!(results[0], Err(Missing::Ambiguous));
+        assert!(results[1].is_ok() && results[2].is_ok(), "{results:?}");
+        assert_eq!(results[3], Err(Missing::NoSymbol));
+    }
+
+    #[test]
+    fn line_continuations_are_formatting() {
+        assert_eq!(
+            one("def f():\n    return 1 + 2\n", "f"),
+            one("def f():\n    return 1 + \\\n        2\n", "f")
         );
     }
 }
