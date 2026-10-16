@@ -3,7 +3,7 @@ use crate::check;
 use crate::fingerprint;
 use crate::git;
 use crate::impact;
-use crate::model::{Finding, Impact, Link, Model, Severity};
+use crate::model::{Finding, Impact, Link, Severity};
 use crate::repo::Repo;
 use crate::state;
 use anyhow::Result;
@@ -34,21 +34,10 @@ pub fn run(all: bool, md: bool) -> Result<CheckReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
     let mut findings = check::run(&model);
-    let rev = git::base(&repo.root)?;
-    let base = match &rev {
-        Some(rev) => {
-            let base = repo.load_at(rev)?;
-            check::history(&model, &base, &mut findings);
-            base
-        }
-        // Before the first commit, everything is new.
-        None => Model {
-            decisions: Some(Vec::new()),
-            gaps: Some(Vec::new()),
-            links: Some(Vec::new()),
-            ..Model::default()
-        },
-    };
+    let (rev, base) = repo.load_base()?;
+    if rev.is_some() {
+        check::history(&model, &base, &mut findings);
+    }
     let mut link_health = Vec::new();
 
     if let Some(links) = &model.links {

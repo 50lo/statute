@@ -4,3 +4,9 @@ expression: run.stdout
 ---
 billing (BILL): 1 rule
   BILL-001  proposed  built    Large refunds need a second approval  (draft; incomplete; stale: billing/refund.go)
+
+## Rule impact
+
+| Rule | Verdict | Why |
+| --- | --- | --- |
+| **BILL-001** Large refunds need a second approval | Not reviewed yet | `billing/refund.go` changed and is not reviewed yet; no longer linked to `billing/refund_test.go` |

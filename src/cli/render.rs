@@ -263,6 +263,8 @@ pub fn status(r: &StatusReport) -> String {
             );
         }
     }
+    out.push('\n');
+    out.push_str(&impact(&r.impact));
     out
 }
 

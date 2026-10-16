@@ -166,6 +166,26 @@ impl Repo {
         })
     }
 
+    /// The base revision, merge-base of `HEAD` and `origin/HEAD` or else `HEAD`, and the model at it.
+    /// Before the first commit there is no base, and the model is empty, so everything is new.
+    pub fn load_base(&self) -> Result<(Option<String>, Model)> {
+        match git::base(&self.root)? {
+            Some(rev) => {
+                let model = self.load_at(&rev)?;
+                Ok((Some(rev), model))
+            }
+            None => Ok((
+                None,
+                Model {
+                    decisions: Some(Vec::new()),
+                    gaps: Some(Vec::new()),
+                    links: Some(Vec::new()),
+                    ..Model::default()
+                },
+            )),
+        }
+    }
+
     /// The model at a git revision, such as the base. A file the revision does not have counts as
     /// empty, since the base can predate Statute.
     pub fn load_at(&self, rev: &str) -> Result<Model> {
