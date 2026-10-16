@@ -64,7 +64,8 @@ impl Repo {
         }
     }
 
-    /// The bytes of each file, `None` for one that does not exist or is not a regular file.
+    /// The bytes of each file, `None` for one that does not exist, is not a regular file, or is reached
+    /// through a symbolic link: a link's target is the path git reports changes for.
     pub fn read_files<'p>(
         &self,
         rels: impl IntoIterator<Item = &'p str>,
@@ -75,7 +76,7 @@ impl Repo {
                 continue;
             }
             let path = self.path(rel);
-            let bytes = if path.is_file() {
+            let bytes = if path.is_file() && self.symlink_in(rel).is_none() {
                 Some(std::fs::read(&path).with_context(|| format!("cannot read {rel}"))?)
             } else {
                 None
@@ -83,6 +84,20 @@ impl Repo {
             files.insert(rel.to_string(), bytes);
         }
         Ok(files)
+    }
+
+    /// The first component of a repo-relative path that is a symbolic link, such as `src` in
+    /// `src/a.go` when `src` is a link.
+    pub fn symlink_in(&self, rel: &str) -> Option<String> {
+        let mut prefix = PathBuf::new();
+        for part in rel.split('/') {
+            prefix.push(part);
+            let meta = std::fs::symlink_metadata(self.root.join(&prefix)).ok()?;
+            if meta.file_type().is_symlink() {
+                return Some(prefix.to_string_lossy().into_owned());
+            }
+        }
+        None
     }
 
     pub fn is_file(&self, rel: &str) -> bool {

@@ -47,6 +47,9 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
             existing.sig
         );
     }
+    if let Some(link) = repo.symlink_in(file) {
+        bail!("{link} is a symbolic link; link the file it points to, inside the repository");
+    }
     if !repo.is_file(file) {
         if repo.exists(file) {
             bail!("{file} is not a file; a target is a file or a symbol in one, never a directory");
@@ -79,14 +82,9 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
         && state::is_complete(rule, &links);
     if becomes_built {
         let text = repo.read(&rule.file)?.unwrap_or_default();
-        let patched = rule
-            .span
-            .block
-            .clone()
-            .and_then(|block| store::set_field(&text, block, "built", "built"));
-        let Some(patched) = patched else {
+        let Some(patched) = store::rules::set_built(&text, rule, Built::Built) else {
             bail!(
-                "cannot find the `built:` line of {rule_id} in {}",
+                "cannot set `built: built` on {rule_id} in {}: write its `built:` field as `built: planned` on one line, then link again",
                 rule.file
             );
         };

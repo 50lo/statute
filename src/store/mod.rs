@@ -12,7 +12,7 @@ pub use lists::{
 
 use crate::model::Finding;
 
-pub use markdown::set_field;
+use markdown::set_field;
 
 /// A YAML error as a finding, with the line in the file. `first_line` is the file line of the YAML's first line.
 fn yaml_finding(

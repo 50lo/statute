@@ -235,3 +235,76 @@ fn check_needs_git() {
     // `--all` fingerprints every link and needs no base.
     assert_eq!(repo.run(&["check", "--all"]).code, 0);
 }
+
+/// PR #6 review, finding 1: a symlink target would be fingerprinted through the link while git reports
+/// changes under the real path, so `check` missed the edit.
+#[cfg(unix)]
+#[test]
+fn link_refuses_symbolic_links_and_check_treats_them_as_missing() {
+    use std::os::unix::fs::symlink;
+    let repo = billing_repo();
+    symlink("refund.go", repo.path("billing/alias.go")).unwrap();
+    symlink("billing", repo.path("payments")).unwrap();
+    symlink("/etc/hosts", repo.path("hosts")).unwrap();
+    for (target, link) in [
+        ("billing/alias.go", "billing/alias.go"),
+        ("payments/refund.go", "payments"),
+        ("hosts", "hosts"),
+    ] {
+        let run = repo.run(&["link", "BILL-001", target]);
+        assert_eq!(run.code, 2, "{target}");
+        assert!(
+            run.stderr.contains(&format!("{link} is a symbolic link")),
+            "{target}: {}",
+            run.stderr
+        );
+    }
+    assert_eq!(repo.read("statute.lock"), "{\"version\": 1}\n");
+
+    // A link to a symlink written by hand is missing, so an edit behind it is never silently fresh.
+    ok(repo.run(&["link", "BILL-001", CODE]));
+    let lock = repo.read("statute.lock").replace(CODE, "billing/alias.go");
+    repo.write("statute.lock", &lock);
+    let run = repo.run(&["check", "--all", "--json"]);
+    assert_eq!(
+        (run.code, run.codes()),
+        (1, vec!["link.missing".to_string()])
+    );
+}
+
+/// PR #6 review, finding 2: `link` must set `built` in any block layout `check` accepts.
+#[test]
+fn the_link_that_completes_a_rule_sets_built_in_any_block_layout() {
+    let layouts = [
+        (
+            "  agreed: proposed\n  built: planned\n  protects: []\n  boundary: []\n",
+            "  built: built\n",
+        ),
+        (
+            "agreed: proposed\n\"built\": planned\nprotects: []\nboundary: []\n",
+            "\"built\": built\n",
+        ),
+        (
+            "agreed: proposed\nbuilt: >-\n  planned\nprotects: []\nboundary: []\n",
+            "\nbuilt: built\nprotects",
+        ),
+    ];
+    for (block, patched) in layouts {
+        let repo = billing_repo();
+        let rules = "statute/rules/billing.md";
+        let original = "agreed: proposed\nbuilt: planned\nprotects: []\nboundary: []\n";
+        let text = repo.read(rules).replace(original, block);
+        repo.write(rules, &text);
+        assert_eq!(repo.run(&["check"]).code, 0, "{block:?}");
+
+        ok(repo.run(&["link", "BILL-001", CODE]));
+        let run = repo.run(&["link", "BILL-001", TEST, "--test", "--json"]);
+        assert_eq!(run.code, 0, "{block:?}: {}", run.stderr);
+        assert_eq!(run.json()["built"], true);
+        let after = repo.read(rules);
+        assert!(after.contains(patched), "{after}");
+        assert!(!after.contains("planned"), "{after}");
+        let check = repo.run(&["check", "--json"]);
+        assert_eq!((check.code, check.codes()), (0, vec![]), "{block:?}");
+    }
+}
