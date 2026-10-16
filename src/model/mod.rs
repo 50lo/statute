@@ -294,6 +294,8 @@ pub enum LinkRole {
 pub enum Mode {
     #[serde(rename = "bytes-sha256-v1")]
     BytesSha256V1,
+    #[serde(rename = "go-ast-sha256-v1")]
+    GoAstSha256V1,
 }
 
 /// Splits a target at the first `#` into its file and symbol. The symbol is opaque; its mode reads it.

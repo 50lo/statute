@@ -1,5 +1,8 @@
 //! Link fingerprints: bytes in, hashes out. Each mode fixes its hash input; golden tests pin it.
 
+mod go;
+mod syntax;
+
 use crate::model::Mode;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -12,6 +15,10 @@ pub enum Missing {
     NoFile,
     /// The file has no such symbol, or the mode has no symbols.
     NoSymbol,
+    /// More than one symbol matches.
+    Ambiguous,
+    /// The file does not parse cleanly. A partial parse never counts as unchanged.
+    ParseError,
 }
 
 impl fmt::Display for Missing {
@@ -19,41 +26,60 @@ impl fmt::Display for Missing {
         f.write_str(match self {
             Missing::NoFile => "the file does not exist",
             Missing::NoSymbol => "the symbol is not found",
+            Missing::Ambiguous => "more than one symbol matches",
+            Missing::ParseError => "the file does not parse cleanly",
         })
     }
 }
 
 /// The current fingerprint of each target, in order. `files` holds the bytes of every target file,
-/// `None` for a file that does not exist.
+/// `None` for a file that does not exist. Each file is parsed once per mode, for all its symbols.
 pub fn sign(
     files: &BTreeMap<String, Option<Vec<u8>>>,
     targets: &[(Mode, &str)],
 ) -> Vec<Result<String, Missing>> {
-    targets
-        .iter()
-        .map(|(mode, target)| {
-            let (file, symbol) = match target.split_once('#') {
-                Some((file, symbol)) => (file, Some(symbol)),
-                None => (*target, None),
-            };
-            let bytes = files
-                .get(file)
-                .and_then(Option::as_ref)
-                .ok_or(Missing::NoFile)?;
-            match (mode, symbol) {
-                (Mode::BytesSha256V1, None) => Ok(sha256(bytes)),
-                (Mode::BytesSha256V1, Some(_)) => Err(Missing::NoSymbol),
+    let mut results = vec![Err(Missing::NoFile); targets.len()];
+    let mut symbols: BTreeMap<(&str, Mode), Vec<(usize, &str)>> = BTreeMap::new();
+    for (i, (mode, target)) in targets.iter().enumerate() {
+        let (file, symbol) = match target.split_once('#') {
+            Some((file, symbol)) => (file, Some(symbol)),
+            None => (*target, None),
+        };
+        let Some(bytes) = files.get(file).and_then(Option::as_ref) else {
+            continue;
+        };
+        results[i] = match (mode, symbol) {
+            (Mode::BytesSha256V1, None) => Ok(sha256(bytes)),
+            (_, None) => Err(Missing::NoSymbol),
+            (_, Some(symbol)) => {
+                symbols.entry((file, *mode)).or_default().push((i, symbol));
+                continue;
             }
-        })
-        .collect()
+        };
+    }
+    for ((file, mode), wanted) in symbols {
+        let bytes = files[file].as_deref().unwrap_or_default();
+        let names: Vec<&str> = wanted.iter().map(|(_, s)| *s).collect();
+        let hashes = match mode {
+            Mode::BytesSha256V1 => vec![Err(Missing::NoSymbol); names.len()],
+            Mode::GoAstSha256V1 => go::sign(bytes, &names),
+        };
+        for ((i, _), hash) in wanted.iter().zip(hashes) {
+            results[*i] = hash;
+        }
+    }
+    results
 }
 
 /// The mode `link` uses for a new target: by file extension when a symbol is given, otherwise bytes.
 /// `None` when no mode reads symbols in this kind of file.
-pub fn mode_for(_file: &str, symbol: Option<&str>) -> Option<Mode> {
-    match symbol {
-        None => Some(Mode::BytesSha256V1),
-        Some(_) => None,
+pub fn mode_for(file: &str, symbol: Option<&str>) -> Option<Mode> {
+    if symbol.is_none() {
+        return Some(Mode::BytesSha256V1);
+    }
+    match file.rsplit_once('.').map(|(_, ext)| ext) {
+        Some("go") => Some(Mode::GoAstSha256V1),
+        _ => None,
     }
 }
 
