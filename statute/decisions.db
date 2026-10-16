@@ -1,23 +1,48 @@
 - id: D261016-f5ieq
-  timestamp: "2026-10-16T11:52:05Z"
-  actor: "user"
-  status: "active"
-  ratified_by: {"name": "Anton Solo", "email": "anton@50lo.me", "at": "2026-10-16T11:55:56Z"}
-  summary: "Adopt Statute's initial vocabulary and rules."
-  rationale: "The user reviewed and explicitly approved all current term definitions and rules in this session. Record that agreement independently of implementation progress."
-  establishes: ["CORE-001", "CORE-002", "CORE-003", "CORE-004", "CORE-005", "LINKS-001"]
+  timestamp: 2026-10-16T11:52:05Z
+  actor: user
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-16T11:55:56Z
+  summary: Adopt Statute's initial vocabulary and rules.
+  rationale: The user reviewed and explicitly approved all current term definitions and rules in this session. Record that agreement independently of implementation progress.
+  establishes:
+  - CORE-001
+  - CORE-002
+  - CORE-003
+  - CORE-004
+  - CORE-005
+  - LINKS-001
   changes: []
   retires: []
-  terms: ["Term", "Rule", "Decision", "Link", "Code link", "Test link", "Manual check", "Protected case", "Boundary case", "Gap", "Agreement status", "Build state", "Affected rule", "Rule review", "Approval"]
-
+  terms:
+  - Term
+  - Rule
+  - Decision
+  - Link
+  - Code link
+  - Test link
+  - Manual check
+  - Protected case
+  - Boundary case
+  - Gap
+  - Agreement status
+  - Build state
+  - Affected rule
+  - Rule review
+  - Approval
 - id: D261017-6x46f
-  timestamp: "2026-10-16T13:16:07Z"
-  actor: "user"
-  status: "proposed"
+  timestamp: 2026-10-16T13:16:07Z
+  actor: user
+  status: proposed
   ratified_by: null
-  summary: "Clarify symbol-link parsing and correct Link's code-name metadata."
-  rationale: "Symbol fingerprint modes require a clean parse of the whole file; byte fingerprints do not parse source syntax. Replace the misleading JSON-as-invalid-Python example with an actual syntax-error case and a byte-mode boundary. Reference is a conceptual distinction, not an existing code name, so keep it in prose rather than the not list."
+  summary: Clarify symbol-link parsing and correct Link's code-name metadata.
+  rationale: Symbol fingerprint modes require a clean parse of the whole file; byte fingerprints do not parse source syntax. Replace the misleading JSON-as-invalid-Python example with an actual syntax-error case and a byte-mode boundary. Reference is a conceptual distinction, not an existing code name, so keep it in prose rather than the not list.
   establishes: []
-  changes: ["LINKS-001"]
+  changes:
+  - LINKS-001
   retires: []
-  terms: ["Link"]
+  terms:
+  - Link
