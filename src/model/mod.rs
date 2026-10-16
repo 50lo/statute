@@ -83,10 +83,6 @@ pub struct Rule {
     pub statement: Option<String>,
     /// `None` when the block is missing or does not match the schema.
     pub meta: Option<RuleMeta>,
-    #[expect(
-        dead_code,
-        reason = "read by the commands that patch rule blocks, from milestone 2"
-    )]
     pub span: Span,
 }
 
@@ -143,14 +139,9 @@ pub enum Built {
 pub struct Term {
     pub name: String,
     pub line: usize,
-    #[cfg_attr(not(test), expect(dead_code, reason = "read by `show`"))]
     pub definition: Option<String>,
     /// Defaults when the term has no `yaml` block; `None` when the block does not match the schema.
     pub meta: Option<TermMeta>,
-    #[expect(
-        dead_code,
-        reason = "read by `decide` and `ratify`, which patch the `agreed:` line"
-    )]
     pub span: Span,
 }
 
@@ -185,7 +176,7 @@ pub struct NotName {
 }
 
 /// One entry of `decisions.db`.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Decision {
     pub id: String,
@@ -216,21 +207,21 @@ impl Decision {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Actor {
     User,
     Agent,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DecisionStatus {
     Proposed,
     Active,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RatifiedBy {
     pub name: String,
@@ -239,7 +230,7 @@ pub struct RatifiedBy {
 }
 
 /// One entry of `gaps.yml`.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Gap {
     pub id: String,
@@ -251,7 +242,7 @@ pub struct Gap {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GapStatus {
     Open,

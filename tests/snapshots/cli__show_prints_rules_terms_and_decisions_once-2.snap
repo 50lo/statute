@@ -1,0 +1,40 @@
+---
+source: tests/cli.rs
+expression: "repo.run(&[\"show\", \"ATTR-003\", \"--json\"]).json()"
+---
+{
+  "items": [
+    {
+      "agreed": "retired",
+      "built": "planned",
+      "decisions": [
+        {
+          "id": "D261001-a2b3c",
+          "role": "establishes",
+          "status": "active",
+          "summary": "Adopt the existing attribution rules."
+        },
+        {
+          "id": "D261010-k7m2q",
+          "role": "retires",
+          "status": "active",
+          "summary": "Sessions no longer expire."
+        }
+      ],
+      "file": "statute/rules/attribution.md",
+      "gaps": [],
+      "id": "ATTR-003",
+      "kind": "rule",
+      "line": 39,
+      "terms": [
+        {
+          "definition": "One conversation between a developer and a coding agent.",
+          "name": "Session"
+        }
+      ],
+      "text": "# ATTR-003 Sessions expire after a day\n\nA Session with no activity for 24 hours is closed.\n\n```yaml\nagreed: retired\nbuilt: planned\nterms: [Session]\nprotects:\n  - A Session idle for 25 hours is closed.\nboundary:\n  - A Session idle for 23 hours stays open.\n```",
+      "title": "Sessions expire after a day"
+    }
+  ],
+  "schema": 1
+}

@@ -296,3 +296,55 @@ fn usage_errors_exit_2() {
     assert_eq!(repo.run(&["rule", "new", "billing"]).code, 2);
     assert_eq!(repo.run(&["check", "--all"]).code, 2);
 }
+
+#[test]
+fn show_prints_rules_terms_and_decisions_once() {
+    let repo = TestRepo::fixture("valid");
+    let run = repo.run(&["show", "ATTR-001", "Session", "D261001-a2b3c", "ATTR-001"]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    insta::assert_snapshot!(run.stdout);
+    insta::assert_json_snapshot!(repo.run(&["show", "ATTR-003", "--json"]).json());
+
+    let json = repo.run(&["show", "Session", "Session", "--json"]).json();
+    assert_eq!(json["items"].as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn show_refuses_an_unknown_name() {
+    let repo = TestRepo::fixture("valid");
+    let run = repo.run(&["show", "ATTR-001", "ATTR-999"]);
+    assert_eq!((run.code, run.stdout.as_str()), (2, ""));
+    assert!(
+        run.stderr
+            .contains("no rule, term or decision named `ATTR-999`"),
+        "{}",
+        run.stderr
+    );
+    assert_eq!(repo.run(&["show"]).code, 2);
+}
+
+#[test]
+fn show_works_when_decisions_and_gaps_do_not_parse() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("statute/decisions.db", "- id: [unclosed\n");
+    repo.write("statute/gaps.yml", "- id: [unclosed\n");
+    let run = repo.run(&["show", "ATTR-001", "--json"]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    let rule = &run.json()["items"][0];
+    assert_eq!(
+        (&rule["decisions"], &rule["gaps"]),
+        (&serde_json::Value::Null, &serde_json::Value::Null)
+    );
+    let text = repo.run(&["show", "ATTR-001"]).stdout;
+    assert!(text.contains("decisions.db does not parse"), "{text}");
+
+    let missing = repo.run(&["show", "D261001-a2b3c"]);
+    assert_eq!(missing.code, 2);
+    assert!(
+        missing
+            .stderr
+            .contains("statute/decisions.db does not parse"),
+        "{}",
+        missing.stderr
+    );
+}
