@@ -1,0 +1,9 @@
+//! One module per command: its logic, without argument parsing or rendering. Each returns a report.
+
+pub mod check;
+pub mod init;
+pub mod rule_new;
+pub mod status;
+
+/// The `schema` every `--json` report starts with.
+pub const SCHEMA: u32 = 1;

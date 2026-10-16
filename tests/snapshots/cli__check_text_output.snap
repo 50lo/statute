@@ -1,0 +1,63 @@
+---
+source: tests/cli.rs
+expression: run.stdout
+---
+error[rule.subheading] rule files have no subheadings: every `#` heading is a rule, and other headings are not allowed
+  --> statute/rules/attribution.md:24
+error[rule.block_missing] ATTR-002: rule has no `yaml` metadata block
+  --> statute/rules/attribution.md:44
+error[rule.schema] ATTR-003: rule block does not parse: unknown field `protect`, expected one of `agreed`, `built`, `scope`, `terms`, `exceptions`, `protects`, `boundary`, `manual_check`
+  --> statute/rules/attribution.md:55
+error[rule.frontmatter] rule file has no frontmatter; start it with `---`, `prefix: <PREFIX>`, `---`
+  --> statute/rules/plain.md:1
+error[term.subheading] terms have no subheadings: `#` headings group terms and each `##` heading is a term
+  --> statute/terms.md:12
+error[term.schema] Approver: term block does not parse: agreed: unknown variant `retired`, expected `proposed` or `agreed`
+  --> statute/terms.md:23
+error[config.version] statute.yml has version 2; this statute supports version 1
+  --> statute.yml
+error[rule.prefix_invalid] prefix `low` must be uppercase letters and digits, starting with a letter
+  --> statute/rules/lower.md
+error[rule.prefix_duplicate] prefix `ATTR` is also declared by statute/rules/attribution.md
+  --> statute/rules/other.md
+error[rule.duplicate] ATTR-001: ATTR-001 is also defined at statute/rules/attribution.md:5
+  --> statute/rules/attribution.md:15
+error[rule.id_invalid] Missing: `Missing` is not a rule ID; a rule heading starts with an ID such as `ATTR-003`
+  --> statute/rules/attribution.md:26
+error[rule.id_invalid] BILL-009: BILL-009 does not use the file's prefix `ATTR`
+  --> statute/rules/attribution.md:35
+error[rule.statement_missing] ATTR-004: rule has no statement: the first paragraph after the heading, before the `yaml` block
+  --> statute/rules/attribution.md:58
+error[rule.term_unknown] ATTR-005: term `Sesion` is not defined in terms.md
+  --> statute/rules/attribution.md:65
+error[rule.cases_missing] ATTR-005: an agreed rule needs at least one `protects` case and one `boundary` case
+  --> statute/rules/attribution.md:65
+error[rule.unestablished] ATTR-005: ATTR-005 is agreed or retired, but no decision establishes it
+  --> statute/rules/attribution.md:65
+error[rule.established_twice] ATTR-006: ATTR-006 is established by more than one decision: D-1, D261002-aaaaa
+  --> statute/rules/attribution.md:75
+warning[rule.avoid_word] ATTR-001: statement uses `chat`, which the term Session avoids
+  --> statute/rules/attribution.md:5
+error[term.duplicate] Session: term `Session` is also defined on line 3
+  --> statute/terms.md:14
+error[decision.id_invalid] D-1: `D-1` is not a decision ID such as `D261015-k7m2q`
+  --> statute/decisions.db
+error[decision.duplicate] D261002-aaaaa: D261002-aaaaa appears more than once
+  --> statute/decisions.db
+error[decision.rule_unknown] D-1: rule ATTR-404 is not defined in any rule file
+  --> statute/decisions.db
+error[decision.term_unknown] D-1: term `Nobody` is not defined in terms.md
+  --> statute/decisions.db
+error[decision.overlap] D261002-aaaaa: rule ATTR-001 is also in proposed decision D261002-aaaaa; a rule is in at most one
+  --> statute/decisions.db
+error[decision.ratified_by_missing] D-1: an active decision needs `ratified_by`
+  --> statute/decisions.db
+error[decision.summary_too_long] D261002-aaaaa: summary has 67 characters; the cap is 40 (summary_max in statute.yml)
+  --> statute/decisions.db
+error[gap.id_invalid] gap-1: `gap-1` is not a gap ID such as `G261015-x4p9t`
+  --> statute/gaps.yml
+error[gap.duplicate] FOOT-1: FOOT-1 appears more than once
+  --> statute/gaps.yml
+error[gap.rule_unknown] FOOT-1: rule ATTR-404 is not defined in any rule file
+  --> statute/gaps.yml
+28 errors, 1 warning

@@ -1,0 +1,23 @@
+---
+source: tests/cli.rs
+expression: "repo.run(&[\"status\", \"--area\", \"billing\", \"--json\"]).json()"
+---
+{
+  "areas": [
+    {
+      "area": "billing",
+      "file": "statute/rules/billing.md",
+      "prefix": "BILL",
+      "rules": [
+        {
+          "agreed": "proposed",
+          "built": "planned",
+          "draft": true,
+          "id": "BILL-001",
+          "title": "Large refunds need a second approval"
+        }
+      ]
+    }
+  ],
+  "schema": 1
+}

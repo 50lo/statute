@@ -1,0 +1,230 @@
+---
+source: tests/cli.rs
+expression: run.json()
+---
+{
+  "errors": 28,
+  "findings": [
+    {
+      "code": "rule.subheading",
+      "file": "statute/rules/attribution.md",
+      "line": 24,
+      "message": "rule files have no subheadings: every `#` heading is a rule, and other headings are not allowed",
+      "severity": "error"
+    },
+    {
+      "code": "rule.block_missing",
+      "file": "statute/rules/attribution.md",
+      "line": 44,
+      "message": "rule has no `yaml` metadata block",
+      "rule": "ATTR-002",
+      "severity": "error"
+    },
+    {
+      "code": "rule.schema",
+      "file": "statute/rules/attribution.md",
+      "line": 55,
+      "message": "rule block does not parse: unknown field `protect`, expected one of `agreed`, `built`, `scope`, `terms`, `exceptions`, `protects`, `boundary`, `manual_check`",
+      "rule": "ATTR-003",
+      "severity": "error"
+    },
+    {
+      "code": "rule.frontmatter",
+      "file": "statute/rules/plain.md",
+      "line": 1,
+      "message": "rule file has no frontmatter; start it with `---`, `prefix: <PREFIX>`, `---`",
+      "severity": "error"
+    },
+    {
+      "code": "term.subheading",
+      "file": "statute/terms.md",
+      "line": 12,
+      "message": "terms have no subheadings: `#` headings group terms and each `##` heading is a term",
+      "severity": "error"
+    },
+    {
+      "code": "term.schema",
+      "file": "statute/terms.md",
+      "line": 23,
+      "message": "term block does not parse: agreed: unknown variant `retired`, expected `proposed` or `agreed`",
+      "severity": "error",
+      "term": "Approver"
+    },
+    {
+      "code": "config.version",
+      "file": "statute.yml",
+      "message": "statute.yml has version 2; this statute supports version 1",
+      "severity": "error"
+    },
+    {
+      "code": "rule.prefix_invalid",
+      "file": "statute/rules/lower.md",
+      "message": "prefix `low` must be uppercase letters and digits, starting with a letter",
+      "severity": "error"
+    },
+    {
+      "code": "rule.prefix_duplicate",
+      "file": "statute/rules/other.md",
+      "message": "prefix `ATTR` is also declared by statute/rules/attribution.md",
+      "severity": "error"
+    },
+    {
+      "code": "rule.duplicate",
+      "file": "statute/rules/attribution.md",
+      "line": 15,
+      "message": "ATTR-001 is also defined at statute/rules/attribution.md:5",
+      "rule": "ATTR-001",
+      "severity": "error"
+    },
+    {
+      "code": "rule.id_invalid",
+      "file": "statute/rules/attribution.md",
+      "line": 26,
+      "message": "`Missing` is not a rule ID; a rule heading starts with an ID such as `ATTR-003`",
+      "rule": "Missing",
+      "severity": "error"
+    },
+    {
+      "code": "rule.id_invalid",
+      "file": "statute/rules/attribution.md",
+      "line": 35,
+      "message": "BILL-009 does not use the file's prefix `ATTR`",
+      "rule": "BILL-009",
+      "severity": "error"
+    },
+    {
+      "code": "rule.statement_missing",
+      "file": "statute/rules/attribution.md",
+      "line": 58,
+      "message": "rule has no statement: the first paragraph after the heading, before the `yaml` block",
+      "rule": "ATTR-004",
+      "severity": "error"
+    },
+    {
+      "code": "rule.term_unknown",
+      "file": "statute/rules/attribution.md",
+      "line": 65,
+      "message": "term `Sesion` is not defined in terms.md",
+      "rule": "ATTR-005",
+      "severity": "error",
+      "term": "Sesion"
+    },
+    {
+      "code": "rule.cases_missing",
+      "file": "statute/rules/attribution.md",
+      "line": 65,
+      "message": "an agreed rule needs at least one `protects` case and one `boundary` case",
+      "rule": "ATTR-005",
+      "severity": "error"
+    },
+    {
+      "code": "rule.unestablished",
+      "file": "statute/rules/attribution.md",
+      "line": 65,
+      "message": "ATTR-005 is agreed or retired, but no decision establishes it",
+      "rule": "ATTR-005",
+      "severity": "error"
+    },
+    {
+      "code": "rule.established_twice",
+      "file": "statute/rules/attribution.md",
+      "line": 75,
+      "message": "ATTR-006 is established by more than one decision: D-1, D261002-aaaaa",
+      "rule": "ATTR-006",
+      "severity": "error"
+    },
+    {
+      "code": "rule.avoid_word",
+      "file": "statute/rules/attribution.md",
+      "line": 5,
+      "message": "statement uses `chat`, which the term Session avoids",
+      "rule": "ATTR-001",
+      "severity": "warning",
+      "term": "Session"
+    },
+    {
+      "code": "term.duplicate",
+      "file": "statute/terms.md",
+      "line": 14,
+      "message": "term `Session` is also defined on line 3",
+      "severity": "error",
+      "term": "Session"
+    },
+    {
+      "code": "decision.id_invalid",
+      "decision": "D-1",
+      "file": "statute/decisions.db",
+      "message": "`D-1` is not a decision ID such as `D261015-k7m2q`",
+      "severity": "error"
+    },
+    {
+      "code": "decision.duplicate",
+      "decision": "D261002-aaaaa",
+      "file": "statute/decisions.db",
+      "message": "D261002-aaaaa appears more than once",
+      "severity": "error"
+    },
+    {
+      "code": "decision.rule_unknown",
+      "decision": "D-1",
+      "file": "statute/decisions.db",
+      "message": "rule ATTR-404 is not defined in any rule file",
+      "rule": "ATTR-404",
+      "severity": "error"
+    },
+    {
+      "code": "decision.term_unknown",
+      "decision": "D-1",
+      "file": "statute/decisions.db",
+      "message": "term `Nobody` is not defined in terms.md",
+      "severity": "error",
+      "term": "Nobody"
+    },
+    {
+      "code": "decision.overlap",
+      "decision": "D261002-aaaaa",
+      "file": "statute/decisions.db",
+      "message": "rule ATTR-001 is also in proposed decision D261002-aaaaa; a rule is in at most one",
+      "rule": "ATTR-001",
+      "severity": "error"
+    },
+    {
+      "code": "decision.ratified_by_missing",
+      "decision": "D-1",
+      "file": "statute/decisions.db",
+      "message": "an active decision needs `ratified_by`",
+      "severity": "error"
+    },
+    {
+      "code": "decision.summary_too_long",
+      "decision": "D261002-aaaaa",
+      "file": "statute/decisions.db",
+      "message": "summary has 67 characters; the cap is 40 (summary_max in statute.yml)",
+      "severity": "error"
+    },
+    {
+      "code": "gap.id_invalid",
+      "file": "statute/gaps.yml",
+      "gap": "gap-1",
+      "message": "`gap-1` is not a gap ID such as `G261015-x4p9t`",
+      "severity": "error"
+    },
+    {
+      "code": "gap.duplicate",
+      "file": "statute/gaps.yml",
+      "gap": "FOOT-1",
+      "message": "FOOT-1 appears more than once",
+      "severity": "error"
+    },
+    {
+      "code": "gap.rule_unknown",
+      "file": "statute/gaps.yml",
+      "gap": "FOOT-1",
+      "message": "rule ATTR-404 is not defined in any rule file",
+      "rule": "ATTR-404",
+      "severity": "error"
+    }
+  ],
+  "schema": 1,
+  "warnings": 1
+}

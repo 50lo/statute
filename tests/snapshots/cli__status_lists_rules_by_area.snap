@@ -1,0 +1,10 @@
+---
+source: tests/cli.rs
+expression: run.stdout
+---
+attribution (ATTR): 3 rules
+  ATTR-001  agreed    planned  A Session without a repository is still kept
+  ATTR-002  proposed  planned  Context alone creates no contribution
+  ATTR-003  retired   planned  Sessions expire after a day
+billing (BILL): 1 rule
+  BILL-001  proposed  planned  Large refunds need a second approval  (draft)
