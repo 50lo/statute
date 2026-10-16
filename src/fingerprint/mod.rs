@@ -1,6 +1,7 @@
 //! Link fingerprints: bytes in, hashes out. Each mode fixes its hash input; golden tests pin it.
 
 mod go;
+mod python;
 mod syntax;
 
 use crate::model::Mode;
@@ -63,6 +64,7 @@ pub fn sign(
         let hashes = match mode {
             Mode::BytesSha256V1 => vec![Err(Missing::NoSymbol); names.len()],
             Mode::GoAstSha256V1 => go::sign(bytes, &names),
+            Mode::PythonAstSha256V1 => python::sign(bytes, &names),
         };
         for ((i, _), hash) in wanted.iter().zip(hashes) {
             results[*i] = hash;
@@ -79,6 +81,7 @@ pub fn mode_for(file: &str, symbol: Option<&str>) -> Option<Mode> {
     }
     match file.rsplit_once('.').map(|(_, ext)| ext) {
         Some("go") => Some(Mode::GoAstSha256V1),
+        Some("py") => Some(Mode::PythonAstSha256V1),
         _ => None,
     }
 }
