@@ -81,6 +81,18 @@ impl<'a> Txn<'a> {
     }
 }
 
+/// Writes a scratch file in the system's temp directory, outside the repository, for a person to
+/// edit, and returns its path.
+pub fn write_scratch(name: &str, contents: &str) -> Result<PathBuf> {
+    let path = std::env::temp_dir().join(format!("statute-{}-{name}", std::process::id()));
+    std::fs::write(&path, contents).with_context(|| format!("cannot write {}", path.display()))?;
+    Ok(path)
+}
+
+pub fn remove_scratch(path: &std::path::Path) {
+    let _ = std::fs::remove_file(path);
+}
+
 fn temp_path(target: &std::path::Path) -> std::io::Result<PathBuf> {
     let name = target
         .file_name()

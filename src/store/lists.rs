@@ -6,7 +6,7 @@
 )]
 
 use super::yaml_finding;
-use crate::model::{Config, Decision, Finding, Gap, paths};
+use crate::model::{Config, Decision, DecisionDraft, Finding, Gap, paths};
 use serde::de::DeserializeOwned;
 
 pub fn parse_config(text: &str) -> Result<Config, Finding> {
@@ -36,6 +36,25 @@ fn parse_list<T: DeserializeOwned>(
         .map_err(|e| yaml_finding(code, path, &e, path, 1))
 }
 
+/// `decisions.db` in its one fixed format. The CLI rewrites the whole file, so comments are not kept.
+pub fn render_decisions(decisions: &[Decision]) -> String {
+    yaml_serde::to_string(decisions).expect("decisions serialize")
+}
+
+const DRAFT_HEADER: &str = "# The decision `statute decide` will record. Edit it, save and close.\n# An empty summary records nothing.\n";
+
+/// A draft as YAML for `decide --edit`.
+pub fn render_draft(draft: &DecisionDraft) -> String {
+    format!(
+        "{DRAFT_HEADER}{}",
+        yaml_serde::to_string(draft).expect("drafts serialize")
+    )
+}
+
+pub fn parse_draft(text: &str) -> Result<DecisionDraft, String> {
+    yaml_serde::from_str(text).map_err(|e| e.to_string())
+}
+
 pub const CONFIG_TEMPLATE: &str =
     "version: 1\nsummary_max: 600      # decision summary cap, in characters\n";
 pub const EMPTY_LIST: &str = "[]\n";
@@ -59,6 +78,29 @@ mod tests {
         let decisions = parse_decisions(text).unwrap();
         assert_eq!(decisions[0].status, DecisionStatus::Proposed);
         assert_eq!(decisions[0].establishes, ["ATTR-001"]);
+    }
+
+    #[test]
+    fn rendered_decisions_parse_back() {
+        let text = "- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: active\n  ratified_by: {name: \"Pat: Example\", email: p@example.com, at: \"2026-10-15T09:00:00Z\"}\n  summary: \"yes\"\n  rationale: \"Line one.\\nLine two: with # and 'quotes'.\"\n  establishes: [ATTR-001, \"true\"]\n  terms: [Active customer]\n";
+        let decisions = parse_decisions(text).unwrap();
+        let rendered = render_decisions(&decisions);
+        assert_eq!(parse_decisions(&rendered).unwrap(), decisions);
+        assert_eq!(render_decisions(&[]), EMPTY_LIST);
+    }
+
+    #[test]
+    fn drafts_parse_back() {
+        let draft = DecisionDraft {
+            actor: crate::model::Actor::User,
+            summary: "S: s.".into(),
+            rationale: "R.\nMore.".into(),
+            establishes: vec!["BILL-001".into()],
+            changes: vec![],
+            retires: vec![],
+            terms: vec!["Approver".into()],
+        };
+        assert_eq!(parse_draft(&render_draft(&draft)).unwrap(), draft);
     }
 
     #[test]

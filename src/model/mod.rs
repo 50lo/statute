@@ -209,6 +209,24 @@ impl Decision {
     }
 }
 
+/// What `decide` is asked to record: a decision before it has an ID, a time and a status. People
+/// edit it as YAML with `decide --edit`.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct DecisionDraft {
+    pub actor: Actor,
+    pub summary: String,
+    pub rationale: String,
+    #[serde(default)]
+    pub establishes: Vec<String>,
+    #[serde(default)]
+    pub changes: Vec<String>,
+    #[serde(default)]
+    pub retires: Vec<String>,
+    #[serde(default)]
+    pub terms: Vec<String>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Actor {

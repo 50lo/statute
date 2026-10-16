@@ -5,7 +5,7 @@ use crate::store;
 use anyhow::{Context, Result, bail};
 use std::collections::BTreeMap;
 use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct Repo {
     pub root: PathBuf,
@@ -51,6 +51,11 @@ impl Repo {
             Err(e) if e.kind() == ErrorKind::NotFound => Ok(None),
             Err(e) => Err(e).with_context(|| format!("cannot read {rel}")),
         }
+    }
+
+    /// A scratch file that `txn::write_scratch` wrote outside the repository.
+    pub fn read_scratch(path: &Path) -> Result<String> {
+        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))
     }
 
     /// A layout file's text. A missing file is an error, so that it is not mistaken for an empty one.

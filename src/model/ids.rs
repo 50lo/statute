@@ -15,8 +15,11 @@ pub fn parse_rule_id(s: &str) -> Option<(&str, u16)> {
     well_formed.then(|| (prefix, number.parse().unwrap_or(0)))
 }
 
-/// A decision or gap ID: the marker, the date as `YYMMDD`, `-`, and five random characters.
-/// Any lowercase letter or digit is accepted until `decide` fixes the alphabet it generates.
+/// The characters of the random part of decision and gap IDs.
+pub const RANDOM_ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
+
+/// A decision or gap ID: the marker, the UTC date as `YYMMDD`, `-`, and five characters from
+/// `RANDOM_ALPHABET`.
 pub fn is_dated_id(s: &str, marker: char) -> bool {
     let Some((date, random)) = s.strip_prefix(marker).and_then(|rest| rest.split_once('-')) else {
         return false;
@@ -24,9 +27,7 @@ pub fn is_dated_id(s: &str, marker: char) -> bool {
     date.len() == 6
         && date.bytes().all(|b| b.is_ascii_digit())
         && random.len() == 5
-        && random
-            .bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+        && random.bytes().all(|b| RANDOM_ALPHABET.contains(&b))
 }
 
 #[cfg(test)]

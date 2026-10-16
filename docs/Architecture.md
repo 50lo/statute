@@ -76,7 +76,7 @@ Repo::open
 Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) follows the same steps:
 
 1. Load the model.
-2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses a rule or term that is already in a proposed decision.
+2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses an unknown rule or term and one that is already in a proposed decision.
 3. Plan edits in `txn`: byte-range patches for Markdown, full rewrites for YAML and the lock.
 4. Apply the edits in memory and re-parse the touched files. A file that no longer parses is a bug in the command, which fails without writing.
 5. Write every touched file to a temp file next to it, then rename each into place.
@@ -94,7 +94,7 @@ Each rename is atomic; a command that writes several files is not. All temp file
 | `statute.yml` | `yaml_serde` into a typed struct | `init` only |
 | `rules/<area>.md` | `pulldown-cmark` events with byte offsets: frontmatter, `#` headings, first paragraph, first `yaml` block, notes | append a section (`rule new`); patch the `agreed:` or `built:` line inside the block |
 | `terms.md` | same, with `#` groups and `##` terms | patch or insert the `agreed:` line |
-| `decisions.db` | `yaml_serde` into a list of entries | full rewrite |
+| `decisions.db` | `yaml_serde` into a list of entries | full rewrite in one fixed format; YAML comments are not kept |
 | `gaps.yml` | same | full rewrite |
 | `statute.lock` | `serde_json`, one line at a time | full rewrite: version line, then links sorted by source and target |
 
@@ -222,6 +222,5 @@ The crates in spec section 5.1, plus:
 
 ## 12. Decisions to confirm
 
-1. **Full rewrite for `decisions.db`, `gaps.yml` and the lock; byte-range patches for Markdown.** YAML comments in `decisions.db` would not survive a CLI write. Recommended, because the CLI is the main writer of those files.
-2. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
-3. **Plugin in the same repository** under `plugin/`. Recommended.
+1. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
+2. **Plugin in the same repository** under `plugin/`. Recommended.
