@@ -2,9 +2,10 @@
 
 use crate::commands::check::CheckReport;
 use crate::commands::init::{AgentsMd, InitReport};
+use crate::commands::link::LinkReport;
 use crate::commands::show::{Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
-use crate::model::{Agreed, Built, DecisionStatus, GapStatus, Severity};
+use crate::model::{Agreed, Built, DecisionStatus, GapStatus, LinkRole, Severity};
 use std::fmt::Write;
 
 pub fn init(r: &InitReport) -> String {
@@ -57,6 +58,21 @@ pub fn check(r: &CheckReport) -> String {
             r.warnings,
             plural(r.warnings, "warning")
         );
+    }
+    out
+}
+
+pub fn link(r: &LinkReport) -> String {
+    if r.removed {
+        return format!("Removed the link from {} to {}\n", r.rule, r.target);
+    }
+    let role = match r.role {
+        LinkRole::Code => "code",
+        LinkRole::Test => "test",
+    };
+    let mut out = format!("Linked {} to {} ({role})\n", r.rule, r.target);
+    if r.built {
+        let _ = writeln!(out, "{} is complete and now `built: built`", r.rule);
     }
     out
 }

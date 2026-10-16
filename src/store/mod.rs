@@ -1,6 +1,7 @@
 //! Parses each kind of Statute file from text and renders edits back to text. No I/O.
 
 mod lists;
+pub mod lock;
 mod markdown;
 pub mod rules;
 pub mod terms;
@@ -10,6 +11,8 @@ pub use lists::{
 };
 
 use crate::model::Finding;
+
+use markdown::set_field;
 
 /// A YAML error as a finding, with the line in the file. `first_line` is the file line of the YAML's first line.
 fn yaml_finding(

@@ -1,7 +1,10 @@
 use super::SCHEMA;
 use crate::check;
-use crate::model::{Finding, Severity};
+use crate::fingerprint;
+use crate::git;
+use crate::model::{Finding, Link, Severity};
 use crate::repo::Repo;
+use crate::state;
 use anyhow::Result;
 use serde::Serialize;
 
@@ -19,10 +22,33 @@ impl CheckReport {
     }
 }
 
-/// Runs every check on the Statute files.
-pub fn run() -> Result<CheckReport> {
-    let model = Repo::discover()?.load()?;
-    let findings = check::run(&model);
+/// Runs every check on the Statute files, and reports stale and missing links whose target file
+/// changed since the base. With `all`, every link is fingerprinted.
+pub fn run(all: bool) -> Result<CheckReport> {
+    let repo = Repo::discover()?;
+    let model = repo.load()?;
+    let mut findings = check::run(&model);
+
+    if let Some(links) = &model.links {
+        let selected: Vec<&Link> = if all {
+            links.iter().collect()
+        } else {
+            let base = git::base(&repo.root)?;
+            let changed = git::changed_files(&repo.root, base.as_deref())?;
+            links
+                .iter()
+                .filter(|l| changed.contains(l.file()))
+                .collect()
+        };
+        let files = repo.read_files(selected.iter().map(|l| l.file()))?;
+        let targets: Vec<_> = selected
+            .iter()
+            .map(|l| (l.mode, l.target.as_str()))
+            .collect();
+        let health = state::health(&selected, &fingerprint::sign(&files, &targets));
+        findings.extend(check::freshness(&selected, &health));
+    }
+
     let errors = findings
         .iter()
         .filter(|f| f.severity == Severity::Error)

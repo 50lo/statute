@@ -3,7 +3,7 @@ source: tests/cli.rs
 expression: run.json()
 ---
 {
-  "errors": 28,
+  "errors": 34,
   "findings": [
     {
       "code": "rule.subheading",
@@ -143,6 +143,23 @@ expression: run.json()
       "term": "Session"
     },
     {
+      "code": "rule.retired_linked",
+      "file": "statute/rules/attribution.md",
+      "line": 84,
+      "message": "ATTR-007 is retired but still links src/app.txt",
+      "rule": "ATTR-007",
+      "severity": "error",
+      "target": "src/app.txt"
+    },
+    {
+      "code": "rule.incomplete",
+      "file": "statute/rules/attribution.md",
+      "line": 93,
+      "message": "ATTR-008 is built but lacks a code link, or both a test link and a `manual_check`",
+      "rule": "ATTR-008",
+      "severity": "error"
+    },
+    {
       "code": "term.duplicate",
       "file": "statute/terms.md",
       "line": 14,
@@ -223,6 +240,38 @@ expression: run.json()
       "message": "rule ATTR-404 is not defined in any rule file",
       "rule": "ATTR-404",
       "severity": "error"
+    },
+    {
+      "code": "link.rule_unknown",
+      "file": "statute.lock",
+      "message": "rule ATTR-404 is not defined in any rule file",
+      "rule": "ATTR-404",
+      "severity": "error",
+      "target": "src/app.txt"
+    },
+    {
+      "code": "link.rule_unknown",
+      "file": "statute.lock",
+      "message": "rule ATTR-404 is not defined in any rule file",
+      "rule": "ATTR-404",
+      "severity": "error",
+      "target": "src/app.txt"
+    },
+    {
+      "code": "link.duplicate",
+      "file": "statute.lock",
+      "message": "ATTR-404 links src/app.txt more than once",
+      "rule": "ATTR-404",
+      "severity": "error",
+      "target": "src/app.txt"
+    },
+    {
+      "code": "link.stale",
+      "file": "src/app.txt",
+      "message": "src/app.txt changed since it was linked; check that the rule still holds, then run `statute review ATTR-001`",
+      "rule": "ATTR-001",
+      "severity": "error",
+      "target": "src/app.txt"
     }
   ],
   "schema": 1,

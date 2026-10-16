@@ -4,7 +4,7 @@
   status: active
   summary: "Active, but nobody ratified it."
   rationale: "R."
-  establishes: [ATTR-006, ATTR-404]
+  establishes: [ATTR-006, ATTR-404, ATTR-007]
   terms: [Nobody]
 - id: D261002-aaaaa
   timestamp: "2026-10-02T09:00:00Z"

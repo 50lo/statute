@@ -34,11 +34,15 @@ impl Run {
 }
 
 impl TestRepo {
-    /// An empty directory that git would treat as a repository root.
+    /// An empty git repository with no commits.
     pub fn empty() -> Self {
-        let dir = tempfile::tempdir().unwrap();
-        std::fs::create_dir(dir.path().join(".git")).unwrap();
-        TestRepo { dir }
+        let repo = TestRepo {
+            dir: tempfile::tempdir().unwrap(),
+        };
+        repo.git(&["init", "--quiet", "--initial-branch=main"]);
+        repo.git(&["config", "user.name", "Pat Example"]);
+        repo.git(&["config", "user.email", "pat@example.com"]);
+        repo
     }
 
     /// A copy of `tests/fixtures/<name>`.
@@ -63,6 +67,43 @@ impl TestRepo {
         let path = self.path(rel);
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(path, text).unwrap();
+    }
+
+    /// Runs git in the repository and returns its output; panics when git fails.
+    pub fn git(&self, args: &[&str]) -> String {
+        let out = Command::new("git")
+            .args(args)
+            .current_dir(self.dir.path())
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8(out.stdout).unwrap()
+    }
+
+    /// Commits every file in the working tree.
+    pub fn commit(&self, message: &str) {
+        self.git(&["add", "--all"]);
+        self.git(&["commit", "--quiet", "--message", message]);
+    }
+
+    /// A clone of this repository, so `origin/HEAD` points at this one's branch.
+    pub fn clone_repo(&self) -> TestRepo {
+        let clone = TestRepo {
+            dir: tempfile::tempdir().unwrap(),
+        };
+        let source = self.dir.path().to_str().unwrap();
+        clone.git(&["clone", "--quiet", source, "."]);
+        clone.git(&["config", "user.name", "Pat Example"]);
+        clone.git(&["config", "user.email", "pat@example.com"]);
+        clone
+    }
+
+    pub fn remove(&self, rel: &str) {
+        std::fs::remove_file(self.path(rel)).unwrap();
     }
 
     pub fn run(&self, args: &[&str]) -> Run {

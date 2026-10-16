@@ -35,6 +35,8 @@ pub struct Model {
     pub decisions: Option<Vec<Decision>>,
     /// `None` when `gaps.yml` does not parse; a finding says why.
     pub gaps: Option<Vec<Gap>>,
+    /// `None` when `statute.lock` does not parse; a finding says why.
+    pub links: Option<Vec<Link>>,
     /// Problems found while parsing, reported by `check` with the other findings.
     pub problems: Vec<Finding>,
 }
@@ -247,4 +249,57 @@ pub struct Gap {
 pub enum GapStatus {
     Open,
     Closed,
+}
+
+/// One line of `statute.lock`: a rule linked to a code or test target, with its fingerprint.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Link {
+    pub source: LinkSource,
+    /// `path` or `path#symbol`, relative to the repository root.
+    pub target: String,
+    pub role: LinkRole,
+    pub mode: Mode,
+    pub sig: String,
+}
+
+impl Link {
+    /// The rule this link belongs to.
+    pub fn rule(&self) -> &str {
+        match &self.source {
+            LinkSource::Rule(id) => id,
+        }
+    }
+
+    /// The file part of the target.
+    pub fn file(&self) -> &str {
+        split_target(&self.target).0
+    }
+}
+
+/// What a link belongs to. Only rules in v1.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LinkSource {
+    Rule(String),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LinkRole {
+    Code,
+    Test,
+}
+
+/// How a link's target is fingerprinted. A change to a mode's hash input is a new variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub enum Mode {
+    #[serde(rename = "bytes-sha256-v1")]
+    BytesSha256V1,
+}
+
+/// Splits a target at the first `#` into its file and symbol. The symbol is opaque; its mode reads it.
+pub fn split_target(target: &str) -> (&str, Option<&str>) {
+    match target.split_once('#') {
+        Some((file, symbol)) => (file, Some(symbol)),
+        None => (target, None),
+    }
 }

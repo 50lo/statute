@@ -2,6 +2,7 @@
 
 pub mod check;
 pub mod init;
+pub mod link;
 pub mod rule_new;
 pub mod show;
 pub mod status;

@@ -1,6 +1,6 @@
 use super::markdown::{self, Block};
 use super::yaml_finding;
-use crate::model::{Finding, Rule, RuleFile, RuleMeta};
+use crate::model::{Built, Finding, Rule, RuleFile, RuleMeta};
 use pulldown_cmark::HeadingLevel;
 use serde::Deserialize;
 
@@ -124,6 +124,27 @@ boundary: []
     )
 }
 
+/// The rule file with `built:` set on one of its rules, or `None` when the block cannot be patched
+/// without changing anything else the block says.
+pub fn set_built(text: &str, rule: &Rule, built: Built) -> Option<String> {
+    let value = match built {
+        Built::Planned => "planned",
+        Built::Built => "built",
+    };
+    let patched = super::set_field(text, rule.span.block.clone()?, "built", value)?;
+    let expected = RuleMeta {
+        built,
+        ..rule.meta.clone()?
+    };
+    let reparsed = parse(&rule.file, &rule.area, &patched);
+    let same = reparsed
+        .rules
+        .iter()
+        .find(|r| r.span.heading == rule.span.heading)
+        .is_some_and(|r| r.meta.as_ref() == Some(&expected));
+    same.then_some(patched)
+}
+
 /// Appends a section to the end of a Markdown file, separated by one blank line. Existing bytes are kept.
 pub fn append_section(text: &str, section: &str) -> String {
     let mut out = text.to_string();
@@ -191,6 +212,19 @@ mod tests {
         let codes: Vec<_> = parsed.problems.iter().map(|p| p.code).collect();
         assert_eq!(codes, ["rule.frontmatter", "rule.block_missing"]);
         assert_eq!(parsed.file.prefix, None);
+    }
+
+    #[test]
+    fn set_built_patches_only_the_built_field() {
+        let text = "---\nprefix: BILL\n---\n\n# BILL-001 T\n\nS.\n\n```yaml\n  agreed: proposed\n  built: >-\n    planned\n  terms: []\n```\n";
+        let rule = &parse(FILE, "billing", text).rules[0];
+        let out = set_built(text, rule, Built::Built).unwrap();
+        assert_eq!(out, text.replace("built: >-\n    planned", "built: built"));
+        // A layout the patch cannot read is refused, not mangled.
+        let flow = "---\nprefix: BILL\n---\n\n# BILL-001 T\n\nS.\n\n```yaml\n{agreed: proposed, built: planned}\n```\n";
+        let rule = &parse(FILE, "billing", flow).rules[0];
+        assert!(rule.meta.is_some());
+        assert_eq!(set_built(flow, rule, Built::Built), None);
     }
 
     #[test]

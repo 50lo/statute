@@ -164,6 +164,87 @@ pub fn scan(text: &str, level: HeadingLevel) -> Document {
     doc
 }
 
+/// The text with the value of a top-level `key` inside a `yaml` block replaced, or `None` when the
+/// block has no such key. Top-level keys sit at the indentation of the block's first content line, and
+/// the key may be quoted. A value that continues on more-indented lines, such as a folded scalar, is
+/// replaced whole. An inline value keeps its trailing comment, at the same column where there is room.
+/// The caller re-parses the result: this reads YAML's layout, not its full grammar.
+pub fn set_field(text: &str, block: Range<usize>, key: &str, value: &str) -> Option<String> {
+    let content = |l: &'_ str| -> usize { l.trim_end_matches(['\n', '\r']).len() };
+    let indent = |l: &str| l.len() - l.trim_start_matches(' ').len();
+    let mut lines = Vec::new();
+    let mut at = block.start;
+    for line in text[block].split_inclusive('\n') {
+        lines.push((at, &line[..content(line)]));
+        at += line.len();
+    }
+    let top = lines
+        .iter()
+        .map(|(_, l)| *l)
+        .find(|l| {
+            let t = l.trim();
+            !t.is_empty() && !t.starts_with('#') && !t.starts_with("---")
+        })
+        .map(indent)?;
+    let keys = [key.to_string(), format!("\"{key}\""), format!("'{key}'")];
+
+    for (i, &(start, line)) in lines.iter().enumerate() {
+        if indent(line) != top {
+            continue;
+        }
+        let Some(after_colon) = keys
+            .iter()
+            .find_map(|k| line[top..].strip_prefix(k.as_str()))
+            .and_then(|r| r.trim_start_matches([' ', '\t']).strip_prefix(':'))
+            .filter(|r| r.is_empty() || r.starts_with([' ', '\t']))
+        else {
+            continue;
+        };
+        let colon_end = start + line.len() - after_colon.len();
+
+        // A value that continues on later lines: replace from the colon to the end of its last line.
+        let last = lines[i + 1..]
+            .iter()
+            .filter(|(_, l)| !l.trim().is_empty())
+            .take_while(|(_, l)| indent(l) > top)
+            .last();
+        if let Some(&(last_start, last_line)) = last {
+            let end = last_start + last_line.len();
+            return Some(format!("{} {value}{}", &text[..colon_end], &text[end..]));
+        }
+
+        let value_start = colon_end + after_colon.len() - after_colon.trim_start().len();
+        let inline = &text[value_start..start + line.len()];
+        let old_len = match inline.chars().next() {
+            Some(q @ ('"' | '\'')) => inline[1..].find(q).map_or(inline.len(), |e| e + 2),
+            Some('#') | None => 0,
+            Some(_) => {
+                let end = [" #", "\t#"]
+                    .iter()
+                    .filter_map(|c| inline.find(c))
+                    .min()
+                    .unwrap_or(inline.len());
+                inline[..end].trim_end().len()
+            }
+        };
+        let after = &inline[old_len..];
+        let gap = after.len() - after.trim_start_matches([' ', '\t']).len();
+        let (end, padding) = if after[gap..].starts_with('#') {
+            let width = (old_len + gap).saturating_sub(value.len()).max(1);
+            (value_start + old_len + gap, " ".repeat(width))
+        } else {
+            (value_start + old_len, String::new())
+        };
+        let space = if value_start == colon_end { " " } else { "" };
+        return Some(format!(
+            "{}{space}{value}{padding}{}",
+            &text[..value_start],
+            &text[end..]
+        ));
+    }
+    None
+}
+
 /// Maps byte offsets to 1-based line numbers.
 pub struct LineIndex {
     starts: Vec<usize>,
@@ -235,6 +316,60 @@ mod tests {
         let names: Vec<_> = doc.sections.iter().map(|s| s.heading.as_str()).collect();
         assert_eq!(names, ["Session", "Commit"]);
         assert_eq!(&text[doc.sections[0].span.end..][..13], "# Other group");
+    }
+
+    #[test]
+    fn set_field_replaces_one_value_and_keeps_the_comment_column() {
+        let text = "# X-001 T\n\nS.\n\n```yaml\nagreed: proposed\nbuilt: planned            # planned | built\nscope: built\n```\n";
+        let block = scan(text, HeadingLevel::H1).sections[0]
+            .span
+            .block
+            .clone()
+            .unwrap();
+        let out = set_field(text, block.clone(), "built", "built").unwrap();
+        assert_eq!(
+            out,
+            text.replace("built: planned            #", "built: built              #")
+        );
+        let out = set_field(text, block.clone(), "agreed", "agreed").unwrap();
+        assert_eq!(out, text.replace("agreed: proposed\n", "agreed: agreed\n"));
+        assert_eq!(set_field(text, block, "terms", "[]"), None);
+
+        // Layouts YAML allows: indented keys, quoted keys and values, values on later lines.
+        let cases = [
+            (
+                "  agreed: proposed\n  built: planned\n",
+                "  agreed: proposed\n  built: built\n",
+            ),
+            ("\"built\": planned\n", "\"built\": built\n"),
+            ("'built' : 'planned'  # c\n", "'built' : built      # c\n"),
+            (
+                "built: >-\n  planned\nterms: []\n",
+                "built: built\nterms: []\n",
+            ),
+            (
+                "built:\n\n    planned\n\nterms: []\n",
+                "built: built\n\nterms: []\n",
+            ),
+            (
+                "# note\nprotects:\n  - built: planned\nbuilt: planned\n",
+                "# note\nprotects:\n  - built: planned\nbuilt: built\n",
+            ),
+            ("builtin: x\nbuilt:planned\n", "builtin: x\nbuilt:planned\n"),
+        ];
+        for (yaml, expected) in cases {
+            let text = format!("```yaml\n{yaml}```\n");
+            let out = set_field(&text, 8..8 + yaml.len(), "built", "built");
+            let expected = (expected != yaml).then(|| format!("```yaml\n{expected}```\n"));
+            assert_eq!(out, expected, "{yaml:?}");
+        }
+
+        let tight = "```yaml\nbuilt: planned # c\n```\n";
+        let block = 8..tight.len() - 4;
+        assert_eq!(
+            set_field(tight, block, "built", "something").unwrap(),
+            "```yaml\nbuilt: something # c\n```\n"
+        );
     }
 
     #[test]

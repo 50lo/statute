@@ -1,0 +1,7 @@
+---
+source: tests/links.rs
+expression: "repo.read(\"statute.lock\")"
+---
+{"version": 1}
+{"source": "BILL-001", "target": "billing/refund.go", "role": "code", "mode": "bytes-sha256-v1", "sig": "89d22855a94f23b681b63f6d1486d642105dd9a7fd517327ec9621adcdb637da"}
+{"source": "BILL-001", "target": "billing/refund_test.go", "role": "test", "mode": "bytes-sha256-v1", "sig": "d17413874d871e91a181c686fe4b2b260ab2d4737b4474e02974d83ccdfb7f35"}
