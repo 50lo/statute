@@ -10,3 +10,7 @@ billing (BILL): 1 rule
 | Rule | Verdict | Why |
 | --- | --- | --- |
 | **BILL-001** Large refunds need a second approval | Not reviewed yet | `billing/refund.go` changed and is not reviewed yet; no longer linked to `billing/refund_test.go` |
+
+### Awaiting approval
+
+- D261014-x4p9t: Context alone never links a Session to a commit. (ATTR-002)

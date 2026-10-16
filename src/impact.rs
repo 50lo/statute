@@ -1,8 +1,8 @@
 //! Which rules and terms a branch affects, why, and the verdict on each rule (spec section 5).
 
 use crate::model::{
-    DecisionStatus, GapStatus, Impact, Model, PendingDecision, Reason, RuleImpact, TermImpact,
-    Verdict,
+    Decision, DecisionStatus, GapStatus, Impact, Link, Model, PendingDecision, Reason, RuleImpact,
+    TermImpact, Verdict,
 };
 use crate::state::Health;
 use std::collections::{BTreeMap, BTreeSet};
@@ -24,10 +24,13 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
 
     let links = model.links.as_deref().unwrap_or_default();
     let base_links = base.links.as_deref().unwrap_or_default();
+    // A link is the same link only with the same rule, target, role and mode; any other change is
+    // a removal and an addition, so the rule is relinked.
+    let same = |a: &Link, b: &Link| {
+        a.source == b.source && a.target == b.target && a.role == b.role && a.mode == b.mode
+    };
     for link in links {
-        let old = base_links
-            .iter()
-            .find(|l| l.source == link.source && l.target == link.target);
+        let old = base_links.iter().find(|l| same(l, link));
         let target = link.target.clone();
         let reason = match old {
             None => Reason::LinkAdded { target },
@@ -37,10 +40,7 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
         rules.entry(link.rule()).or_default().insert(reason);
     }
     for old in base_links {
-        if !links
-            .iter()
-            .any(|l| l.source == old.source && l.target == old.target)
-        {
+        if !links.iter().any(|l| same(l, old)) {
             let reason = Reason::LinkRemoved {
                 target: old.target.clone(),
             };
@@ -84,7 +84,7 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
         .collect();
 
     let verdict = |rule: &str, reasons: &BTreeSet<Reason>| {
-        let lists = |pick: fn(&crate::model::Decision) -> &Vec<String>| {
+        let lists = |pick: fn(&Decision) -> &Vec<String>| {
             changed.iter().any(|d| pick(d).iter().any(|r| r == rule))
         };
         if reasons
@@ -143,17 +143,33 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
             d.rules().any(|r| rules.contains_key(r.as_str()))
                 || d.terms.iter().any(|t| terms.contains_key(t.as_str()))
         })
-        .map(|d| PendingDecision {
-            id: d.id.clone(),
-            summary: d.summary.clone(),
-            rules: d.rules().cloned().collect(),
-            terms: d.terms.clone(),
-        })
+        .map(pending_decision)
         .collect();
 
     Impact {
         rules: rule_impacts,
         terms: term_impacts,
         awaiting_approval,
+    }
+}
+
+/// Every proposed decision, whether or not the branch changed it: what `status` lists as awaiting
+/// approval.
+pub fn pending(model: &Model) -> Vec<PendingDecision> {
+    model
+        .decisions
+        .iter()
+        .flatten()
+        .filter(|d| d.status == DecisionStatus::Proposed)
+        .map(pending_decision)
+        .collect()
+}
+
+fn pending_decision(d: &Decision) -> PendingDecision {
+    PendingDecision {
+        id: d.id.clone(),
+        summary: d.summary.clone(),
+        rules: d.rules().cloned().collect(),
+        terms: d.terms.clone(),
     }
 }

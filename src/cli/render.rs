@@ -72,7 +72,6 @@ pub fn impact(r: &Impact) -> String {
     let mut out = String::from("## Rule impact\n\n");
     if r.rules.is_empty() && r.terms.is_empty() {
         out.push_str("This change affects no rules or terms.\n");
-        return out;
     }
     if !r.rules.is_empty() {
         out.push_str("| Rule | Verdict | Why |\n| --- | --- | --- |\n");

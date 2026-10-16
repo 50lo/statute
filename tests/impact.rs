@@ -122,3 +122,34 @@ fn check_md_lists_affected_rules_and_terms_with_verdicts() {
     let run = repo.run(&["check", "--md"]);
     insta::assert_snapshot!(run.stdout.replace(&id, "D000000-xxxxx"));
 }
+
+/// A link whose role changes, such as a code link re-added with `--test`, is relinked.
+#[test]
+fn a_link_role_change_is_relinked() {
+    let repo = cloned_repo();
+    ok(repo.run(&["link", "ATTR-001", "src/keep.go#Keep", "--remove"]));
+    ok(repo.run(&["link", "ATTR-001", "src/keep.go#Keep", "--test"]));
+    assert_eq!(verdicts(&repo), [pair("ATTR-001", "relinked")]);
+}
+
+/// `status` lists every pending decision, including one already proposed in the base.
+#[test]
+fn status_lists_pending_decisions_from_the_base() {
+    let repo = cloned_repo();
+    let status = ok(repo.run(&["status", "--json"])).json();
+    let pending: Vec<&str> = status["impact"]["awaiting_approval"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(pending, ["D261014-x4p9t"]);
+    let run = ok(repo.run(&["status"]));
+    assert!(
+        run.stdout.contains(
+            "### Awaiting approval\n\n- D261014-x4p9t: Context alone never links a Session to a commit. (ATTR-002)\n"
+        ),
+        "{}",
+        run.stdout
+    );
+}

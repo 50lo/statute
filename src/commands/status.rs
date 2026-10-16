@@ -11,8 +11,8 @@ use serde::Serialize;
 pub struct StatusReport {
     pub schema: u32,
     pub areas: Vec<AreaStatus>,
-    /// The rules and terms the branch affects, and the decisions awaiting approval. With an area,
-    /// only that area's rules.
+    /// The rules and terms the branch affects (with an area, only that area's rules), and every
+    /// decision awaiting approval.
     pub impact: Impact,
 }
 
@@ -101,6 +101,7 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
         let in_area = |id: &str| model.rules.iter().any(|r| r.id == id && r.area == area);
         impact.rules.retain(|r| in_area(&r.rule));
     }
+    impact.awaiting_approval = impact::pending(&model);
     Ok(StatusReport {
         schema: SCHEMA,
         areas,
