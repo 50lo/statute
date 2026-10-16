@@ -522,3 +522,52 @@ fn ratify_builds_a_complete_rule() {
     );
     assert!(errors(&repo).is_empty(), "{:?}", errors(&repo));
 }
+
+/// Spec 4.2: `ratify` refuses a rule that uses a term that is neither agreed nor approved with it.
+#[test]
+fn ratify_refuses_a_rule_using_an_unapproved_term() {
+    let repo = TestRepo::fixture("valid");
+    repo.write(
+        TERMS,
+        &format!(
+            "{}\n## Approver\n\nThe second person who approves a large refund.\n",
+            repo.read(TERMS)
+        ),
+    );
+    let rules = repo.read(ATTRIBUTION);
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace(
+            "terms: [Session, Commit]\nprotects:",
+            "terms: [Approver]\nprotects:",
+        ),
+    );
+    let before = repo.read(DECISIONS);
+    refused(
+        repo.run(&["ratify", "D261014-x4p9t"]),
+        "uses term `Approver`, which is not agreed",
+    );
+    assert_eq!(repo.read(DECISIONS), before);
+
+    // Proposed in a separate decision that is not ratified with it: still refused.
+    let id = ok(repo.run(&[
+        "decide",
+        "--terms",
+        "Approver",
+        "--summary",
+        "S.",
+        "--rationale",
+        "R.",
+        "--json",
+    ]))
+    .json()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    refused(
+        repo.run(&["ratify", "D261014-x4p9t"]),
+        "uses term `Approver`, which is not agreed",
+    );
+    // Ratified together, the term is approved with the rule.
+    ok(repo.run(&["ratify", "D261014-x4p9t", &id]));
+}

@@ -167,11 +167,27 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
                 .is_some_and(|r| agreed_rules.contains(r) || retired_rules.contains(r))
             || f.term.as_ref().is_some_and(|t| agreed_terms.contains(t))
     };
-    let blocking: Vec<String> = findings
+    let mut blocking: Vec<String> = findings
         .iter()
         .filter(|f| f.severity == Severity::Error && about(f))
         .map(|f| format!("  {}: {}", f.code, f.message))
         .collect();
+    // A rule becomes agreed only with agreed terms: agreed before, or approved in this batch.
+    for rule in after.rules.iter().filter(|r| agreed_rules.contains(&r.id)) {
+        for name in rule.meta.iter().flat_map(|m| &m.terms) {
+            let agreed = after.terms.iter().any(|t| {
+                &t.name == name
+                    && t.meta.as_ref().and_then(|m| m.agreed) == Some(TermAgreed::Agreed)
+            });
+            let known = after.terms.iter().any(|t| &t.name == name);
+            if known && !agreed {
+                blocking.push(format!(
+                    "  rule.term_not_agreed: {} uses term `{name}`, which is not agreed; ratify the decision that lists it at the same time",
+                    rule.id
+                ));
+            }
+        }
+    }
     if !blocking.is_empty() {
         bail!(
             "nothing was ratified; `check` would report these errors afterwards:\n{}",
