@@ -31,6 +31,11 @@ enum Command {
         #[command(subcommand)]
         command: RuleCommand,
     },
+    /// Print rules, terms and decisions by rule ID, term name or decision ID
+    Show {
+        #[arg(required = true, value_name = "X")]
+        names: Vec<String>,
+    },
     /// Run every check on the Statute files
     Check,
     /// Per area: rules by agreed and built state, and draft rules
@@ -57,6 +62,9 @@ pub fn run() -> ExitCode {
             Command::Rule {
                 command: RuleCommand::New { area, title },
             } => commands::rule_new::run(area, title).map(|r| emit(json, &r, r.id.clone(), 0)),
+            Command::Show { names } => {
+                commands::show::run(names).map(|r| emit(json, &r, render::show(&r), 0))
+            }
             Command::Check => commands::check::run()
                 .map(|r| emit(json, &r, render::check(&r), u8::from(r.failed()))),
             Command::Status { area } => commands::status::run(area.as_deref())

@@ -2,8 +2,9 @@
 
 use crate::commands::check::CheckReport;
 use crate::commands::init::{AgentsMd, InitReport};
+use crate::commands::show::{Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
-use crate::model::{Agreed, Built, Severity};
+use crate::model::{Agreed, Built, DecisionStatus, GapStatus, Severity};
 use std::fmt::Write;
 
 pub fn init(r: &InitReport) -> String {
@@ -100,6 +101,100 @@ pub fn status(r: &StatusReport) -> String {
         }
     }
     out
+}
+
+pub fn show(r: &ShowReport) -> String {
+    let mut blocks = Vec::new();
+    for item in &r.items {
+        let mut out = String::new();
+        match item {
+            Item::Rule(rule) => {
+                let _ = writeln!(out, "{}:{}\n{}", rule.file, rule.line, rule.text);
+                out.push_str("\nTerms:\n");
+                if rule.terms.is_empty() {
+                    out.push_str("  none\n");
+                }
+                for t in &rule.terms {
+                    let definition = t.definition.as_deref().unwrap_or("(no definition)");
+                    let _ = writeln!(out, "  {}: {}", t.name, one_line(definition));
+                }
+                out.push_str("\nDecisions:\n");
+                match &rule.decisions {
+                    None => out.push_str("  (decisions.db does not parse; run `statute check`)\n"),
+                    Some(ds) if ds.is_empty() => out.push_str("  none\n"),
+                    Some(ds) => {
+                        for d in ds {
+                            let role = match d.role {
+                                Role::Establishes => "establishes",
+                                Role::Changes => "changes",
+                                Role::Retires => "retires",
+                            };
+                            let _ = writeln!(
+                                out,
+                                "  {} {role} ({}): {}",
+                                d.id,
+                                decision_status(d.status),
+                                one_line(&d.summary)
+                            );
+                        }
+                    }
+                }
+                out.push_str("\nGaps:\n");
+                match &rule.gaps {
+                    None => out.push_str("  (gaps.yml does not parse; run `statute check`)\n"),
+                    Some(gaps) if gaps.is_empty() => out.push_str("  none\n"),
+                    Some(gaps) => {
+                        for g in gaps {
+                            let status = match g.status {
+                                GapStatus::Open => "open",
+                                GapStatus::Closed => "closed",
+                            };
+                            let note = g
+                                .note
+                                .as_deref()
+                                .map(|n| format!(": {}", one_line(n)))
+                                .unwrap_or_default();
+                            let _ =
+                                writeln!(out, "  {} {status}, opened {}{note}", g.id, g.opened_at);
+                        }
+                    }
+                }
+            }
+            Item::Term(term) => {
+                let _ = writeln!(out, "{}:{}\n{}", term.file, term.line, term.text);
+                out.push_str("\nRules:\n");
+                if term.rules.is_empty() {
+                    out.push_str("  none\n");
+                }
+                for rule in &term.rules {
+                    let _ = writeln!(out, "  {} {}", rule.id, rule.title);
+                }
+            }
+            Item::Decision(d) => {
+                // The entry as it would read in decisions.db.
+                match yaml_serde::to_string(std::slice::from_ref(d)) {
+                    Ok(yaml) => out.push_str(&yaml),
+                    Err(e) => {
+                        let _ = writeln!(out, "{}: cannot render the entry: {e}", d.id);
+                    }
+                }
+            }
+        }
+        blocks.push(out.trim_end().to_string());
+    }
+    blocks.join("\n\n")
+}
+
+fn decision_status(s: DecisionStatus) -> &'static str {
+    match s {
+        DecisionStatus::Proposed => "proposed",
+        DecisionStatus::Active => "active",
+    }
+}
+
+/// Collapses whitespace, so a multi-line value fits on one line of a list.
+fn one_line(s: &str) -> String {
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn plural(n: usize, word: &str) -> String {

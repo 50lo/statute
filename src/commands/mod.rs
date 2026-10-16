@@ -3,6 +3,7 @@
 pub mod check;
 pub mod init;
 pub mod rule_new;
+pub mod show;
 pub mod status;
 
 /// The `schema` every `--json` report starts with.

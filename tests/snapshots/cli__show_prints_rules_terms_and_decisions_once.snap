@@ -1,0 +1,70 @@
+---
+source: tests/cli.rs
+expression: run.stdout
+---
+statute/rules/attribution.md:7
+# ATTR-001 A Session without a repository is still kept
+
+The collector keeps a Session that has no Repository, and stores it like any other Session.
+
+```yaml
+agreed: agreed            # proposed | agreed | retired
+built: planned            # planned | built   (broken is derived, see 4.6)
+scope: Session collection
+terms: [Session]
+exceptions: []
+protects:
+  - A Session started outside any git repository is stored and listed.
+boundary:
+  - A Session the developer deleted is not kept; deletion still applies.
+```
+
+Notes: this came out of the collector filter incident.
+
+Terms:
+  Session: One conversation between a developer and a coding agent.
+
+Decisions:
+  D261001-a2b3c establishes (active): Adopt the existing attribution rules.
+
+Gaps:
+  G261015-x4p9t closed, opened 2026-10-15T01:20:00Z: New filter in collector drops Sessions without a Repository.
+  FOOT-412 open, opened 2026-10-15T02:00:00Z
+
+statute/terms.md:3
+## Session
+
+One conversation between a developer and a coding agent.
+
+```yaml
+agreed: agreed                   # proposed | agreed
+code: [Session, SessionID]
+not:
+  - {name: sessions, means: the sign-in sessions table}
+aliases: [agent session]
+avoid: [chat]
+```
+
+Rules:
+  ATTR-001 A Session without a repository is still kept
+  ATTR-002 Context alone creates no contribution
+  ATTR-003 Sessions expire after a day
+
+- id: D261001-a2b3c
+  timestamp: 2026-10-01T09:00:00Z
+  actor: user
+  status: active
+  ratified_by:
+    name: Pat Example
+    email: pat@example.com
+    at: 2026-10-01T09:30:00Z
+  summary: Adopt the existing attribution rules.
+  rationale: They were written down in the contract doc; this records them.
+  establishes:
+  - ATTR-001
+  - ATTR-003
+  changes: []
+  retires: []
+  terms:
+  - Session
+  - Commit
