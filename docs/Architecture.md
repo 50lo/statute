@@ -18,16 +18,16 @@ src/
   main.rs            parse args, call the command, render, set the exit code
   lib.rs
   cli/               clap argument definitions; renderers (text, json, md)
-  repo.rs            find the root, read statute.yml, fixed paths; the only module that reads files
-  model/             Rule, Term, Decision, Gap, Link, IDs, enums for agreed/built/status
+  repo.rs            find the root, read statute.yml and the Statute files, load models; the only module that reads files
+  model/             Rule, Term, Decision, Gap, Link, Mode, IDs, enums for agreed/built/status
   store/             parse each file kind from text and render edits back to text (below); no I/O
   git.rs             the only module that runs `git`
-  fingerprint/       Mode enum; bytes, go, python (tree-sitter); takes bytes, no I/O
+  fingerprint/       bytes, go, python (tree-sitter); takes bytes, no I/O
   check/             one function per check; Finding with a stable code
-  state.rs           derived state: in force, incomplete, broken, stale, missing
+  state.rs           derived state: in force, draft, incomplete, broken, stale, missing
   impact.rs          affected rules and terms against the base; verdicts for "Rule impact"
   commands/          one module per command: its logic, without argument parsing or rendering
-  txn.rs             plan edits, validate in memory, write atomically; the only module that writes files
+  txn.rs             plan edits, re-parse them in memory, write files; the only module that writes files
 plugin/
   .claude-plugin/    Claude Code plugin manifest
   skills/            adopt, change, decide, ratify (SKILL.md each)
@@ -45,41 +45,47 @@ The plugin lives in the same repository so a CLI change and the skill that relie
 
 ### 3.1 Loading
 
-`Repo::open` finds the root (the directory holding `statute.yml`, worktrees included) and reads the config. `Model::load` parses every Statute file; they are small, so there is no lazy loading. The model holds:
+`Repo::open` finds the root (the directory holding `statute.yml`, worktrees included) and reads the config. `repo` then reads every Statute file and passes the text to `store`, which parses it into a `Model`; the files are small, so there is no lazy loading. The model holds:
 
 - rules and terms, each with its source span (file, heading range, `yaml` block range) for later patches;
 - decisions and gaps as parsed entries;
 - links from `statute.lock`, indexed by target file.
 
-`BaseModel` is the same structure built from the base versions of the Statute files, read through one `git cat-file --batch` process. It is loaded only by commands that compare with the base (`check`, `status`).
+`BaseModel` is the same structure built from the base versions of the Statute files, which `repo` reads through one `git cat-file --batch` process. It is loaded only by commands that compare with the base (`check`, `status`, `ratify`).
 
 ### 3.2 `check`
 
 ```text
 Repo::open
   -> git: base = merge-base(HEAD, origin/HEAD); ChangeSet = diff(base) + working tree + untracked
-  -> Model::load, BaseModel::load
+  -> repo: load Model and BaseModel
   -> check::structural(model)            IDs, schemas, references, completeness, terms
-  -> check::history(model, base)         active decisions unchanged
+  -> check::history(model, base)         active decisions unchanged; agreed rules and terms
+                                         changed only with a decision (7.1)
   -> fingerprint links whose target file is in the ChangeSet (all links with --all)
        group by file; parse each file once; rayon across files
   -> state::derive                       stale, missing, incomplete, broken
-  -> impact::compute(model, base, link states)   only for --md and status
+  -> impact::compute(model, base, link states)   only for --md and status (7.2)
   -> Report -> render -> exit code
 ```
 
-`check --all` adds the repository walk (`ignore`) and the term-name search (`aho-corasick`).
+`check --all` adds the repository walk (`ignore`) and the term-name search (`aho-corasick`). The search skips Statute's own files (`statute.yml`, `statute.lock`, everything under `statute/`) and Markdown files, because docs lag behind code and would hide a renamed name. A match counts only as a whole identifier: the bytes on either side are not letters, digits or `_`, so `Session` is not found inside `SessionID`.
 
 ### 3.3 Mutating commands
 
-Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) goes through a transaction:
+Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) follows the same steps:
 
 1. Load the model.
-2. Plan edits: byte-range patches for Markdown, whole-file writes for YAML and the lock.
-3. Apply the edits in memory, re-parse the touched files, and run the structural checks on the result.
-4. Refuse if the result has an error that the current state does not have. Otherwise write each file to a temp file and rename it into place.
+2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses a rule or term that is already in a proposed decision.
+3. Plan edits in `txn`: byte-range patches for Markdown, full rewrites for YAML and the lock.
+4. Apply the edits in memory and re-parse the touched files. A file that no longer parses is a bug in the command, which fails without writing.
+5. Write every touched file to a temp file next to it, then rename each into place.
 
-This gives `ratify` its "refuses when the result would fail `check`" for free, and holds every other command to the same standard: a command never makes `check` worse.
+Commands other than `ratify` do not run `check` on their result, because the spec's workflows pass through states that `check` reports: `link --remove` before relinking a moved target leaves the rule incomplete until the new link is added. `check` reports whatever remains at the end.
+
+`ratify` runs the structural and history checks on its result, using the same check list as `check`, and refuses when any error is about the decisions it ratifies, their rules or their terms. Errors about other items and link freshness do not block it: approving one decision does not wait on unrelated work.
+
+Each rename is atomic; a command that writes several files is not. All temp files are written before any rename, so most failures (disk full, permissions) happen before a file is replaced. If a rename fails, the command fails and names the files it already replaced; git shows the partial write.
 
 ## 4. Storage
 
@@ -94,7 +100,7 @@ This gives `ratify` its "refuses when the result would fail `check`" for free, a
 
 Metadata blocks parse into typed structs that reject unknown keys, so a typo such as `protect:` is an error rather than a silently ignored field. Field changes made by the CLI patch one line, which keeps comments such as `# proposed | agreed | retired`.
 
-A full rewrite means the CLI parses the whole file, changes the data, and writes the whole file back in one fixed format: fixed key order, quoting, indentation and entry order, like `gofmt` or `rustfmt` output. The same data always produces the same bytes, so an entry the command did not touch never shows up in a diff. The cost is that comments and hand formatting in these files are lost on the next CLI write. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
+A full rewrite means the CLI parses the whole file, changes the data, and writes the whole file back in one fixed format: fixed key order, quoting, indentation and entry order, like `gofmt` or `rustfmt` output. The same data always produces the same bytes, so once a file is in this format, an entry the command did not touch never shows up in a diff. The first CLI write after a hand edit or a merge resolution can reformat other entries, and comments and hand formatting in these files are lost then. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
 
 ## 5. Git
 
@@ -113,12 +119,25 @@ The `ChangeSet` type exposes the changed paths. It is the place to add diff hunk
 enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1 }
 ```
 
+- `Mode` lives in `model`, because every link stores its mode; `fingerprint` imports it from there.
 - A target is `path` or `path#symbol`. The core splits at the first `#` and treats the symbol as opaque; the mode interprets it.
 - `link` picks the mode from the file extension when a symbol is given, and `bytes-sha256-v1` otherwise. The chosen mode is stored per link and used for every later fingerprint of that link, so modes can be added or revised (as `-v2`) without touching existing links.
 - Each tree-sitter mode turns one parsed file into a map from symbol to hash, in one pass, so all links into a file cost one parse. Missing covers: no such symbol, more than one match, or a parse with errors.
 - One tree-sitter parser per rayon thread, created lazily per language.
 
 Swift and TypeScript (milestone 7) are new variants with the same shape.
+
+### 6.1 Hash input
+
+The hash input decides how many false alarms and missed changes links produce, so each mode fixes it:
+
+- **Tokens, not text.** A symbol's hash covers the text of its leaf tokens in source order, each followed by a separator byte. Whitespace between tokens is not part of the input, so formatting does not change the hash.
+- **Comments.** Comment tokens are dropped. In Go, `//go:` directives directly above the declaration and the file's `//go:build` line are hashed with the symbol. In Python, a docstring (a string literal that is the first statement of a function or class body) is dropped like a comment.
+- **No node kinds.** Tree-sitter node kind names are not part of the input, so a grammar update that renames node kinds does not change hashes.
+- **Go symbols.** `Func`, `Type` and `Type.Method`. A method's receiver type is named without `*` and without type parameters, so `func (p *Publisher[T]) Decide` is `Publisher.Decide`. `#Type` covers the type declaration only, not its methods.
+- **Python symbols.** `func`, `Class` and `Class.method`, with nested classes as dotted paths. Decorators are part of the symbol. `#Class` covers the whole class, methods included.
+
+Grammar crate versions are pinned. Each mode has golden fixtures: edits that must keep the hash (a comment, reformatting, a change to another declaration) and edits that must change it (a body or signature change, a Go directive). A change to the hash input that alters any golden hash is a new mode version, never an edit to an existing one.
 
 ## 7. Checks, findings and reports
 
@@ -133,7 +152,22 @@ A finding has a stable code, a severity and the item it is about:
 - Each check is a plain function `fn(&Model, &mut Findings)` (or with `&BaseModel` for history). The list of checks is one array in `check/mod.rs`.
 - Every `--json` report starts with `"schema": 1`.
 
-`impact.rs` produces, for each affected rule and term, the reasons it is affected and its verdict, following the order in spec section 5. `check --md` and `status` render it.
+### 7.1 History checks
+
+`check::history` compares the model with the base:
+
+- Active decisions are unchanged: an entry that is active in the base has the same parsed fields and is not deleted.
+- Agreed rules and terms change only with a decision. For each rule that is agreed in the base, it compares the statement (with whitespace collapsed) and the parsed `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check`; for each term that is agreed in the base, the definition, `code` and `not`. Notes, `agreed`, `built` and formatting are not compared. A difference requires a decision that lists the item (`changes` for a rule, `terms` for a term) and is either proposed or became active since the base. Rules and terms that are proposed in the base are not compared: their text is a proposal, and restoring a rejected proposal must not trip the check.
+
+### 7.2 Impact
+
+`impact.rs` produces, for each affected rule and term, the reasons it is affected and its verdict, following the order in spec section 5. `check --md` and `status` render it. It takes three kinds of link input:
+
+- current link health: stale or missing now (`LinkStale`, `LinkMissing`);
+- links added or removed since the base, matched by source and target (`LinkAddedOrRemoved`);
+- links whose recorded `sig` differs from the base lock, which `review` refreshed (`LinkRefreshed`).
+
+A rule with only `LinkRefreshed` reasons falls through the verdict order to "holds". This is how a rule reviewed with `review RULE ok` stays in the report without a separate review record.
 
 ## 8. Ideas for v2: where each one fits
 
@@ -150,7 +184,7 @@ A guide is a doc linked to code so that a code change flags the doc for an updat
 
 A change that touches a term's code names brings the rules using that term up for review.
 
-- v1 choice: impact reasons are an enum (`LinkStale`, `LinkMissing`, `LinkAddedOrRemoved`, `DecisionChanged`, `GapChanged`). Terms already parse their `code` and `not` names, and `aho-corasick` is already a dependency for `check --all`.
+- v1 choice: impact reasons are an enum (`LinkStale`, `LinkMissing`, `LinkAddedOrRemoved`, `LinkRefreshed`, `DecisionChanged`, `GapChanged`). Terms already parse their `code` and `not` names, and `aho-corasick` is already a dependency for `check --all`.
 - v2 work: add `ChangeSet::hunks(path)`, a `TermMatched` reason, and a decision on how a term-triggered review is recorded, since there is no stale link for `review` to refresh.
 
 ### 8.3 Markdown section fingerprints
@@ -168,7 +202,12 @@ The crates in spec section 5.1, plus:
 ## 10. Testing
 
 - Unit tests next to each parser, check and fingerprint mode.
-- End-to-end tests build a temporary git repo from a fixture, make a commit, apply an edit, run the binary and snapshot the `--json` report. Each spec scenario in the appendix becomes one test.
+- Golden fixtures for each fingerprint mode (6.1).
+- End-to-end tests build a temporary git repo from a fixture, make a commit, apply an edit, run the binary and snapshot the `--json` report. Each spec scenario in the appendix becomes one test. Beyond the scenarios:
+  - intermediate states: `rule new` and `link` before `decide`; `link --remove` then `link` for a moved target;
+  - a rule reviewed with `review RULE ok` appears in `check --md` as holding;
+  - `ratify` after the proposal has already reached the default branch;
+  - an agreed rule or term edited without a decision is an error.
 - From milestone 2, a `hyperfine` run of `check` on Footprints against the 100 ms budget.
 
 ## 11. Milestones to modules
@@ -184,6 +223,5 @@ The crates in spec section 5.1, plus:
 ## 12. Decisions to confirm
 
 1. **Full rewrite for `decisions.db`, `gaps.yml` and the lock; byte-range patches for Markdown.** YAML comments in `decisions.db` would not survive a CLI write. Recommended, because the CLI is the main writer of those files.
-2. **Every mutating command refuses to introduce a new `check` error**, not only `ratify`. Recommended; it is the same code path.
-3. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
-4. **Plugin in the same repository** under `plugin/`. Recommended.
+2. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
+3. **Plugin in the same repository** under `plugin/`. Recommended.

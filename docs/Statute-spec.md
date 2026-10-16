@@ -119,7 +119,8 @@ Checks (`statute check`):
 - Every entry in `terms` resolves to a term (4.3).
 - `agreed: agreed` requires at least one `protects` and one `boundary` case. They are the safeguard against code, docs and tests that agree with each other and are all wrong.
 - A rule that is not retired and has `built: built` requires at least one `code` link and at least one `test` link, or a non-empty `manual_check` in place of the test link.
-- Every rule is established by exactly one decision.
+- Every agreed or retired rule is established by exactly one decision. A proposed rule that no decision establishes yet is a draft: it is a pending item, not a finding, and `status` lists it.
+- The statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check` of a rule that is agreed in the base change only together with a decision that lists the rule in `changes` and is proposed or became active since the base. Notes and formatting are not compared.
 - A retired rule keeps its section and has no links.
 
 Rule IDs use counters because they are readable. Two branches can create the same ID. `rule new` appends to the end of the rule file, so their rule files conflict on merge, and whoever resolves the conflict renumbers the rule that is not yet on the default branch, together with its links, gaps and decisions. `check` reports any duplicate that slips through.
@@ -149,13 +150,13 @@ Decisions are append-only events in `statute/decisions.db` (YAML).
 - It sets `status: active` and `ratified_by`, taking the person from git `user.name` and `user.email`.
 - It sets `agreed: agreed` on the rules the decision establishes or changes and on the terms it lists, and `agreed: retired` on the rules it retires. It removes the links of retired rules.
 - It sets `built: built` on every rule it touches that is complete (4.1).
-- It refuses when the result would fail `check`: for example, a rule becoming agreed without `protects` and `boundary` cases, or a rule using a term that is neither agreed nor approved in the same decision.
+- It refuses when `check` would report an error about the ratified decisions, their rules or their terms after ratification: for example, a rule becoming agreed without `protects` and `boundary` cases, or a rule using a term that is neither agreed nor approved in the same decision. Errors about other items and stale or missing links do not block it.
 
 Checks:
 
 - IDs are unique and have the form `DYYMMDD-xxxxx`: the marker `D`, the date, and five random lowercase base32 characters, for example `D261015-k7m2q`. The random part lets agents in parallel worktrees add decisions without conflicting IDs.
 - Every rule ID in `establishes`, `changes`, `retires` exists, and every entry in `terms` resolves to a term.
-- A rule appears in the `establishes` of exactly one decision.
+- A rule appears in the `establishes` of at most one decision (exactly one once it is agreed or retired, 4.1).
 - A rule or term appears in at most one proposed decision. `decide` refuses a second one, and `check` reports an overlap that arrives through a merge.
 - `status: active` requires `ratified_by`.
 - History is immutable from `active` on. `check` compares `decisions.db` with the merge-base and fails when an active entry was edited or deleted. Proposed entries may be edited or deleted; a rejected proposal is deleted, and git keeps its history. A wrong decision is corrected by a new decision that changes or retires its rules.
@@ -193,8 +194,9 @@ Terms are approved like rules, because a term's wording steers how agents name a
 Checks:
 
 - Term headings are unique.
+- The definition, `code` and `not` of a term that is agreed in the base change only together with a decision that lists the term in `terms` and is proposed or became active since the base.
 - `avoid` words in rule statements produce a warning.
-- `check --all` warns when a `code` or `not` name no longer exists anywhere in the repo.
+- `check --all` warns when a `code` or `not` name no longer appears as a whole identifier in any file outside Statute's own files (`statute.yml`, `statute.lock`, `statute/`) and Markdown files.
 
 Terms are vocabulary for people and agents. `check` does not match them against diffs.
 
@@ -221,9 +223,9 @@ Fingerprint modes:
 | --- | --- | --- |
 | `bytes-sha256-v1` | any file | Fallback for every language |
 | `go-ast-sha256-v1` | `file.go#Func`, `#Type`, `#Type.Method` | Ignores comments and formatting, except `//go:` directives, including the file's `//go:build` line |
-| `python-ast-sha256-v1` | `file.py#Class.method` | Ported from nodrift |
+| `python-ast-sha256-v1` | `file.py#func`, `#Class`, `#Class.method` | Ignores comments, docstrings and formatting. Ported from nodrift |
 
-The symbol modes are built on tree-sitter (5.1). Later modes (Swift, TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
+The symbol modes are built on tree-sitter (5.1). Each mode's hash input is fixed by golden fixtures; a change that alters a fingerprint is a new mode version. Later modes (Swift, TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
 
 Targets are files or symbols, never directories. `check` re-fingerprints only links whose target file changed since the merge-base with the default branch or in the working tree, so its cost grows with the size of the change, not the size of the repo. `check --all` re-fingerprints every link, which catches links made stale by changes that reached the default branch without Statute.
 
@@ -298,9 +300,9 @@ The base for `check` is the merge-base of `HEAD` with the default branch (`origi
 | `ratify D...` | Activates the decisions and updates their rules and terms (4.2) |
 | `gap open RULE [--ref REF] [--note …]` | Adds an open gap and prints its ID. Without `--ref` it writes a full entry and requires `--note`; with `--ref` it records a tracker issue (4.5) |
 | `gap close REF` | Closes a gap |
-| `status [--area]` | Per area: rules by agreed/built, broken, stale, incomplete, pending decisions with the rules and terms awaiting approval, open gaps, and every manual check |
+| `status [--area]` | Per area: rules by agreed/built, broken, stale, incomplete, draft rules, pending decisions with the rules and terms awaiting approval, open gaps, and every manual check |
 
-The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, or was added or removed, since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions.
+The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, was added or removed, or was refreshed by `review` (its fingerprint in the lock differs from the base) since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions.
 
 Approval: `ratify` is run by the agent in the session, only after a human has explicitly approved the specific decisions. This is a convention, not an identity check. Pending items never block a merge, so contributors in other timezones are not held up.
 
@@ -358,7 +360,7 @@ The CLI is a prerequisite; each skill checks for it and stops with install instr
 | `adopt` | Setting Statute up in a repo | Read existing docs, contracts, ADRs and decision logs and convert them into the Statute format; draft terms with `code` and `not` entries; draft rules per area with `rule new` (statement, terms, protected and boundary cases), each with a code link and a test link | One decision per area that establishes its rules and lists its terms, `statute check` passing, a list for human approval |
 | `change` | After any code change in the repo | `statute check`; relink missing targets at their new location; for each rule with stale or missing links: read the rule and code, try the protected and boundary cases, decide holds / changing on purpose / broken; for each open tracker gap whose issue is closed, check the rule against the current code and close the gap only if it holds | `statute review RULE …` per rule, `decide` or a gap as needed, `statute check --md` in the PR, written so a PM or designer can follow it |
 | `decide` | A choice passes the decision gates (kept from Footprints AGENTS.md), or a rule or term needs to change | Write summary and rationale; draft new or changed rule sections and terms; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
-| `ratify` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text; ask the human to approve, reject or skip each | `statute ratify D...` for the approved decisions; rejected proposals deleted together with the edits they carried |
+| `ratify` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute ratify D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term it introduced; run `statute check` until no reference to the removed items remains |
 
 ### 6.3 Hook (Claude Code)
 
