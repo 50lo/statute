@@ -94,7 +94,7 @@ This gives `ratify` its "refuses when the result would fail `check`" for free, a
 
 Metadata blocks parse into typed structs that reject unknown keys, so a typo such as `protect:` is an error rather than a silently ignored field. Field changes made by the CLI patch one line, which keeps comments such as `# proposed | agreed | retired`.
 
-YAML files written by the CLI have one canonical form, so an unchanged entry never shows up in a diff. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
+A canonical rewrite means the CLI parses the whole file, changes the data, and writes the whole file back in one fixed format: fixed key order, quoting, indentation and entry order. The same data always produces the same bytes, so an entry the command did not touch never shows up in a diff. The cost is that comments and hand formatting in these files are lost on the next CLI write. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
 
 ## 5. Git
 
