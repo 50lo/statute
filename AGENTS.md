@@ -14,7 +14,7 @@ Statute is one crate, so the compiler does not stop a module from importing any 
 | --- | --- | --- |
 | `model` | nothing internal | none |
 | `store` | `model` | none: text in, values or text out |
-| `fingerprint` | nothing internal | none: bytes in, hashes out |
+| `fingerprint` | `model` (the `Mode` type only) | none: bytes in, hashes out |
 | `state` | `model`, `fingerprint` types | none |
 | `check` | `model`, `state` | none |
 | `impact` | `model`, `state` | none |
