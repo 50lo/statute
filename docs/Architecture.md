@@ -1,14 +1,14 @@
 # Statute: v1 architecture
 
-Status: proposal for review. It implements [the spec](Statute-spec.md) and adds no behaviour; where the spec leaves a choice open, the choice is listed under "Decisions to confirm".
+Status: proposal for review. It implements [the spec](Statute-spec.md) and adds no behaviour; where the spec leaves a choice open, the open choices are listed under "Decisions to confirm".
 
 ## 1. Principles
 
-- **One crate, plain modules.** A single Cargo package with a library and a thin binary. Split into crates only when build times or reuse call for it.
+- **One crate, plain modules.** A single Cargo package with a library and a thin binary, so publishing is one package with one version. The compiler does not enforce layering inside a crate, so the import rules in [AGENTS.md](../AGENTS.md) do.
 - **Extend by adding a variant, not by a plugin framework.** Fingerprint modes, link sources and impact triggers are closed Rust enums matched in one place. A new idea from "Ideas for v2" adds a variant and its match arms; nothing else moves.
-- **Pure core, effects at the edges.** Parsing, checks, derived state and impact are pure functions over an in-memory model. Only `git`, file reads and file writes touch the outside, each in one module.
+- **Pure core, effects at the edges.** Parsing, fingerprinting, checks, derived state and impact are pure functions over in-memory data. Only three modules touch the outside: `repo` reads files, `txn` writes them, `git` runs `git`.
 - **The JSON report is the contract.** Every command builds one serializable report; text, `--json` and `--md` are renderings of it. Skills and the Stop hook depend only on `--json` and stable finding codes.
-- **Edit files surgically.** The CLI never re-renders a Markdown file. It patches byte ranges (a `yaml` block line, an appended section), so people's prose, comments and formatting survive.
+- **Patch Markdown, rewrite YAML.** The CLI never re-renders a Markdown file. It patches byte ranges (a `yaml` block line, an appended section), so people's prose, comments and formatting survive.
 
 ## 2. Repository layout
 
@@ -18,16 +18,16 @@ src/
   main.rs            parse args, call the command, render, set the exit code
   lib.rs
   cli/               clap definitions; one file per command; renderers (text, json, md)
-  repo.rs            find the root, read statute.yml, fixed paths
+  repo.rs            find the root, read statute.yml, fixed paths; the only module that reads files
   model/             Rule, Term, Decision, Gap, Link, IDs, enums for agreed/built/status
-  store/             parse and write each file kind (below)
+  store/             parse each file kind from text and render edits back to text (below); no I/O
   git.rs             the only module that runs `git`
-  fingerprint/       Mode enum; bytes, go, python (tree-sitter)
+  fingerprint/       Mode enum; bytes, go, python (tree-sitter); takes bytes, no I/O
   check/             one function per check; Finding with a stable code
   state.rs           derived state: in force, incomplete, broken, stale, missing
   impact.rs          affected rules and terms against the base; verdicts for "Rule impact"
-  ops/               mutating commands: rule_new, link, review, decide, ratify, gap
-  txn.rs             plan edits, validate in memory, write atomically
+  ops/               one module per command: its logic, without argument parsing or rendering
+  txn.rs             plan edits, validate in memory, write atomically; the only module that writes files
 plugin/
   .claude-plugin/    Claude Code plugin manifest
   skills/            adopt, change, decide, ratify (SKILL.md each)
@@ -88,13 +88,13 @@ This gives `ratify` its "refuses when the result would fail `check`" for free, a
 | `statute.yml` | `yaml_serde` into a typed struct | `init` only |
 | `rules/<area>.md` | `pulldown-cmark` events with byte offsets: frontmatter, `#` headings, first paragraph, first `yaml` block, notes | append a section (`rule new`); patch the `agreed:` or `built:` line inside the block |
 | `terms.md` | same, with `#` groups and `##` terms | patch or insert the `agreed:` line |
-| `decisions.db` | `yaml_serde` into a list of entries | canonical rewrite of the whole file |
-| `gaps.yml` | same | canonical rewrite |
-| `statute.lock` | `serde_json`, one line at a time | canonical rewrite: version line, then links sorted by source and target |
+| `decisions.db` | `yaml_serde` into a list of entries | full rewrite |
+| `gaps.yml` | same | full rewrite |
+| `statute.lock` | `serde_json`, one line at a time | full rewrite: version line, then links sorted by source and target |
 
 Metadata blocks parse into typed structs that reject unknown keys, so a typo such as `protect:` is an error rather than a silently ignored field. Field changes made by the CLI patch one line, which keeps comments such as `# proposed | agreed | retired`.
 
-A canonical rewrite means the CLI parses the whole file, changes the data, and writes the whole file back in one fixed format: fixed key order, quoting, indentation and entry order. The same data always produces the same bytes, so an entry the command did not touch never shows up in a diff. The cost is that comments and hand formatting in these files are lost on the next CLI write. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
+A full rewrite means the CLI parses the whole file, changes the data, and writes the whole file back in one fixed format: fixed key order, quoting, indentation and entry order, like `gofmt` or `rustfmt` output. The same data always produces the same bytes, so an entry the command did not touch never shows up in a diff. The cost is that comments and hand formatting in these files are lost on the next CLI write. The append-only check compares parsed entries, not text, so reformatting cannot trip it.
 
 ## 5. Git
 
@@ -183,8 +183,7 @@ The crates in spec section 5.1, plus:
 
 ## 12. Decisions to confirm
 
-1. **One crate** rather than a workspace. Recommended; revisit if build times hurt.
-2. **Canonical rewrite for `decisions.db`, `gaps.yml` and the lock; byte-range patches for Markdown.** YAML comments in `decisions.db` would not survive a CLI write. Recommended, because the CLI is the main writer of those files.
-3. **Every mutating command refuses to introduce a new `check` error**, not only `ratify`. Recommended; it is the same code path.
-4. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
-5. **Plugin in the same repository** under `plugin/`. Recommended.
+1. **Full rewrite for `decisions.db`, `gaps.yml` and the lock; byte-range patches for Markdown.** YAML comments in `decisions.db` would not survive a CLI write. Recommended, because the CLI is the main writer of those files.
+2. **Every mutating command refuses to introduce a new `check` error**, not only `ratify`. Recommended; it is the same code path.
+3. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
+4. **Plugin in the same repository** under `plugin/`. Recommended.
