@@ -29,12 +29,15 @@ pub fn run(all: bool) -> Result<CheckReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
     let mut findings = check::run(&model);
+    let base = git::base(&repo.root)?;
+    if let Some(rev) = &base {
+        check::history(&model, &repo.load_at(rev)?, &mut findings);
+    }
 
     if let Some(links) = &model.links {
         let selected: Vec<&Link> = if all {
             links.iter().collect()
         } else {
-            let base = git::base(&repo.root)?;
             let changed = git::changed_files(&repo.root, base.as_deref())?;
             links
                 .iter()

@@ -2,6 +2,7 @@
 
 mod decisions;
 mod gaps;
+mod history;
 mod links;
 mod names;
 mod rules;
@@ -43,6 +44,7 @@ pub fn run(model: &Model) -> Vec<Finding> {
     findings
 }
 
+pub use history::history;
 pub use links::freshness;
 pub use names::NameSearch;
 

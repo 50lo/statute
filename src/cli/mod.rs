@@ -90,6 +90,11 @@ enum Command {
         #[arg(long)]
         edit: bool,
     },
+    /// Make proposed decisions active after a person approved them, and update their rules and terms
+    Ratify {
+        #[arg(required = true, value_name = "DECISION")]
+        ids: Vec<String>,
+    },
     /// Per area: rules by agreed and built state, drafts, incomplete rules, stale and missing links
     Status {
         /// Show only this area
@@ -194,6 +199,9 @@ pub fn run() -> ExitCode {
                 commands::decide::run(draft)
             };
             report.map(|r| emit(json, &r, render::decide(&r), 0))
+        }
+        Command::Ratify { ids } => {
+            commands::ratify::run(ids).map(|r| emit(json, &r, render::ratify(&r), 0))
         }
         Command::Status { area } => {
             commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))

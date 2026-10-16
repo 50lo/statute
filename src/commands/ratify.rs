@@ -1,0 +1,243 @@
+use super::SCHEMA;
+use crate::check;
+use crate::git;
+use crate::model::{
+    Agreed, Built, DecisionStatus, Finding, Model, RatifiedBy, Rule, Severity, TermAgreed, paths,
+};
+use crate::repo::Repo;
+use crate::state;
+use crate::store;
+use crate::txn::Txn;
+use anyhow::{Result, bail};
+use serde::Serialize;
+use std::collections::{BTreeMap, BTreeSet};
+
+#[derive(Serialize)]
+pub struct RatifyReport {
+    pub schema: u32,
+    pub decisions: Vec<String>,
+    pub ratified_by: RatifiedBy,
+    /// Rules that became `agreed: agreed`.
+    pub agreed_rules: Vec<String>,
+    pub retired_rules: Vec<String>,
+    pub agreed_terms: Vec<String>,
+    /// Rules this command set to `built: built`, because they are complete.
+    pub built_rules: Vec<String>,
+    /// Links removed from retired rules.
+    pub removed_links: usize,
+}
+
+/// Makes the decisions active, and updates their rules and terms. Refuses when `check` would report an
+/// error about the decisions, their rules or their terms afterwards.
+pub fn run(ids: &[String]) -> Result<RatifyReport> {
+    let repo = Repo::discover()?;
+    let model = repo.load()?;
+    let Some(decisions) = &model.decisions else {
+        bail!("{} does not parse; run `statute check`", paths::DECISIONS);
+    };
+    let Some(links) = &model.links else {
+        bail!("{} does not parse; run `statute check`", paths::LOCK);
+    };
+    let ids: Vec<&String> = ids.iter().collect::<BTreeSet<_>>().into_iter().collect();
+    for id in &ids {
+        match decisions.iter().find(|d| &&d.id == id) {
+            None => bail!("no decision {id}"),
+            Some(d) if d.status == DecisionStatus::Active => bail!("{id} is already active"),
+            Some(_) => {}
+        }
+    }
+    let Some((name, email)) = git::user(&repo.root)? else {
+        bail!(
+            "git `user.name` and `user.email` must be set; `ratify` records who approved the decisions"
+        );
+    };
+    let ratified_by = RatifiedBy {
+        name,
+        email,
+        at: jiff::Timestamp::now()
+            .strftime("%Y-%m-%dT%H:%M:%SZ")
+            .to_string(),
+    };
+
+    let chosen: Vec<_> = decisions.iter().filter(|d| ids.contains(&&d.id)).collect();
+    let mut agreed_rules = Vec::new();
+    let mut retired_rules = Vec::new();
+    let mut agreed_terms = Vec::new();
+    for d in &chosen {
+        agreed_rules.extend(d.establishes.iter().chain(&d.changes).cloned());
+        retired_rules.extend(d.retires.iter().cloned());
+        agreed_terms.extend(d.terms.iter().cloned());
+    }
+
+    let mut edits: BTreeMap<String, String> = BTreeMap::new();
+    for id in &agreed_rules {
+        patch_rule(
+            &repo,
+            &model,
+            id,
+            &mut edits,
+            &|t, r| store::rules::set_agreed(t, r, Agreed::Agreed),
+            "agreed: agreed",
+        )?;
+    }
+    for id in &retired_rules {
+        patch_rule(
+            &repo,
+            &model,
+            id,
+            &mut edits,
+            &|t, r| store::rules::set_agreed(t, r, Agreed::Retired),
+            "agreed: retired",
+        )?;
+    }
+
+    // Links of retired rules go; the rules that are complete with the remaining links become built.
+    let kept: Vec<_> = links
+        .iter()
+        .filter(|l| !retired_rules.iter().any(|r| r == l.rule()))
+        .cloned()
+        .collect();
+    let removed_links = links.len() - kept.len();
+    if removed_links > 0 {
+        edits.insert(paths::LOCK.to_string(), store::lock::render(&kept));
+    }
+    let mut built_rules = Vec::new();
+    for id in &agreed_rules {
+        let Some(rule) = model.rules.iter().find(|r| &r.id == id) else {
+            continue;
+        };
+        let planned = rule
+            .meta
+            .as_ref()
+            .is_some_and(|m| m.built == Built::Planned);
+        if planned && state::is_complete(rule, &kept) {
+            patch_rule(
+                &repo,
+                &model,
+                id,
+                &mut edits,
+                &|t, r| store::rules::set_built(t, r, Built::Built),
+                "built: built",
+            )?;
+            built_rules.push(id.clone());
+        }
+    }
+
+    let mut terms_text = None;
+    for name in &agreed_terms {
+        let text = match terms_text.take() {
+            Some(text) => text,
+            None => repo.read(paths::TERMS)?.unwrap_or_default(),
+        };
+        let parsed = store::terms::parse(&text);
+        let Some(term) = parsed.terms.iter().find(|t| &t.name == name) else {
+            bail!("no term `{name}`; run `statute check`");
+        };
+        let Some(patched) = store::terms::set_agreed(&text, term, TermAgreed::Agreed) else {
+            bail!(
+                "cannot set `agreed: agreed` on term `{name}`: write the field on one line in a block mapping, then ratify again"
+            );
+        };
+        terms_text = Some(patched);
+    }
+    if let Some(text) = terms_text {
+        edits.insert(paths::TERMS.to_string(), text);
+    }
+
+    let mut ratified = decisions.clone();
+    for d in ratified.iter_mut().filter(|d| ids.contains(&&d.id)) {
+        d.status = DecisionStatus::Active;
+        d.ratified_by = Some(ratified_by.clone());
+    }
+    edits.insert(
+        paths::DECISIONS.to_string(),
+        store::render_decisions(&ratified),
+    );
+
+    // The checks `check` runs, on the result. Only errors about what is being ratified block it.
+    let after = repo.load_with(&edits)?;
+    let mut findings = check::run(&after);
+    if let Some(rev) = git::base(&repo.root)? {
+        check::history(&after, &repo.load_at(&rev)?, &mut findings);
+    }
+    let about = |f: &Finding| {
+        f.decision.as_ref().is_some_and(|d| ids.contains(&d))
+            || f.rule
+                .as_ref()
+                .is_some_and(|r| agreed_rules.contains(r) || retired_rules.contains(r))
+            || f.term.as_ref().is_some_and(|t| agreed_terms.contains(t))
+    };
+    let mut blocking: Vec<String> = findings
+        .iter()
+        .filter(|f| f.severity == Severity::Error && about(f))
+        .map(|f| format!("  {}: {}", f.code, f.message))
+        .collect();
+    // A rule becomes agreed only with agreed terms: agreed before, or approved in this batch.
+    for rule in after.rules.iter().filter(|r| agreed_rules.contains(&r.id)) {
+        for name in rule.meta.iter().flat_map(|m| &m.terms) {
+            let agreed = after.terms.iter().any(|t| {
+                &t.name == name
+                    && t.meta.as_ref().and_then(|m| m.agreed) == Some(TermAgreed::Agreed)
+            });
+            let known = after.terms.iter().any(|t| &t.name == name);
+            if known && !agreed {
+                blocking.push(format!(
+                    "  rule.term_not_agreed: {} uses term `{name}`, which is not agreed; ratify the decision that lists it at the same time",
+                    rule.id
+                ));
+            }
+        }
+    }
+    if !blocking.is_empty() {
+        bail!(
+            "nothing was ratified; `check` would report these errors afterwards:\n{}",
+            blocking.join("\n")
+        );
+    }
+
+    let mut txn = Txn::new(&repo);
+    for (file, text) in edits {
+        txn.write(&file, text);
+    }
+    txn.commit()?;
+
+    Ok(RatifyReport {
+        schema: SCHEMA,
+        decisions: ids.into_iter().cloned().collect(),
+        ratified_by,
+        agreed_rules,
+        retired_rules,
+        agreed_terms,
+        built_rules,
+        removed_links,
+    })
+}
+
+/// Patches one rule in its file, applying the patch to the text earlier patches produced.
+fn patch_rule(
+    repo: &Repo,
+    model: &Model,
+    id: &str,
+    edits: &mut BTreeMap<String, String>,
+    patch: &dyn Fn(&str, &Rule) -> Option<String>,
+    what: &str,
+) -> Result<()> {
+    let Some(rule) = model.rules.iter().find(|r| r.id == id) else {
+        bail!("no rule {id}; run `statute check`");
+    };
+    let text = match edits.get(&rule.file) {
+        Some(text) => text.clone(),
+        None => repo.read(&rule.file)?.unwrap_or_default(),
+    };
+    // Earlier patches in the same file move this rule's byte offsets.
+    let parsed = store::rules::parse(&rule.file, &rule.area, &text);
+    let current = parsed.rules.iter().find(|r| r.id == id);
+    let Some(patched) = current.and_then(|r| patch(&text, r)) else {
+        bail!(
+            "cannot set `{what}` on {id} in {}: write the field on one line in a block mapping, then ratify again",
+            rule.file
+        );
+    };
+    edits.insert(rule.file.clone(), patched);
+    Ok(())
+}
