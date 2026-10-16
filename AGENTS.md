@@ -38,3 +38,20 @@ When a change needs an import these rules forbid, change the rules here first, w
 ## Extension
 
 New fingerprint modes, link sources and impact reasons are new enum variants (docs/Architecture.md, section 8). Do not add traits, registries or plugin mechanisms for them.
+
+Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms, decision IDs, files and symbols, `check [--all]`, whole-file and Go/Python symbol `link`, `review`, `decide`, `ratify`, and `status`. Gap commands, `check --md`, and the `change` skill are not implemented yet; the snippet below describes the intended workflow. Check `statute --help` for the installed build.
+
+Use `statute show` to inspect linked rules and terms, `statute decide` to record proposed decisions, and `statute ratify` to record a person's explicit approval of specific decisions. Report workflow steps that the current build cannot perform. Agreement and build states are set by the CLI.
+
+<!-- statute:begin -->
+## Statute
+
+- Before changing code, run `statute show` on the files you will touch and read the rules and terms it returns.
+- Change a rule or an agreed term only together with a proposed decision that lists it (`statute decide`), never to match the code. Never edit `agreed` or `built`; the CLI sets them.
+- When a user instruction conflicts with an agreed rule, name the rule and propose a decision before changing the code.
+- After changing code, run the `change` skill before declaring the task done.
+- Anything you create is `proposed`. Run `statute ratify` only after a human in this session explicitly approves those specific decisions.
+- Before asking a human to ratify a rule, check it: what valid case would it reject? What invalid case would it allow? Does its meaning change with actor or permission, missing data, lifecycle stage, time, retries, concurrency or partial failure? Add to the rule only the answers that change it.
+- Gaps go to the issue tracker named in this file; if none is named, use `statute gap open --note`.
+- When instructions conflict: explicit user instruction > current task > project principles > agreed rules, terms and ratified decisions > repo conventions > proposed decisions > agent judgment.
+<!-- statute:end -->
