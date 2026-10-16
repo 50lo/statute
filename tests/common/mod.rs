@@ -123,8 +123,19 @@ impl TestRepo {
 
     /// Runs `statute` from a subdirectory of the repository.
     pub fn run_in(&self, subdir: &str, args: &[&str]) -> Run {
+        self.run_with(subdir, &[], args)
+    }
+
+    /// Runs `statute` with extra environment variables.
+    pub fn run_env(&self, env: &[(&str, &str)], args: &[&str]) -> Run {
+        self.run_with(".", env, args)
+    }
+
+    fn run_with(&self, subdir: &str, env: &[(&str, &str)], args: &[&str]) -> Run {
         let out = Command::new(env!("CARGO_BIN_EXE_statute"))
             .args(args)
+            .envs(env.iter().copied())
+            .env_remove("VISUAL")
             .current_dir(self.path(subdir))
             .output()
             .unwrap();

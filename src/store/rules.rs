@@ -1,6 +1,6 @@
 use super::markdown::{self, Block};
 use super::yaml_finding;
-use crate::model::{Built, Finding, Rule, RuleFile, RuleMeta};
+use crate::model::{Agreed, Built, Finding, Rule, RuleFile, RuleMeta};
 use pulldown_cmark::HeadingLevel;
 use serde::Deserialize;
 
@@ -131,17 +131,41 @@ pub fn set_built(text: &str, rule: &Rule, built: Built) -> Option<String> {
         Built::Planned => "planned",
         Built::Built => "built",
     };
-    let patched = super::set_field(text, rule.span.block.clone()?, "built", value)?;
     let expected = RuleMeta {
         built,
         ..rule.meta.clone()?
     };
+    patch_meta(text, rule, "built", value, &expected)
+}
+
+/// The rule file with `agreed:` set on one of its rules, or `None` as for `set_built`.
+pub fn set_agreed(text: &str, rule: &Rule, agreed: Agreed) -> Option<String> {
+    let value = match agreed {
+        Agreed::Proposed => "proposed",
+        Agreed::Agreed => "agreed",
+        Agreed::Retired => "retired",
+    };
+    let expected = RuleMeta {
+        agreed,
+        ..rule.meta.clone()?
+    };
+    patch_meta(text, rule, "agreed", value, &expected)
+}
+
+fn patch_meta(
+    text: &str,
+    rule: &Rule,
+    key: &str,
+    value: &str,
+    expected: &RuleMeta,
+) -> Option<String> {
+    let patched = super::set_field(text, rule.span.block.clone()?, key, value)?;
     let reparsed = parse(&rule.file, &rule.area, &patched);
     let same = reparsed
         .rules
         .iter()
         .find(|r| r.span.heading == rule.span.heading)
-        .is_some_and(|r| r.meta.as_ref() == Some(&expected));
+        .is_some_and(|r| r.meta.as_ref() == Some(expected) && r.statement == rule.statement);
     same.then_some(patched)
 }
 
@@ -225,6 +249,17 @@ mod tests {
         let rule = &parse(FILE, "billing", flow).rules[0];
         assert!(rule.meta.is_some());
         assert_eq!(set_built(flow, rule, Built::Built), None);
+    }
+
+    #[test]
+    fn set_agreed_patches_only_the_agreed_field() {
+        let text = format!("---\nprefix: BILL\n---\n\n{}", skeleton("BILL-001", "T"));
+        let rule = &parse(FILE, "billing", &text).rules[0];
+        let out = set_agreed(&text, rule, Agreed::Agreed).unwrap();
+        assert_eq!(
+            out,
+            text.replace("agreed: proposed          #", "agreed: agreed            #")
+        );
     }
 
     #[test]

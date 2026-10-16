@@ -1,6 +1,6 @@
 use super::markdown::{self, Block};
 use super::yaml_finding;
-use crate::model::{Finding, Term, TermMeta, paths};
+use crate::model::{Finding, Term, TermAgreed, TermMeta, paths};
 use pulldown_cmark::HeadingLevel;
 
 pub struct ParsedTerms {
@@ -50,6 +50,43 @@ pub fn parse(text: &str) -> ParsedTerms {
     ParsedTerms { terms, problems }
 }
 
+/// `terms.md` with `agreed:` set on one term, adding the field, or a `yaml` block after the term's
+/// text, when the term has none. `None` when the result would change anything else the term says.
+pub fn set_agreed(text: &str, term: &Term, agreed: TermAgreed) -> Option<String> {
+    let value = match agreed {
+        TermAgreed::Proposed => "proposed",
+        TermAgreed::Agreed => "agreed",
+    };
+    let expected = TermMeta {
+        agreed: Some(agreed),
+        ..term.meta.clone()?
+    };
+    let patched = match term.span.block.clone() {
+        Some(block) => super::set_field(text, block.clone(), "agreed", value)
+            .unwrap_or_else(|| super::insert_field(text, block, "agreed", value)),
+        None => {
+            let (before, after) = text.split_at(term.span.end);
+            let gap = if before.ends_with("\n\n") {
+                ""
+            } else if before.ends_with('\n') {
+                "\n"
+            } else {
+                "\n\n"
+            };
+            let next = if after.is_empty() { "" } else { "\n" };
+            format!("{before}{gap}```yaml\nagreed: {value}\n```\n{next}{after}")
+        }
+    };
+    let reparsed = parse(&patched);
+    let same = reparsed
+        .terms
+        .iter()
+        .find(|t| t.span.heading == term.span.heading)
+        .is_some_and(|t| t.meta.as_ref() == Some(&expected) && t.definition == term.definition)
+        && reparsed.problems.len() <= parse(text).problems.len();
+    same.then_some(patched)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,6 +105,32 @@ mod tests {
         assert_eq!(meta.not[0].name, "sessions");
         assert_eq!(commit.definition.as_deref(), Some("A git commit."));
         assert_eq!(commit.meta, Some(TermMeta::default()));
+    }
+
+    #[test]
+    fn set_agreed_replaces_inserts_or_adds_the_field() {
+        let set = |text: &str, i: usize| {
+            set_agreed(text, &parse(text).terms[i], TermAgreed::Proposed).unwrap()
+        };
+        let with = "## A\n\nD.\n\n```yaml\nagreed: agreed   # note\ncode: [A]\n```\n";
+        assert_eq!(
+            set(with, 0),
+            with.replace("agreed: agreed   #", "agreed: proposed #")
+        );
+        let without = "## A\n\nD.\n\n```yaml\n  code: [A]\n```\n";
+        assert_eq!(
+            set(without, 0),
+            "## A\n\nD.\n\n```yaml\n  agreed: proposed\n  code: [A]\n```\n"
+        );
+        let no_block = "# G\n\n## A\n\nD.\n\n## B\n\nE.";
+        assert_eq!(
+            set(no_block, 0),
+            "# G\n\n## A\n\nD.\n\n```yaml\nagreed: proposed\n```\n\n## B\n\nE."
+        );
+        assert_eq!(
+            set(no_block, 1),
+            "# G\n\n## A\n\nD.\n\n## B\n\nE.\n\n```yaml\nagreed: proposed\n```\n"
+        );
     }
 
     #[test]

@@ -245,6 +245,21 @@ pub fn set_field(text: &str, block: Range<usize>, key: &str, value: &str) -> Opt
     None
 }
 
+/// The text with `key: value` added as the first line of a `yaml` block, at the indentation of the
+/// block's first content line. The caller re-parses the result.
+pub fn insert_field(text: &str, block: Range<usize>, key: &str, value: &str) -> String {
+    let indent = text[block.clone()]
+        .lines()
+        .find(|l| !l.trim().is_empty())
+        .map_or(0, |l| l.len() - l.trim_start_matches(' ').len());
+    format!(
+        "{}{}{key}: {value}\n{}",
+        &text[..block.start],
+        " ".repeat(indent),
+        &text[block.start..]
+    )
+}
+
 /// Maps byte offsets to 1-based line numbers.
 pub struct LineIndex {
     starts: Vec<usize>,

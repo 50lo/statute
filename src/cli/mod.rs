@@ -4,8 +4,9 @@ mod render;
 
 use crate::commands;
 use crate::commands::review::Verdict;
-use crate::model::LinkRole;
-use clap::{Parser, Subcommand};
+use crate::model::{Actor, DecisionDraft, LinkRole};
+use anyhow::{Result, bail};
+use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 use std::process::ExitCode;
 
@@ -62,6 +63,33 @@ enum Command {
         #[command(subcommand)]
         verdict: VerdictArg,
     },
+    /// Append a proposed decision, set its changed rules and its terms to proposed, and print its ID
+    Decide {
+        /// One to three sentences
+        #[arg(long, required_unless_present = "edit")]
+        summary: Option<String>,
+        /// Why this alternative, and what was rejected
+        #[arg(long, required_unless_present = "edit")]
+        rationale: Option<String>,
+        /// New rules, comma-separated
+        #[arg(long, value_delimiter = ',', value_name = "RULES")]
+        establishes: Vec<String>,
+        /// Rules whose text this decision changes
+        #[arg(long, value_delimiter = ',', value_name = "RULES")]
+        changes: Vec<String>,
+        /// Rules this decision retires
+        #[arg(long, value_delimiter = ',', value_name = "RULES")]
+        retires: Vec<String>,
+        /// Terms this decision introduces or redefines
+        #[arg(long, value_delimiter = ',', value_name = "TERMS")]
+        terms: Vec<String>,
+        /// Who initiated the decision; informational only
+        #[arg(long, value_enum, default_value = "agent")]
+        actor: ActorArg,
+        /// Open the decision in $VISUAL or $EDITOR before recording it
+        #[arg(long)]
+        edit: bool,
+    },
     /// Per area: rules by agreed and built state, drafts, incomplete rules, stale and missing links
     Status {
         /// Show only this area
@@ -84,6 +112,12 @@ enum VerdictArg {
         #[arg(value_name = "REF")]
         reference: String,
     },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ActorArg {
+    User,
+    Agent,
 }
 
 #[derive(Subcommand)]
@@ -132,6 +166,33 @@ pub fn run() -> ExitCode {
             };
             commands::review::run(rule, verdict).map(|r| emit(json, &r, render::review(&r), 0))
         }
+        Command::Decide {
+            summary,
+            rationale,
+            establishes,
+            changes,
+            retires,
+            terms,
+            actor,
+            edit,
+        } => {
+            let draft = DecisionDraft {
+                actor: match actor {
+                    ActorArg::User => Actor::User,
+                    ActorArg::Agent => Actor::Agent,
+                },
+                summary: summary.clone().unwrap_or_default(),
+                rationale: rationale.clone().unwrap_or_default(),
+                establishes: establishes.clone(),
+                changes: changes.clone(),
+                retires: retires.clone(),
+                terms: terms.clone(),
+            };
+            let draft = if *edit { edit_draft(&draft) } else { Ok(draft) };
+            draft
+                .and_then(commands::decide::run)
+                .map(|r| emit(json, &r, render::decide(&r), 0))
+        }
         Command::Status { area } => {
             commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))
         }
@@ -145,6 +206,27 @@ pub fn run() -> ExitCode {
         }
         ExitCode::from(2)
     })
+}
+
+/// Lets a person edit the draft in their editor. `cli` launches the editor; `commands` writes and
+/// reads the file.
+fn edit_draft(draft: &DecisionDraft) -> Result<DecisionDraft> {
+    let editor = std::env::var("VISUAL")
+        .or_else(|_| std::env::var("EDITOR"))
+        .unwrap_or_else(|_| "vi".to_string());
+    let path = commands::decide::draft_file(draft)?;
+    let status = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(format!("{editor} \"$1\""))
+        .arg("sh")
+        .arg(&path)
+        .status();
+    let edited = commands::decide::read_draft_file(&path);
+    match status {
+        Ok(s) if s.success() => edited,
+        Ok(s) => bail!("the editor `{editor}` exited with {s}; no decision was recorded"),
+        Err(e) => bail!("cannot run the editor `{editor}`: {e}"),
+    }
 }
 
 fn emit<R: Serialize>(json: bool, report: &R, text: String, code: u8) -> ExitCode {

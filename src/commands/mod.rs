@@ -1,6 +1,7 @@
 //! One module per command: its logic, without argument parsing or rendering. Each returns a report.
 
 pub mod check;
+pub mod decide;
 pub mod init;
 pub mod link;
 pub mod review;

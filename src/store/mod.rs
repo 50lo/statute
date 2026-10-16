@@ -7,12 +7,13 @@ pub mod rules;
 pub mod terms;
 
 pub use lists::{
-    CONFIG_TEMPLATE, EMPTY_LIST, LOCK_TEMPLATE, parse_config, parse_decisions, parse_gaps,
+    CONFIG_TEMPLATE, EMPTY_LIST, LOCK_TEMPLATE, parse_config, parse_decisions, parse_draft,
+    parse_gaps, render_decisions, render_draft,
 };
 
 use crate::model::Finding;
 
-use markdown::set_field;
+use markdown::{insert_field, set_field};
 
 /// A YAML error as a finding, with the line in the file. `first_line` is the file line of the YAML's first line.
 fn yaml_finding(

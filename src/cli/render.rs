@@ -1,6 +1,7 @@
 //! Text renderings of the reports.
 
 use crate::commands::check::CheckReport;
+use crate::commands::decide::DecideReport;
 use crate::commands::init::{AgentsMd, InitReport};
 use crate::commands::link::LinkReport;
 use crate::commands::review::ReviewReport;
@@ -59,6 +60,20 @@ pub fn check(r: &CheckReport) -> String {
             r.warnings,
             plural(r.warnings, "warning")
         );
+    }
+    out
+}
+
+pub fn decide(r: &DecideReport) -> String {
+    let mut out = r.id.clone();
+    for rule in &r.proposed_rules {
+        out.push_str(&format!("\n{rule} is proposed until {} is ratified", r.id));
+    }
+    for term in &r.proposed_terms {
+        out.push_str(&format!(
+            "\nterm `{term}` is proposed until {} is ratified",
+            r.id
+        ));
     }
     out
 }

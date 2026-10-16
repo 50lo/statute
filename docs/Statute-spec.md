@@ -154,7 +154,7 @@ Decisions are append-only events in `statute/decisions.db` (YAML).
 
 Checks:
 
-- IDs are unique and have the form `DYYMMDD-xxxxx`: the marker `D`, the date, and five random lowercase base32 characters, for example `D261015-k7m2q`. The random part lets agents in parallel worktrees add decisions without conflicting IDs.
+- IDs are unique and have the form `DYYMMDD-xxxxx`: the marker `D`, the UTC date, and five random lowercase letters or digits, for example `D261015-k7m2q`. The random part lets agents in parallel worktrees add decisions without conflicting IDs.
 - Every rule ID in `establishes`, `changes`, `retires` exists, and every entry in `terms` resolves to a term.
 - A rule appears in the `establishes` of at most one decision (exactly one once it is agreed or retired, 4.1).
 - A rule or term appears in at most one proposed decision. `decide` refuses a second one, and `check` reports an overlap that arrives through a merge.
@@ -296,7 +296,7 @@ The base for `check` is the merge-base of `HEAD` with the default branch (`origi
 | `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for term `code` and `not` names across the repo. `--md` prints the PR "Rule impact" section |
 | `link RULE TARGET [--test] [--remove]` | Adds a link with the current fingerprint, or removes one. Refuses an unknown rule and an existing link. Sets `built: built` when the rule becomes complete |
 | `review RULE ok\|changed D…\|gap REF` | Records one verdict for the rule (4.4) and refreshes every stale link of that rule |
-| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID; `--edit` opens it in `$EDITOR` for people |
+| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
 | `ratify D...` | Activates the decisions and updates their rules and terms (4.2) |
 | `gap open RULE [--ref REF] [--note …]` | Adds an open gap and prints its ID. Without `--ref` it writes a full entry and requires `--note`; with `--ref` it records a tracker issue (4.5) |
 | `gap close REF` | Closes a gap |
@@ -322,7 +322,7 @@ The CLI is written in Rust and ships as one static binary per platform. Every de
 | Repository walk for `check --all` | `ignore` | ripgrep's parallel walker; respects `.gitignore` |
 | Finding term names across the repo in `check --all` | `aho-corasick` | One automaton for all `code` and `not` names |
 | Parallel work | `rayon` | |
-| IDs and timestamps | `rand`, `data-encoding` (base32), `jiff` | |
+| IDs and timestamps | `rand`, `jiff` | |
 | Release | `cargo-dist` | macOS and Linux binaries, Homebrew tap |
 
 Speed. `check` runs in the Stop hook at the end of every agent turn, so its cost must follow the size of the change:
