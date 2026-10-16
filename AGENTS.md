@@ -28,7 +28,7 @@ Statute is one crate, so the compiler does not stop a module from importing any 
 Rules:
 
 - Only `cli` imports `ops`, and only `main.rs` imports `cli`.
-- No module outside `git`, `repo` and `txn` calls `std::fs`, `std::process` or reads environment variables. If a pure module needs data from outside, its caller passes it in.
+- No module outside `git`, `repo` and `txn` calls `std::fs`, `std::process` or reads environment variables. The one exception is `cli`, which launches `$EDITOR` for `decide --edit` and passes the result to `ops`. If a pure module needs data from outside, such as the current time or a random ID, its caller passes it in.
 - Shared types belong in `model`, not in the module that first needed them. If two modules on the same layer need each other, move the shared part down.
 - `ops` modules do not call each other. Logic used by two commands moves into a lower module.
 - `cli` holds argument parsing and rendering only. Anything that decides an outcome or a finding goes in `ops` or below.
