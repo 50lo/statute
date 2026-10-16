@@ -1,4 +1,5 @@
-//! End-to-end tests for links: `link`, and stale and missing links in `check`.
+//! End-to-end tests for links: `link`, `review`, `show` and `status` for links, and stale and missing
+//! links in `check`.
 
 mod common;
 
@@ -96,7 +97,10 @@ fn check_reports_a_link_whose_target_changed_since_the_base() {
     repo.commit("Pay on approval");
     assert_eq!(repo.run(&["check"]).code, 0);
     let all = repo.run(&["check", "--all", "--json"]);
-    assert_eq!((all.code, all.codes()), (1, vec!["link.stale".to_string()]));
+    assert_eq!(
+        (all.code, all.error_codes()),
+        (1, vec!["link.stale".to_string()])
+    );
 }
 
 #[test]
@@ -267,7 +271,7 @@ fn link_refuses_symbolic_links_and_check_treats_them_as_missing() {
     repo.write("statute.lock", &lock);
     let run = repo.run(&["check", "--all", "--json"]);
     assert_eq!(
-        (run.code, run.codes()),
+        (run.code, run.error_codes()),
         (1, vec!["link.missing".to_string()])
     );
 }
@@ -307,4 +311,221 @@ fn the_link_that_completes_a_rule_sets_built_in_any_block_layout() {
         let check = repo.run(&["check", "--json"]);
         assert_eq!((check.code, check.codes()), (0, vec![]), "{block:?}");
     }
+}
+
+const EDITED: &str = "package billing\n\nfunc Approve() { pay() }\n";
+
+/// From the appendix, "A PM adds a small feature": `check` reports the stale link, and
+/// `review RULE ok` refreshes it.
+#[test]
+fn review_ok_refreshes_the_stale_links_of_a_rule() {
+    let repo = linked_repo();
+    repo.write(CODE, EDITED);
+    assert_eq!(repo.run(&["check"]).code, 1);
+
+    let run = ok(repo.run(&["review", "BILL-001", "ok", "--json"])).json();
+    assert_eq!(run["verdict"], "ok");
+    assert_eq!(run["refreshed"], serde_json::json!([CODE]));
+    let check = repo.run(&["check", "--json"]);
+    assert_eq!((check.code, check.codes()), (0, vec![]));
+
+    // Nothing stale: nothing to refresh, and the lock is unchanged.
+    let lock = repo.read("statute.lock");
+    let again = ok(repo.run(&["review", "BILL-001", "ok"]));
+    assert_eq!(
+        again.stdout,
+        "BILL-001 has no stale links; nothing to refresh\n"
+    );
+    assert_eq!(repo.read("statute.lock"), lock);
+}
+
+/// From the appendix, "An engineer changes a function many rules depend on": each rule gets one
+/// review, which refreshes all of that rule's stale links and no other rule's.
+#[test]
+fn one_review_per_rule_refreshes_all_of_its_links_and_only_its_own() {
+    let repo = linked_repo();
+    let rules = "statute/rules/billing.md";
+    let second = "\n# BILL-002 Refunds are logged\n\nEvery refund is logged.\n\n```yaml\nagreed: proposed\nbuilt: planned\n```\n";
+    repo.write(rules, &format!("{}{second}", repo.read(rules)));
+    ok(repo.run(&["link", "BILL-002", CODE]));
+    repo.commit("Link BILL-002");
+
+    repo.write(CODE, EDITED);
+    repo.write(TEST, "package billing\n\nfunc TestLargeRefund() { t() }\n");
+    let check = repo.run(&["check", "--json"]);
+    let stale: Vec<_> = check.json()["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| {
+            format!(
+                "{} {}",
+                f["rule"].as_str().unwrap(),
+                f["target"].as_str().unwrap()
+            )
+        })
+        .collect();
+    assert_eq!(
+        stale,
+        [
+            "BILL-001 billing/refund.go",
+            "BILL-001 billing/refund_test.go",
+            "BILL-002 billing/refund.go"
+        ]
+    );
+
+    let run = ok(repo.run(&["review", "BILL-001", "ok", "--json"])).json();
+    assert_eq!(run["refreshed"], serde_json::json!([CODE, TEST]));
+    assert_eq!(
+        repo.run(&["check", "--json"]).codes(),
+        ["link.stale".to_string()]
+    );
+    ok(repo.run(&["review", "BILL-002", "ok"]));
+    assert_eq!(repo.run(&["check"]).code, 0);
+}
+
+/// From the appendix, "A rule needs to change" and "A rule is found broken": the verdict must be
+/// backed by a decision that changes the rule, or by an open gap on it.
+#[test]
+fn review_checks_changed_and_gap_verdicts_against_decisions_and_gaps() {
+    let repo = linked_repo();
+    let decisions = format!(
+        "{}- id: D261016-b4c5d\n  timestamp: \"2026-10-16T09:00:00Z\"\n  actor: agent\n  status: proposed\n  summary: \"Raise the threshold.\"\n  rationale: \"R.\"\n  changes: [BILL-001]\n",
+        repo.read("statute/decisions.db")
+    );
+    repo.write("statute/decisions.db", &decisions);
+    let gaps = format!(
+        "{}- id: FOOT-500\n  rule: BILL-001\n  status: open\n  opened_at: \"2026-10-16T09:00:00Z\"\n",
+        repo.read("statute/gaps.yml")
+    );
+    repo.write("statute/gaps.yml", &gaps);
+    repo.write(CODE, EDITED);
+    let lock = repo.read("statute.lock");
+
+    let refusals: &[(&[&str], &str)] = &[
+        (&["review", "BILL-404", "ok"], "no rule BILL-404"),
+        (
+            &["review", "BILL-001", "changed", "D261099-zzzzz"],
+            "no decision D261099-zzzzz",
+        ),
+        (
+            &["review", "BILL-001", "changed", "D261014-x4p9t"],
+            "D261014-x4p9t does not list BILL-001 in `changes` or `retires`",
+        ),
+        (
+            &["review", "BILL-001", "gap", "FOOT-412"],
+            "BILL-001 has no open gap FOOT-412",
+        ),
+        (
+            &["review", "BILL-001", "gap", "G261015-x4p9t"],
+            "no open gap G261015-x4p9t",
+        ),
+        (&["review", "BILL-001"], ""),
+    ];
+    for (args, message) in refusals {
+        let run = repo.run(args);
+        assert_eq!(run.code, 2, "{args:?}");
+        assert!(run.stderr.contains(message), "{args:?}: {}", run.stderr);
+    }
+    assert_eq!(repo.read("statute.lock"), lock);
+
+    let changed =
+        ok(repo.run(&["review", "BILL-001", "changed", "D261016-b4c5d", "--json"])).json();
+    assert_eq!(
+        (&changed["verdict"], &changed["ref"]),
+        (&"changed".into(), &"D261016-b4c5d".into())
+    );
+    repo.write(CODE, "package billing\n\nfunc Approve() { pay(); log() }\n");
+    let gap = ok(repo.run(&["review", "BILL-001", "gap", "FOOT-500", "--json"])).json();
+    assert_eq!(gap["refreshed"], serde_json::json!([CODE]));
+}
+
+#[test]
+fn review_refuses_a_rule_with_a_missing_link() {
+    let repo = linked_repo();
+    repo.remove(CODE);
+    let run = repo.run(&["review", "BILL-001", "ok"]);
+    assert_eq!(run.code, 2);
+    assert!(
+        run.stderr
+            .contains("BILL-001 has a missing link: billing/refund.go (the file does not exist)"),
+        "{}",
+        run.stderr
+    );
+}
+
+/// From the appendix, "A PM adds a feature that needs a new rule": `show` on files with no rules
+/// is not an error, and `show` on a linked file or a symbol in it returns the rule.
+#[test]
+fn show_prints_the_rules_linked_to_a_file_or_symbol() {
+    let repo = linked_repo();
+    repo.write("billing/other.go", "package billing\n");
+
+    let run = ok(repo.run(&["show", CODE, "billing/refund.go#Approve", TEST, "--json"])).json();
+    let items = run["items"].as_array().unwrap();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0]["id"], "BILL-001");
+    assert_eq!(
+        items[0]["links"],
+        serde_json::json!([
+            {"target": CODE, "role": "code"},
+            {"target": TEST, "role": "test"}
+        ])
+    );
+
+    let none = ok(repo.run(&["show", "billing/other.go"]));
+    assert_eq!(none.stdout, "No rules are linked to billing/other.go.\n");
+    let missing = repo.run(&["show", "billing/nope.go"]);
+    assert_eq!(missing.code, 2);
+    assert!(
+        missing
+            .stderr
+            .contains("no rule, term, decision or file named `billing/nope.go`")
+    );
+}
+
+#[test]
+fn status_shows_stale_missing_and_incomplete_rules() {
+    let repo = linked_repo();
+    repo.write(CODE, EDITED);
+    ok(repo.run(&["link", "BILL-001", TEST, "--remove"]));
+    let run = ok(repo.run(&["status", "--area", "billing"]));
+    insta::assert_snapshot!(run.stdout);
+
+    repo.remove(CODE);
+    let json = ok(repo.run(&["status", "--area", "billing", "--json"])).json();
+    let rule = &json["areas"][0]["rules"][0];
+    assert_eq!(
+        (&rule["incomplete"], &rule["stale"], &rule["missing"]),
+        (
+            &true.into(),
+            &serde_json::json!([]),
+            &serde_json::json!([CODE])
+        )
+    );
+}
+
+/// From the appendix, "The feature needs a new term": `check --all` warns about a term's code name
+/// that appears nowhere outside Statute's files and Markdown.
+#[test]
+fn check_all_warns_about_term_names_that_no_longer_appear() {
+    let repo = TestRepo::fixture("valid");
+    repo.write(
+        "collector/session.go",
+        "type Session struct{ ID SessionID }\n// sessions\n",
+    );
+    repo.write("docs/notes.md", "A Commit is a commit.\n");
+    repo.write("ignored/commit.go", "type Commit struct{}\n");
+    repo.write(".gitignore", "ignored/\n");
+    let run = repo.run(&["check", "--all", "--json"]);
+    assert_eq!(run.code, 0, "{}", run.stdout);
+    assert_eq!(run.codes(), ["term.name_not_found"]);
+    let finding = &run.json()["findings"][0];
+    assert_eq!(
+        (&finding["term"], &finding["line"]),
+        (&"Commit".into(), &16.into())
+    );
+
+    // Plain `check` does not search.
+    assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
 }

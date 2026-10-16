@@ -3,6 +3,7 @@
 mod render;
 
 use crate::commands;
+use crate::commands::review::Verdict;
 use crate::model::LinkRole;
 use clap::{Parser, Subcommand};
 use serde::Serialize;
@@ -32,14 +33,14 @@ enum Command {
         #[command(subcommand)]
         command: RuleCommand,
     },
-    /// Print rules, terms and decisions by rule ID, term name or decision ID
+    /// Print rules, terms and decisions by rule ID, term name or decision ID, and the rules linked to a file or symbol
     Show {
         #[arg(required = true, value_name = "X")]
         names: Vec<String>,
     },
     /// Run every check, and report stale and missing links whose target changed since the base
     Check {
-        /// Fingerprint every link, not only those whose target file changed
+        /// Fingerprint every link, and look for term `code` and `not` names across the repository
         #[arg(long)]
         all: bool,
     },
@@ -55,11 +56,33 @@ enum Command {
         #[arg(long, conflicts_with = "test")]
         remove: bool,
     },
-    /// Per area: rules by agreed and built state, and draft rules
+    /// Record a verdict on a rule whose links went stale, and refresh every stale link of the rule
+    Review {
+        rule: String,
+        #[command(subcommand)]
+        verdict: VerdictArg,
+    },
+    /// Per area: rules by agreed and built state, drafts, incomplete rules, stale and missing links
     Status {
         /// Show only this area
         #[arg(long)]
         area: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+enum VerdictArg {
+    /// The rule still holds
+    Ok,
+    /// The change is on purpose: the decision lists the rule in `changes` or `retires`
+    Changed {
+        #[arg(value_name = "DECISION")]
+        decision: String,
+    },
+    /// The rule no longer holds: the rule has an open gap with this reference
+    Gap {
+        #[arg(value_name = "REF")]
+        reference: String,
     },
 }
 
@@ -100,6 +123,14 @@ pub fn run() -> ExitCode {
                 commands::link::add(rule, target, role)
             };
             report.map(|r| emit(json, &r, render::link(&r), 0))
+        }
+        Command::Review { rule, verdict } => {
+            let verdict = match verdict {
+                VerdictArg::Ok => Verdict::Ok,
+                VerdictArg::Changed { decision } => Verdict::Changed(decision.clone()),
+                VerdictArg::Gap { reference } => Verdict::Gap(reference.clone()),
+            };
+            commands::review::run(rule, verdict).map(|r| emit(json, &r, render::review(&r), 0))
         }
         Command::Status { area } => {
             commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))

@@ -1,0 +1,6 @@
+---
+source: tests/links.rs
+expression: run.stdout
+---
+billing (BILL): 1 rule
+  BILL-001  proposed  built    Large refunds need a second approval  (draft; incomplete; stale: billing/refund.go)

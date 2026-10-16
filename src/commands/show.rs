@@ -1,5 +1,8 @@
 use super::SCHEMA;
-use crate::model::{Agreed, Built, Decision, DecisionStatus, Gap, Model, Span, paths};
+use crate::model::{
+    Agreed, Built, Decision, DecisionStatus, Gap, Link, LinkRole, Model, Rule, Span, paths,
+    split_target,
+};
 use crate::repo::Repo;
 use anyhow::{Result, bail};
 use serde::Serialize;
@@ -10,6 +13,8 @@ pub struct ShowReport {
     pub schema: u32,
     /// One item per distinct rule, term or decision, in the order the arguments name them.
     pub items: Vec<Item>,
+    /// File and symbol arguments that no rule links to.
+    pub unlinked: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -32,6 +37,8 @@ pub struct RuleShow {
     /// The rule's section as written: heading, statement, block and notes.
     pub text: String,
     pub terms: Vec<TermRef>,
+    /// `None` when `statute.lock` does not parse.
+    pub links: Option<Vec<LinkRef>>,
     /// `None` when `decisions.db` does not parse.
     pub decisions: Option<Vec<DecisionRef>>,
     /// `None` when `gaps.yml` does not parse.
@@ -43,6 +50,12 @@ pub struct TermRef {
     pub name: String,
     /// `None` when no term has this name, or the term has no definition.
     pub definition: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct LinkRef {
+    pub target: String,
+    pub role: LinkRole,
 }
 
 #[derive(Serialize)]
@@ -79,78 +92,132 @@ pub struct RuleRef {
 }
 
 /// Prints each named rule, term or decision once. An argument is matched as a rule ID, then a decision
-/// ID, then a term name.
+/// ID, then a term name, then a file or symbol, which shows the rules linked to it.
 pub fn run(names: &[String]) -> Result<ShowReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
     let mut texts: BTreeMap<&str, String> = BTreeMap::new();
     let mut items = Vec::new();
+    let mut unlinked = Vec::new();
     let mut seen = Vec::new();
     for name in names {
-        let item = if let Some(rule) = model.rules.iter().find(|r| r.id == *name) {
-            let text = section(&repo, &mut texts, &rule.file, &rule.span)?;
-            Item::Rule(RuleShow {
-                id: rule.id.clone(),
-                title: rule.title.clone(),
-                file: rule.file.clone(),
-                line: rule.line,
-                agreed: rule.meta.as_ref().map(|m| m.agreed),
-                built: rule.meta.as_ref().map(|m| m.built),
-                text,
-                terms: rule
-                    .meta
-                    .iter()
-                    .flat_map(|m| &m.terms)
-                    .map(|t| TermRef {
-                        name: t.clone(),
-                        definition: model
-                            .terms
-                            .iter()
-                            .find(|term| term.name == *t)
-                            .and_then(|term| term.definition.clone()),
-                    })
-                    .collect(),
-                decisions: model
-                    .decisions
-                    .as_ref()
-                    .map(|ds| decisions_naming(ds, &rule.id)),
-                gaps: model
-                    .gaps
-                    .as_ref()
-                    .map(|gaps| gaps.iter().filter(|g| g.rule == rule.id).cloned().collect()),
-            })
+        let found = if let Some(rule) = model.rules.iter().find(|r| r.id == *name) {
+            vec![rule_item(&repo, &mut texts, &model, rule)?]
         } else if let Some(d) = model.decisions.iter().flatten().find(|d| d.id == *name) {
-            Item::Decision(d.clone())
+            vec![Item::Decision(d.clone())]
         } else if let Some(term) = model.terms.iter().find(|t| t.name == *name) {
-            Item::Term(TermShow {
+            vec![Item::Term(TermShow {
                 name: term.name.clone(),
                 file: paths::TERMS.to_string(),
                 line: term.line,
                 text: section(&repo, &mut texts, paths::TERMS, &term.span)?,
                 rules: rules_using(&model, &term.name),
-            })
+            })]
+        } else if let Some(rules) = linked_to(&repo, &model, name) {
+            if rules.is_empty() {
+                unlinked.push(name.clone());
+            }
+            rules
+                .into_iter()
+                .map(|rule| rule_item(&repo, &mut texts, &model, rule))
+                .collect::<Result<_>>()?
         } else if model.decisions.is_none() {
             bail!(
                 "no rule or term named `{name}`, and {} does not parse; run `statute check`",
                 paths::DECISIONS
             );
         } else {
-            bail!("no rule, term or decision named `{name}`");
+            bail!("no rule, term, decision or file named `{name}`");
         };
-        let key = match &item {
-            Item::Rule(r) => ("rule", r.id.clone()),
-            Item::Term(t) => ("term", t.name.clone()),
-            Item::Decision(d) => ("decision", d.id.clone()),
-        };
-        if !seen.contains(&key) {
-            seen.push(key);
-            items.push(item);
+        for item in found {
+            let key = match &item {
+                Item::Rule(r) => ("rule", r.id.clone()),
+                Item::Term(t) => ("term", t.name.clone()),
+                Item::Decision(d) => ("decision", d.id.clone()),
+            };
+            if !seen.contains(&key) {
+                seen.push(key);
+                items.push(item);
+            }
         }
     }
     Ok(ShowReport {
         schema: SCHEMA,
         items,
+        unlinked,
     })
+}
+
+/// The rules linked to a file (whole-file and symbol links in it) or to a symbol (its own links and
+/// whole-file links to its file), in lock order. `None` when the argument is neither an existing file
+/// nor a linked target.
+fn linked_to<'m>(repo: &Repo, model: &'m Model, name: &str) -> Option<Vec<&'m Rule>> {
+    let (file, symbol) = split_target(name);
+    let links = model.links.as_deref().unwrap_or_default();
+    let matching: Vec<&Link> = links
+        .iter()
+        .filter(|l| l.file() == file && (symbol.is_none() || l.target == name || l.target == file))
+        .collect();
+    if matching.is_empty() && !repo.is_file(file) {
+        return None;
+    }
+    let mut rules: Vec<&Rule> = Vec::new();
+    for link in matching {
+        if let Some(rule) = model.rules.iter().find(|r| r.id == link.rule())
+            && !rules.iter().any(|r| r.id == rule.id)
+        {
+            rules.push(rule);
+        }
+    }
+    Some(rules)
+}
+
+fn rule_item<'a>(
+    repo: &Repo,
+    texts: &mut BTreeMap<&'a str, String>,
+    model: &Model,
+    rule: &'a Rule,
+) -> Result<Item> {
+    Ok(Item::Rule(RuleShow {
+        id: rule.id.clone(),
+        title: rule.title.clone(),
+        file: rule.file.clone(),
+        line: rule.line,
+        agreed: rule.meta.as_ref().map(|m| m.agreed),
+        built: rule.meta.as_ref().map(|m| m.built),
+        text: section(repo, texts, &rule.file, &rule.span)?,
+        terms: rule
+            .meta
+            .iter()
+            .flat_map(|m| &m.terms)
+            .map(|t| TermRef {
+                name: t.clone(),
+                definition: model
+                    .terms
+                    .iter()
+                    .find(|term| term.name == *t)
+                    .and_then(|term| term.definition.clone()),
+            })
+            .collect(),
+        links: model.links.as_ref().map(|links| {
+            links
+                .iter()
+                .filter(|l| l.rule() == rule.id)
+                .map(|l| LinkRef {
+                    target: l.target.clone(),
+                    role: l.role,
+                })
+                .collect()
+        }),
+        decisions: model
+            .decisions
+            .as_ref()
+            .map(|ds| decisions_naming(ds, &rule.id)),
+        gaps: model
+            .gaps
+            .as_ref()
+            .map(|gaps| gaps.iter().filter(|g| g.rule == rule.id).cloned().collect()),
+    }))
 }
 
 /// A section's source text, without trailing blank lines. Each file is read once.

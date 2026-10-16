@@ -26,6 +26,7 @@ expression: "repo.run(&[\"show\", \"ATTR-003\", \"--json\"]).json()"
       "id": "ATTR-003",
       "kind": "rule",
       "line": 39,
+      "links": [],
       "terms": [
         {
           "definition": "One conversation between a developer and a coding agent.",
@@ -36,5 +37,6 @@ expression: "repo.run(&[\"show\", \"ATTR-003\", \"--json\"]).json()"
       "title": "Sessions expire after a day"
     }
   ],
-  "schema": 1
+  "schema": 1,
+  "unlinked": []
 }

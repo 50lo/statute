@@ -317,7 +317,7 @@ fn show_refuses_an_unknown_name() {
     assert_eq!((run.code, run.stdout.as_str()), (2, ""));
     assert!(
         run.stderr
-            .contains("no rule, term or decision named `ATTR-999`"),
+            .contains("no rule, term, decision or file named `ATTR-999`"),
         "{}",
         run.stderr
     );
