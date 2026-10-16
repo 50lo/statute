@@ -3,6 +3,7 @@
 mod render;
 
 use crate::commands;
+use crate::model::LinkRole;
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::process::ExitCode;
@@ -36,8 +37,24 @@ enum Command {
         #[arg(required = true, value_name = "X")]
         names: Vec<String>,
     },
-    /// Run every check on the Statute files
-    Check,
+    /// Run every check, and report stale and missing links whose target changed since the base
+    Check {
+        /// Fingerprint every link, not only those whose target file changed
+        #[arg(long)]
+        all: bool,
+    },
+    /// Link a rule to a code or test target with its current fingerprint, or remove a link
+    Link {
+        rule: String,
+        /// A repo-relative file, or a symbol in one: `path#Symbol`
+        target: String,
+        /// The target is a test that shows the rule holds
+        #[arg(long)]
+        test: bool,
+        /// Remove the link instead
+        #[arg(long, conflicts_with = "test")]
+        remove: bool,
+    },
     /// Per area: rules by agreed and built state, and draft rules
     Status {
         /// Show only this area
@@ -56,20 +73,38 @@ enum RuleCommand {
 pub fn run() -> ExitCode {
     let cli = Cli::parse();
     let json = cli.json;
-    let result =
-        match &cli.command {
-            Command::Init => commands::init::run().map(|r| emit(json, &r, render::init(&r), 0)),
-            Command::Rule {
-                command: RuleCommand::New { area, title },
-            } => commands::rule_new::run(area, title).map(|r| emit(json, &r, r.id.clone(), 0)),
-            Command::Show { names } => {
-                commands::show::run(names).map(|r| emit(json, &r, render::show(&r), 0))
-            }
-            Command::Check => commands::check::run()
-                .map(|r| emit(json, &r, render::check(&r), u8::from(r.failed()))),
-            Command::Status { area } => commands::status::run(area.as_deref())
-                .map(|r| emit(json, &r, render::status(&r), 0)),
-        };
+    let result = match &cli.command {
+        Command::Init => commands::init::run().map(|r| emit(json, &r, render::init(&r), 0)),
+        Command::Rule {
+            command: RuleCommand::New { area, title },
+        } => commands::rule_new::run(area, title).map(|r| emit(json, &r, r.id.clone(), 0)),
+        Command::Show { names } => {
+            commands::show::run(names).map(|r| emit(json, &r, render::show(&r), 0))
+        }
+        Command::Check { all } => commands::check::run(*all)
+            .map(|r| emit(json, &r, render::check(&r), u8::from(r.failed()))),
+        Command::Link {
+            rule,
+            target,
+            test,
+            remove,
+        } => {
+            let report = if *remove {
+                commands::link::remove(rule, target)
+            } else {
+                let role = if *test {
+                    LinkRole::Test
+                } else {
+                    LinkRole::Code
+                };
+                commands::link::add(rule, target, role)
+            };
+            report.map(|r| emit(json, &r, render::link(&r), 0))
+        }
+        Command::Status { area } => {
+            commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))
+        }
+    };
     result.unwrap_or_else(|e| {
         if json {
             let report = serde_json::json!({"schema": commands::SCHEMA, "error": format!("{e:#}")});

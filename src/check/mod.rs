@@ -2,6 +2,7 @@
 
 mod decisions;
 mod gaps;
+mod links;
 mod rules;
 mod terms;
 
@@ -19,6 +20,8 @@ const CHECKS: &[Check] = &[
     rules::cases,
     rules::establishment,
     rules::avoid_words,
+    links::retired,
+    links::completeness,
     terms::unique,
     decisions::ids,
     decisions::references,
@@ -27,6 +30,7 @@ const CHECKS: &[Check] = &[
     decisions::summary_length,
     gaps::ids,
     gaps::rules_resolve,
+    links::references,
 ];
 
 /// Parse problems found while loading, then every check.
@@ -37,6 +41,8 @@ pub fn run(model: &Model) -> Vec<Finding> {
     }
     findings
 }
+
+pub use links::freshness;
 
 fn config_version(model: &Model, out: &mut Vec<Finding>) {
     if model.config.version != 1 {

@@ -139,6 +139,7 @@ fn problems(rel: &str, text: &str) -> Vec<Finding> {
         paths::TERMS => store::terms::parse(text).problems,
         paths::DECISIONS => store::parse_decisions(text).err().into_iter().collect(),
         paths::GAPS => store::parse_gaps(text).err().into_iter().collect(),
+        paths::LOCK => store::lock::parse(text).err().into_iter().collect(),
         _ => match rule_area {
             Some(area) => store::rules::parse(rel, area, text).problems,
             None => Vec::new(),

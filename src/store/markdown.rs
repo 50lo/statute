@@ -164,6 +164,36 @@ pub fn scan(text: &str, level: HeadingLevel) -> Document {
     doc
 }
 
+/// The text with the value of a top-level `key:` line inside a `yaml` block replaced, or `None` when
+/// the block has no such line. A trailing comment keeps its column where the new value leaves room.
+pub fn set_field(text: &str, block: Range<usize>, key: &str, value: &str) -> Option<String> {
+    let mut start = block.start;
+    for line in text[block].split_inclusive('\n') {
+        let line_start = start;
+        start += line.len();
+        let Some(rest) = line.strip_prefix(key).and_then(|r| r.strip_prefix(':')) else {
+            continue;
+        };
+        let value_start = line_start + key.len() + 1 + (rest.len() - rest.trim_start().len());
+        let after = &text[value_start..start];
+        let old_len = after.find(char::is_whitespace).unwrap_or(after.len());
+        let gap = after[old_len..].len() - after[old_len..].trim_start_matches([' ', '\t']).len();
+        let has_comment = after[old_len + gap..].starts_with('#');
+        let (end, padding) = if has_comment {
+            let width = (old_len + gap).saturating_sub(value.len()).max(1);
+            (value_start + old_len + gap, " ".repeat(width))
+        } else {
+            (value_start + old_len, String::new())
+        };
+        return Some(format!(
+            "{}{value}{padding}{}",
+            &text[..value_start],
+            &text[end..]
+        ));
+    }
+    None
+}
+
 /// Maps byte offsets to 1-based line numbers.
 pub struct LineIndex {
     starts: Vec<usize>,
@@ -235,6 +265,31 @@ mod tests {
         let names: Vec<_> = doc.sections.iter().map(|s| s.heading.as_str()).collect();
         assert_eq!(names, ["Session", "Commit"]);
         assert_eq!(&text[doc.sections[0].span.end..][..13], "# Other group");
+    }
+
+    #[test]
+    fn set_field_replaces_one_value_and_keeps_the_comment_column() {
+        let text = "# X-001 T\n\nS.\n\n```yaml\nagreed: proposed\nbuilt: planned            # planned | built\nscope: built\n```\n";
+        let block = scan(text, HeadingLevel::H1).sections[0]
+            .span
+            .block
+            .clone()
+            .unwrap();
+        let out = set_field(text, block.clone(), "built", "built").unwrap();
+        assert_eq!(
+            out,
+            text.replace("built: planned            #", "built: built              #")
+        );
+        let out = set_field(text, block.clone(), "agreed", "agreed").unwrap();
+        assert_eq!(out, text.replace("agreed: proposed\n", "agreed: agreed\n"));
+        assert_eq!(set_field(text, block, "terms", "[]"), None);
+
+        let tight = "```yaml\nbuilt: planned # c\n```\n";
+        let block = 8..tight.len() - 4;
+        assert_eq!(
+            set_field(tight, block, "built", "something").unwrap(),
+            "```yaml\nbuilt: something # c\n```\n"
+        );
     }
 
     #[test]

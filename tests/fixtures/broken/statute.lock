@@ -1,1 +1,5 @@
 {"version": 1}
+{"source": "ATTR-001", "target": "src/app.txt", "role": "code", "mode": "bytes-sha256-v1", "sig": "0000"}
+{"source": "ATTR-007", "target": "src/app.txt", "role": "code", "mode": "bytes-sha256-v1", "sig": "8a8f60ecb09b7e64c6d5214a8043865e608507db8c3f61f995eae6d078875901"}
+{"source": "ATTR-404", "target": "src/app.txt", "role": "code", "mode": "bytes-sha256-v1", "sig": "8a8f60ecb09b7e64c6d5214a8043865e608507db8c3f61f995eae6d078875901"}
+{"source": "ATTR-404", "target": "src/app.txt", "role": "test", "mode": "bytes-sha256-v1", "sig": "8a8f60ecb09b7e64c6d5214a8043865e608507db8c3f61f995eae6d078875901"}

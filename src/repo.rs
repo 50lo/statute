@@ -3,6 +3,7 @@
 use crate::model::{Model, paths};
 use crate::store;
 use anyhow::{Context, Result, bail};
+use std::collections::BTreeMap;
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
@@ -61,6 +62,31 @@ impl Repo {
                 "{rel} is missing; restore it from git, or create it empty if there is nothing to record yet"
             ),
         }
+    }
+
+    /// The bytes of each file, `None` for one that does not exist or is not a regular file.
+    pub fn read_files<'p>(
+        &self,
+        rels: impl IntoIterator<Item = &'p str>,
+    ) -> Result<BTreeMap<String, Option<Vec<u8>>>> {
+        let mut files = BTreeMap::new();
+        for rel in rels {
+            if files.contains_key(rel) {
+                continue;
+            }
+            let path = self.path(rel);
+            let bytes = if path.is_file() {
+                Some(std::fs::read(&path).with_context(|| format!("cannot read {rel}"))?)
+            } else {
+                None
+            };
+            files.insert(rel.to_string(), bytes);
+        }
+        Ok(files)
+    }
+
+    pub fn is_file(&self, rel: &str) -> bool {
+        self.path(rel).is_file()
     }
 
     pub fn exists(&self, rel: &str) -> bool {
@@ -122,6 +148,11 @@ impl Repo {
 
         let text = self.read_required(paths::GAPS)?;
         model.gaps = store::parse_gaps(&text)
+            .map_err(|p| model.problems.push(p))
+            .ok();
+
+        let text = self.read_required(paths::LOCK)?;
+        model.links = store::lock::parse(&text)
             .map_err(|p| model.problems.push(p))
             .ok();
 

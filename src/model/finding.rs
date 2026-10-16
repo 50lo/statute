@@ -13,6 +13,9 @@ pub struct Finding {
     pub decision: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gap: Option<String>,
+    /// A link's target, for `link.*` findings.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,6 +39,7 @@ impl Finding {
             term: None,
             decision: None,
             gap: None,
+            target: None,
             file: None,
             line: None,
             message: message.into(),
@@ -66,6 +70,11 @@ impl Finding {
 
     pub fn gap(mut self, id: &str) -> Self {
         self.gap = Some(id.to_string());
+        self
+    }
+
+    pub fn target(mut self, target: &str) -> Self {
+        self.target = Some(target.to_string());
         self
     }
 

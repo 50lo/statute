@@ -294,7 +294,8 @@ fn commands_outside_a_statute_repository_exit_2() {
 fn usage_errors_exit_2() {
     let repo = TestRepo::empty();
     assert_eq!(repo.run(&["rule", "new", "billing"]).code, 2);
-    assert_eq!(repo.run(&["check", "--all"]).code, 2);
+    assert_eq!(repo.run(&["link", "BILL-001"]).code, 2);
+    assert_eq!(repo.run(&["link", "A", "b", "--test", "--remove"]).code, 2);
 }
 
 #[test]

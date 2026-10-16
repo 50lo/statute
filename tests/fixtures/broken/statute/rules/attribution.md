@@ -80,3 +80,21 @@ Statement.
 agreed: proposed
 built: planned
 ```
+
+# ATTR-007 Retired but still linked
+
+Statement.
+
+```yaml
+agreed: retired
+built: planned
+```
+
+# ATTR-008 Built without links
+
+Statement.
+
+```yaml
+agreed: proposed
+built: built
+```

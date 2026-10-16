@@ -38,6 +38,10 @@ error[rule.established_twice] ATTR-006: ATTR-006 is established by more than one
   --> statute/rules/attribution.md:75
 warning[rule.avoid_word] ATTR-001: statement uses `chat`, which the term Session avoids
   --> statute/rules/attribution.md:5
+error[rule.retired_linked] ATTR-007: ATTR-007 is retired but still links src/app.txt
+  --> statute/rules/attribution.md:84
+error[rule.incomplete] ATTR-008: ATTR-008 is built but lacks a code link, or both a test link and a `manual_check`
+  --> statute/rules/attribution.md:93
 error[term.duplicate] Session: term `Session` is also defined on line 3
   --> statute/terms.md:14
 error[decision.id_invalid] D-1: `D-1` is not a decision ID such as `D261015-k7m2q`
@@ -60,4 +64,12 @@ error[gap.duplicate] FOOT-1: FOOT-1 appears more than once
   --> statute/gaps.yml
 error[gap.rule_unknown] FOOT-1: rule ATTR-404 is not defined in any rule file
   --> statute/gaps.yml
-28 errors, 1 warning
+error[link.rule_unknown] ATTR-404: rule ATTR-404 is not defined in any rule file
+  --> statute.lock
+error[link.rule_unknown] ATTR-404: rule ATTR-404 is not defined in any rule file
+  --> statute.lock
+error[link.duplicate] ATTR-404: ATTR-404 links src/app.txt more than once
+  --> statute.lock
+error[link.stale] ATTR-001: src/app.txt changed since it was linked; check that the rule still holds, then run `statute review ATTR-001`
+  --> src/app.txt
+34 errors, 1 warning

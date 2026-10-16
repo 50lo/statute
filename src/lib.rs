@@ -6,6 +6,8 @@ pub mod cli;
 
 mod check;
 mod commands;
+mod fingerprint;
+mod git;
 mod model;
 mod repo;
 mod state;
