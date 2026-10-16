@@ -148,6 +148,58 @@ fn rule_new_needs_a_rule_file_with_a_prefix() {
 }
 
 #[test]
+fn rule_new_refuses_to_append_inside_an_unclosed_code_block() {
+    let repo = TestRepo::fixture("valid");
+    let path = "statute/rules/billing.md";
+    let text = format!(
+        "{}\nNotes with an unclosed fence:\n\n```text\nunclosed\n",
+        repo.read(path)
+    );
+    repo.write(path, &text);
+
+    let run = repo.run(&["rule", "new", "billing", "Hidden rule"]);
+    assert_eq!(run.code, 2);
+    assert!(run.stderr.contains("unclosed block"), "{}", run.stderr);
+    assert_eq!(repo.read(path), text);
+}
+
+#[test]
+fn missing_layout_files_are_file_errors() {
+    for path in [
+        "statute/terms.md",
+        "statute/decisions.db",
+        "statute/gaps.yml",
+    ] {
+        let repo = TestRepo::fixture("valid");
+        std::fs::remove_file(repo.path(path)).unwrap();
+        for args in [
+            &["check"][..],
+            &["status"],
+            &["rule", "new", "billing", "X"],
+        ] {
+            let run = repo.run(args);
+            assert_eq!(run.code, 2, "{path} {args:?}");
+            assert!(
+                run.stderr.contains(&format!("{path} is missing")),
+                "{}",
+                run.stderr
+            );
+        }
+    }
+    // Empty files are fine, and so is a missing rules directory, which git does not keep.
+    let repo = TestRepo::fixture("valid");
+    for path in [
+        "statute/terms.md",
+        "statute/decisions.db",
+        "statute/gaps.yml",
+    ] {
+        repo.write(path, "");
+    }
+    std::fs::remove_dir_all(repo.path("statute/rules")).unwrap();
+    assert_eq!(repo.run(&["check"]).code, 0);
+}
+
+#[test]
 fn the_valid_fixture_has_no_findings() {
     let run = TestRepo::fixture("valid").run(&["check"]);
     assert_eq!((run.code, run.stdout.as_str()), (0, "No findings.\n"));

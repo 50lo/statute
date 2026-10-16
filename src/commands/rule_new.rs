@@ -56,11 +56,17 @@ pub fn run(area: &str, title: &str) -> Result<RuleNewReport> {
     }
     let id = format!("{prefix}-{:03}", last + 1);
 
+    let new_text = store::rules::append_section(&text, &store::rules::skeleton(&id, title));
+    // The end of the file can be inside an unclosed code block, which would swallow the new section.
+    let parsed = store::rules::parse(&file, area, &new_text);
+    if !parsed.rules.iter().any(|r| r.id == id && r.meta.is_some()) {
+        bail!(
+            "cannot append {id} to {file}: the file ends inside an unclosed block, such as a code fence; close it first"
+        );
+    }
+
     let mut txn = Txn::new(&repo);
-    txn.write(
-        &file,
-        store::rules::append_section(&text, &store::rules::skeleton(&id, title)),
-    );
+    txn.write(&file, new_text);
     txn.commit()?;
     Ok(RuleNewReport {
         schema: SCHEMA,

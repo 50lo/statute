@@ -52,6 +52,17 @@ impl Repo {
         }
     }
 
+    /// A layout file's text. A missing file is an error, so that it is not mistaken for an empty one.
+    /// `statute/rules/` is not required: git does not keep an empty directory.
+    fn read_required(&self, rel: &str) -> Result<String> {
+        match self.read(rel)? {
+            Some(text) => Ok(text),
+            None => bail!(
+                "{rel} is missing; restore it from git, or create it empty if there is nothing to record yet"
+            ),
+        }
+    }
+
     pub fn exists(&self, rel: &str) -> bool {
         self.path(rel).exists()
     }
@@ -100,16 +111,16 @@ impl Repo {
             model.problems.extend(parsed.problems);
         }
 
-        let parsed = store::terms::parse(&self.read(paths::TERMS)?.unwrap_or_default());
+        let parsed = store::terms::parse(&self.read_required(paths::TERMS)?);
         model.terms = parsed.terms;
         model.problems.extend(parsed.problems);
 
-        let text = self.read(paths::DECISIONS)?.unwrap_or_default();
+        let text = self.read_required(paths::DECISIONS)?;
         model.decisions = store::parse_decisions(&text)
             .map_err(|p| model.problems.push(p))
             .ok();
 
-        let text = self.read(paths::GAPS)?.unwrap_or_default();
+        let text = self.read_required(paths::GAPS)?;
         model.gaps = store::parse_gaps(&text)
             .map_err(|p| model.problems.push(p))
             .ok();
