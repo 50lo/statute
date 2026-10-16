@@ -1,12 +1,12 @@
 {"version": 1}
 {"source": "CORE-001", "target": "src/check/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "17267afbc0b0f4fb517b1e979fa34b6fd67387ce195ce8090673d48a99d59212"}
 {"source": "CORE-002", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}
-{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "ef4200bd8978a8a0bfce7a8b132ec3d6aba8eb900d4e49eac8fe210e9bf23c1b"}
-{"source": "CORE-002", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0bd0e00cd1852e7e63583fc20fb9765f326379152469d94f7182bc246fc0227b"}
+{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "2d21e7e87d3d6558ab66f94d435bfa6770fc105c11b355795e778a8977d32ed2"}
+{"source": "CORE-002", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
 {"source": "CORE-003", "target": "src/check/links.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "b5f442963e85f4e97e2b1731ebe876c71eec3539ca0c39a4a8095320c97e8bdd"}
 {"source": "CORE-003", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}
 {"source": "CORE-003", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "aabe14744ec1d855b04e0e3503ca8925bbc40ab67aeac27207234b5a49cb9fe6"}
-{"source": "CORE-003", "target": "tests/cli.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "17feed5fcf8a83838934463c09e9f34775863a70563cfd5ab1ea17c0ee7af94e"}
-{"source": "CORE-003", "target": "tests/links.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "1c72d3b1e61cbc4b08a0d36eae9b539f7cb439ab6211ca7e481845fd5813c665"}
+{"source": "CORE-003", "target": "tests/cli.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "90cb6ed66056965dac7c0dc3dcffa69cdab1adeb10d9cf9422eb9ea3cd143ad6"}
+{"source": "CORE-003", "target": "tests/links.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "83c8cdb2a2010794dbe5ad579d1668492b25ed0571733992a543e9b8bf1aced9"}
 {"source": "CORE-004", "target": "src/commands/rule_new.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8c9355c9ab0cf38337c8588e7b38dde23dd1c3be257c5df63cf10247ee6f1aa8"}
-{"source": "CORE-004", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0bd0e00cd1852e7e63583fc20fb9765f326379152469d94f7182bc246fc0227b"}
+{"source": "CORE-004", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
