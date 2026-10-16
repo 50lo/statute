@@ -1,0 +1,11 @@
+- id: D261016-f5ieq
+  timestamp: "2026-10-16T11:52:05Z"
+  actor: "user"
+  status: "active"
+  ratified_by: {"name": "Anton Solo", "email": "anton@50lo.me", "at": "2026-10-16T11:55:56Z"}
+  summary: "Adopt Statute's initial vocabulary and rules."
+  rationale: "The user reviewed and explicitly approved all current term definitions and rules in this session. Record that agreement independently of implementation progress."
+  establishes: ["CORE-001", "CORE-002", "CORE-003", "CORE-004", "CORE-005", "LINKS-001"]
+  changes: []
+  retires: []
+  terms: ["Term", "Rule", "Decision", "Link", "Code link", "Test link", "Manual check", "Protected case", "Boundary case", "Gap", "Agreement status", "Build state", "Affected rule", "Rule review", "Approval"]
