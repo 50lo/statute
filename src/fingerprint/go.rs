@@ -3,10 +3,11 @@
 //! Symbols are `Func`, `Type` and `Type.Method`. A method's receiver type is named without `*` and
 //! without type parameters. `#Type` covers the type's own spec, not its methods. Comments are dropped,
 //! except `//go:` directives directly above the declaration and the file's `//go:build` line, which are
-//! hashed with the symbol. A newline or `;` that ends a statement is formatting and is dropped.
+//! hashed with the symbol. A newline or `;` that ends a statement is formatting and is dropped; the
+//! end of each statement and field is marked instead.
 
 use super::Missing;
-use super::syntax::Input;
+use super::syntax::{Input, Visit};
 use std::collections::BTreeMap;
 use tree_sitter::{Node, Parser};
 
@@ -43,7 +44,7 @@ pub fn sign(source: &[u8], symbols: &[&str]) -> Vec<Result<String, Missing>> {
                 for directive in directives(*decl, source) {
                     input.token(directive);
                 }
-                input.node(*node, source, &skip);
+                input.node(*node, source, &visit);
                 Ok(input.finish())
             }
             Some(_) => Err(Missing::Ambiguous),
@@ -116,14 +117,19 @@ fn build_line<'s>(root: Node, source: &'s [u8]) -> Option<&'s [u8]> {
         .find(|t| t.starts_with(b"//go:build"))
 }
 
-/// Comments, and the newlines and semicolons that end statements, are not part of the hash input.
-fn skip(node: Node) -> bool {
-    if node.kind() == "comment" {
-        return true;
-    }
-    node.child_count() == 0
+/// Comments, and the newlines and semicolons that end statements, are not part of the hash input;
+/// the end of each statement and field is marked instead.
+fn visit(node: Node) -> Visit {
+    let terminator = node.child_count() == 0
         && (node.kind() == "\n"
-            || (node.kind() == ";" && node.parent().is_none_or(|p| p.kind() != "for_clause")))
+            || (node.kind() == ";" && node.parent().is_none_or(|p| p.kind() != "for_clause")));
+    if terminator || node.kind() == "comment" {
+        Visit::Skip
+    } else if matches!(node.kind(), "statement_list" | "field_declaration_list") {
+        Visit::List
+    } else {
+        Visit::Enter
+    }
 }
 
 fn text<'s>(node: Node, source: &'s [u8]) -> Option<&'s str> {
@@ -158,6 +164,7 @@ mod tests {
         "changed.go",
         "changed_directive.go",
         "changed_build_line.go",
+        "changed_statements.go",
         "parse_error.go",
         "golden.txt"
     );
@@ -191,6 +198,10 @@ mod tests {
                 [true, true, true, false, true, true],
             ),
             ("changed_build_line.go", [false; 6]),
+            (
+                "changed_statements.go",
+                [true, true, true, false, true, true],
+            ),
         ];
         for (file, expected) in cases {
             let other = hashes(file);
