@@ -3,6 +3,7 @@
 use crate::commands::check::CheckReport;
 use crate::commands::init::{AgentsMd, InitReport};
 use crate::commands::link::LinkReport;
+use crate::commands::review::ReviewReport;
 use crate::commands::show::{Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
 use crate::model::{Agreed, Built, DecisionStatus, GapStatus, LinkRole, Severity};
@@ -66,13 +67,25 @@ pub fn link(r: &LinkReport) -> String {
     if r.removed {
         return format!("Removed the link from {} to {}\n", r.rule, r.target);
     }
-    let role = match r.role {
-        LinkRole::Code => "code",
-        LinkRole::Test => "test",
-    };
-    let mut out = format!("Linked {} to {} ({role})\n", r.rule, r.target);
+    let mut out = format!("Linked {} to {} ({})\n", r.rule, r.target, role(r.role));
     if r.built {
         let _ = writeln!(out, "{} is complete and now `built: built`", r.rule);
+    }
+    out
+}
+
+pub fn review(r: &ReviewReport) -> String {
+    if r.refreshed.is_empty() {
+        return format!("{} has no stale links; nothing to refresh\n", r.rule);
+    }
+    let mut out = format!(
+        "Refreshed {} {} of {}:\n",
+        r.refreshed.len(),
+        plural(r.refreshed.len(), "link"),
+        r.rule
+    );
+    for target in &r.refreshed {
+        let _ = writeln!(out, "  {target}");
     }
     out
 }
@@ -108,10 +121,26 @@ pub fn status(r: &StatusReport) -> String {
                 Some(Built::Built) => "built",
                 None => "?",
             };
-            let draft = if rule.draft { "  (draft)" } else { "" };
+            let mut notes = Vec::new();
+            if rule.draft {
+                notes.push("draft".to_string());
+            }
+            if rule.incomplete {
+                notes.push("incomplete".to_string());
+            }
+            for (targets, what) in [(&rule.stale, "stale"), (&rule.missing, "missing")] {
+                if !targets.is_empty() {
+                    notes.push(format!("{what}: {}", targets.join(", ")));
+                }
+            }
+            let notes = if notes.is_empty() {
+                String::new()
+            } else {
+                format!("  ({})", notes.join("; "))
+            };
             let _ = writeln!(
                 out,
-                "  {:width$}  {agreed:<8}  {built:<7}  {}{draft}",
+                "  {:width$}  {agreed:<8}  {built:<7}  {}{notes}",
                 rule.id, rule.title
             );
         }
@@ -133,6 +162,16 @@ pub fn show(r: &ShowReport) -> String {
                 for t in &rule.terms {
                     let definition = t.definition.as_deref().unwrap_or("(no definition)");
                     let _ = writeln!(out, "  {}: {}", t.name, one_line(definition));
+                }
+                out.push_str("\nLinks:\n");
+                match &rule.links {
+                    None => out.push_str("  (statute.lock does not parse; run `statute check`)\n"),
+                    Some(links) if links.is_empty() => out.push_str("  none\n"),
+                    Some(links) => {
+                        for l in links {
+                            let _ = writeln!(out, "  {} {}", role(l.role), l.target);
+                        }
+                    }
                 }
                 out.push_str("\nDecisions:\n");
                 match &rule.decisions {
@@ -198,7 +237,17 @@ pub fn show(r: &ShowReport) -> String {
         }
         blocks.push(out.trim_end().to_string());
     }
+    for name in &r.unlinked {
+        blocks.push(format!("No rules are linked to {name}."));
+    }
     blocks.join("\n\n")
+}
+
+fn role(r: LinkRole) -> &'static str {
+    match r {
+        LinkRole::Code => "code",
+        LinkRole::Test => "test",
+    }
 }
 
 fn decision_status(s: DecisionStatus) -> &'static str {

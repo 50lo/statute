@@ -23,7 +23,8 @@ impl CheckReport {
 }
 
 /// Runs every check on the Statute files, and reports stale and missing links whose target file
-/// changed since the base. With `all`, every link is fingerprinted.
+/// changed since the base. With `all`, every link is fingerprinted, and term `code` and `not` names
+/// are searched for across the repository.
 pub fn run(all: bool) -> Result<CheckReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
@@ -47,6 +48,12 @@ pub fn run(all: bool) -> Result<CheckReport> {
             .collect();
         let health = state::health(&selected, &fingerprint::sign(&files, &targets));
         findings.extend(check::freshness(&selected, &health));
+    }
+
+    if all {
+        let mut search = check::NameSearch::new(&model);
+        repo.walk(check::NameSearch::searches, |bytes| search.scan(bytes))?;
+        findings.extend(search.findings(&model));
     }
 
     let errors = findings

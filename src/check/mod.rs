@@ -3,6 +3,7 @@
 mod decisions;
 mod gaps;
 mod links;
+mod names;
 mod rules;
 mod terms;
 
@@ -43,6 +44,7 @@ pub fn run(model: &Model) -> Vec<Finding> {
 }
 
 pub use links::freshness;
+pub use names::NameSearch;
 
 fn config_version(model: &Model, out: &mut Vec<Finding>) {
     if model.config.version != 1 {

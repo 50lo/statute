@@ -22,6 +22,17 @@ impl Run {
             .unwrap_or_else(|e| panic!("not JSON ({e}): {}", self.stdout))
     }
 
+    /// The codes of the error findings of a `check --json` report, in order.
+    pub fn error_codes(&self) -> Vec<String> {
+        self.json()["findings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|f| f["severity"] == "error")
+            .map(|f| f["code"].as_str().unwrap().to_string())
+            .collect()
+    }
+
     /// The finding codes of a `check --json` report, in order.
     pub fn codes(&self) -> Vec<String> {
         self.json()["findings"]

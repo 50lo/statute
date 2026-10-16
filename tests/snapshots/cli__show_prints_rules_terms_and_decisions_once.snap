@@ -24,6 +24,9 @@ Notes: this came out of the collector filter incident.
 Terms:
   Session: One conversation between a developer and a coding agent.
 
+Links:
+  none
+
 Decisions:
   D261001-a2b3c establishes (active): Adopt the existing attribution rules.
 

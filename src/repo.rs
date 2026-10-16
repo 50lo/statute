@@ -86,6 +86,27 @@ impl Repo {
         Ok(files)
     }
 
+    /// Calls `visit` with the bytes of every file in the repository that `wanted` accepts, by
+    /// repo-relative path. Files that git ignores, hidden files and symbolic links are skipped.
+    pub fn walk(&self, wanted: impl Fn(&str) -> bool, mut visit: impl FnMut(&[u8])) -> Result<()> {
+        for entry in ignore::WalkBuilder::new(&self.root).build() {
+            let entry = entry.context("cannot walk the repository")?;
+            if !entry.file_type().is_some_and(|t| t.is_file()) {
+                continue;
+            }
+            let Ok(rel) = entry.path().strip_prefix(&self.root) else {
+                continue;
+            };
+            let rel = rel.to_string_lossy().replace('\\', "/");
+            if wanted(&rel) {
+                let bytes =
+                    std::fs::read(entry.path()).with_context(|| format!("cannot read {rel}"))?;
+                visit(&bytes);
+            }
+        }
+        Ok(())
+    }
+
     /// The first component of a repo-relative path that is a symbolic link, such as `src` in
     /// `src/a.go` when `src` is a link.
     pub fn symlink_in(&self, rel: &str) -> Option<String> {
