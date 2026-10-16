@@ -21,17 +21,17 @@ Statute is one crate, so the compiler does not stop a module from importing any 
 | `git` | nothing internal | runs `git`; the only module that spawns processes |
 | `repo` | `model`, `store`, `git` | reads files; the only module that reads the filesystem |
 | `txn` | `model`, `store`, `check`, `repo` | writes files; the only module that writes the filesystem |
-| `ops` | everything above | through `repo`, `txn` and `git` only |
-| `cli` | `ops`, `model` | prints output |
+| `commands` | everything above | through `repo`, `txn` and `git` only |
+| `cli` | `commands`, `model` | prints output |
 | `main.rs` | `cli` | sets the exit code |
 
 Rules:
 
-- Only `cli` imports `ops`, and only `main.rs` imports `cli`.
-- No module outside `git`, `repo` and `txn` calls `std::fs`, `std::process` or reads environment variables. The one exception is `cli`, which launches `$EDITOR` for `decide --edit` and passes the result to `ops`. If a pure module needs data from outside, such as the current time or a random ID, its caller passes it in.
+- Only `cli` imports `commands`, and only `main.rs` imports `cli`.
+- No module outside `git`, `repo` and `txn` calls `std::fs`, `std::process` or reads environment variables. The one exception is `cli`, which launches `$EDITOR` for `decide --edit` and passes the result to `commands`. If a pure module needs data from outside, such as the current time or a random ID, its caller passes it in.
 - Shared types belong in `model`, not in the module that first needed them. If two modules on the same layer need each other, move the shared part down.
-- `ops` modules do not call each other. Logic used by two commands moves into a lower module.
-- `cli` holds argument parsing and rendering only. Anything that decides an outcome or a finding goes in `ops` or below.
+- `commands` modules do not call each other. Logic used by two commands moves into a lower module.
+- `cli` holds argument parsing and rendering only. Anything that decides an outcome or a finding goes in `commands` or below.
 
 When a change needs an import these rules forbid, change the rules here first, with the reason, in the same PR.
 

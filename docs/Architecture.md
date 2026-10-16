@@ -17,7 +17,7 @@ Cargo.toml
 src/
   main.rs            parse args, call the command, render, set the exit code
   lib.rs
-  cli/               clap definitions; one file per command; renderers (text, json, md)
+  cli/               clap argument definitions; renderers (text, json, md)
   repo.rs            find the root, read statute.yml, fixed paths; the only module that reads files
   model/             Rule, Term, Decision, Gap, Link, IDs, enums for agreed/built/status
   store/             parse each file kind from text and render edits back to text (below); no I/O
@@ -26,7 +26,7 @@ src/
   check/             one function per check; Finding with a stable code
   state.rs           derived state: in force, incomplete, broken, stale, missing
   impact.rs          affected rules and terms against the base; verdicts for "Rule impact"
-  ops/               one module per command: its logic, without argument parsing or rendering
+  commands/          one module per command: its logic, without argument parsing or rendering
   txn.rs             plan edits, validate in memory, write atomically; the only module that writes files
 plugin/
   .claude-plugin/    Claude Code plugin manifest
@@ -175,10 +175,10 @@ The crates in spec section 5.1, plus:
 
 | Milestone | Modules |
 | --- | --- |
-| 1. Model and checks | `repo`, `model`, `store` (all but lock), `check` (structural), `txn`, `ops::rule_new`, `cli` for `init`, `rule new`, `show`, `check`, `status` |
-| 2. Links | `git`, `fingerprint`, lock in `store`, `state` (stale, missing, incomplete), `ops::link`, `ops::review`, `check --all` |
-| 3. Decisions | `ops::decide`, `ops::ratify`, `check::history`, `impact`, `--md` renderer |
-| 4. Gaps | `ops::gap`, `state` (broken) |
+| 1. Model and checks | `repo`, `model`, `store` (all but lock), `check` (structural), `txn`, `commands` and `cli` for `init`, `rule new`, `show`, `check`, `status` |
+| 2. Links | `git`, `fingerprint`, lock in `store`, `state` (stale, missing, incomplete), `commands::link`, `commands::review`, `check --all` |
+| 3. Decisions | `commands::decide`, `commands::ratify`, `check::history`, `impact`, `--md` renderer |
+| 4. Gaps | `commands::gap`, `state` (broken) |
 | 5. Plugin | `plugin/` |
 
 ## 12. Decisions to confirm
