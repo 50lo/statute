@@ -225,4 +225,3 @@ The crates in spec section 5.1, plus:
 1. **Full rewrite for `decisions.db`, `gaps.yml` and the lock; byte-range patches for Markdown.** YAML comments in `decisions.db` would not survive a CLI write. Recommended, because the CLI is the main writer of those files.
 2. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
 3. **Plugin in the same repository** under `plugin/`. Recommended.
-4. **Symbol coverage in the hash input (6.1).** Python docstrings are dropped; Go `#Type` excludes its methods; Python `#Class` includes them. Confirm the Python choices against nodrift's behaviour before porting.
