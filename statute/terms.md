@@ -39,13 +39,14 @@ avoid: []
 A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target.
 
 ```yaml
-agreed: agreed                 # proposed | agreed
+agreed: proposed                 # proposed | agreed
 code: [LinkLine]
-not:
-  - {name: Reference, means: Reference to an issue in external tracker in gaps.yml }
+not: []
 aliases: []
 avoid: []
 ```
+
+A reference to an issue in an external tracker, recorded in gaps.yml, is separate from a rule's code or test links.
 
 ## Code link
 

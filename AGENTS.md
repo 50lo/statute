@@ -39,6 +39,10 @@ When a change needs an import these rules forbid, change the rules here first, w
 
 New fingerprint modes, link sources and impact reasons are new enum variants (docs/Architecture.md, section 8). Do not add traits, registries or plugin mechanisms for them.
 
+Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms and decision IDs, `check [--all]`, whole-file `link`, and `status`. File and symbol lookup with `show`, `decide`, `ratify`, `review`, gap commands, `check --md`, and the `change` skill are not implemented yet; the snippet below describes the intended workflow. Check `statute --help` for the installed build.
+
+Until file lookup is available, find the target path in `statute.lock` and read the named rules and their terms directly. Report workflow steps that the current build cannot perform. Manual decision entries and agreement-state changes still require explicit user authorization.
+
 <!-- statute:begin -->
 ## Statute
 

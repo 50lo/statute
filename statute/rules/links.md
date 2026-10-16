@@ -2,18 +2,18 @@
 prefix: LINKS
 ---
 
-# LINKS-001 Link target must parse cleanly
+# LINKS-001 A symbol link requires a clean parse
 
-Link target must parse cleanly, otherwise link is considered missing.
+A symbol link is missing when its file does not parse cleanly, even if the linked declaration itself is valid.
 
 ```yaml
-agreed: agreed          # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: planned            # planned | built
-scope: ""
+scope: Links using a symbol fingerprint mode.
 terms: [Link]
 exceptions: []
 protects:
-  - Link targeting foo.py with correct Python syntax is not missing
+  - A link to foo.py#bar is missing when foo.py has a syntax error elsewhere in the file, even if bar itself is valid.
 boundary:
-  - Links targeting bar.py with JSON content instead of Python is a missing link
+  - An existing file linked with bytes-sha256-v1 is not missing solely because its contents have a syntax error; that mode does not parse the file.
 ```

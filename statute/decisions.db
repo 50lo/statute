@@ -9,3 +9,15 @@
   changes: []
   retires: []
   terms: ["Term", "Rule", "Decision", "Link", "Code link", "Test link", "Manual check", "Protected case", "Boundary case", "Gap", "Agreement status", "Build state", "Affected rule", "Rule review", "Approval"]
+
+- id: D261017-6x46f
+  timestamp: "2026-10-16T13:16:07Z"
+  actor: "user"
+  status: "proposed"
+  ratified_by: null
+  summary: "Clarify symbol-link parsing and correct Link's code-name metadata."
+  rationale: "Symbol fingerprint modes require a clean parse of the whole file; byte fingerprints do not parse source syntax. Replace the misleading JSON-as-invalid-Python example with an actual syntax-error case and a byte-mode boundary. Reference is a conceptual distinction, not an existing code name, so keep it in prose rather than the not list."
+  establishes: []
+  changes: ["LINKS-001"]
+  retires: []
+  terms: ["Link"]
