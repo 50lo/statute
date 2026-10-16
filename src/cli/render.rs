@@ -4,6 +4,7 @@ use crate::commands::check::CheckReport;
 use crate::commands::decide::DecideReport;
 use crate::commands::init::{AgentsMd, InitReport};
 use crate::commands::link::LinkReport;
+use crate::commands::ratify::RatifyReport;
 use crate::commands::review::ReviewReport;
 use crate::commands::show::{Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
@@ -73,6 +74,31 @@ pub fn decide(r: &DecideReport) -> String {
         out.push_str(&format!(
             "\nterm `{term}` is proposed until {} is ratified",
             r.id
+        ));
+    }
+    out
+}
+
+pub fn ratify(r: &RatifyReport) -> String {
+    let mut out = format!(
+        "Ratified {} by {} <{}>",
+        r.decisions.join(", "),
+        r.ratified_by.name,
+        r.ratified_by.email
+    );
+    let mut line = |label: &str, items: &[String]| {
+        if !items.is_empty() {
+            out.push_str(&format!("\n{label}: {}", items.join(", ")));
+        }
+    };
+    line("Agreed rules", &r.agreed_rules);
+    line("Retired rules", &r.retired_rules);
+    line("Agreed terms", &r.agreed_terms);
+    line("Built rules", &r.built_rules);
+    if r.removed_links > 0 {
+        out.push_str(&format!(
+            "\nRemoved {} links of retired rules",
+            r.removed_links
         ));
     }
     out

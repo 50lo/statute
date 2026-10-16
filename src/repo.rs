@@ -1,5 +1,6 @@
 //! Finds the repository root and reads Statute files. The only module that reads the filesystem.
 
+use crate::git;
 use crate::model::{Model, paths};
 use crate::store;
 use anyhow::{Context, Result, bail};
@@ -56,17 +57,6 @@ impl Repo {
     /// A scratch file that `txn::write_scratch` wrote outside the repository.
     pub fn read_scratch(path: &Path) -> Result<String> {
         std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))
-    }
-
-    /// A layout file's text. A missing file is an error, so that it is not mistaken for an empty one.
-    /// `statute/rules/` is not required: git does not keep an empty directory.
-    fn read_required(&self, rel: &str) -> Result<String> {
-        match self.read(rel)? {
-            Some(text) => Ok(text),
-            None => bail!(
-                "{rel} is missing; restore it from git, or create it empty if there is nothing to record yet"
-            ),
-        }
     }
 
     /// The bytes of each file, `None` for one that does not exist, is not a regular file, or is reached
@@ -160,43 +150,98 @@ impl Repo {
 
     /// Reads and parses every Statute file. Parse problems go into `Model::problems`.
     pub fn load(&self) -> Result<Model> {
-        let mut model = Model::default();
-
-        if let Some(text) = self.read(paths::CONFIG)? {
-            match store::parse_config(&text) {
-                Ok(config) => model.config = config,
-                Err(problem) => model.problems.push(problem),
-            }
-        }
-
-        for area in self.areas()? {
-            let path = paths::rule_file(&area);
-            let text = self.read(&path)?.unwrap_or_default();
-            let parsed = store::rules::parse(&path, &area, &text);
-            model.rule_files.push(parsed.file);
-            model.rules.extend(parsed.rules);
-            model.problems.extend(parsed.problems);
-        }
-
-        let parsed = store::terms::parse(&self.read_required(paths::TERMS)?);
-        model.terms = parsed.terms;
-        model.problems.extend(parsed.problems);
-
-        let text = self.read_required(paths::DECISIONS)?;
-        model.decisions = store::parse_decisions(&text)
-            .map_err(|p| model.problems.push(p))
-            .ok();
-
-        let text = self.read_required(paths::GAPS)?;
-        model.gaps = store::parse_gaps(&text)
-            .map_err(|p| model.problems.push(p))
-            .ok();
-
-        let text = self.read_required(paths::LOCK)?;
-        model.links = store::lock::parse(&text)
-            .map_err(|p| model.problems.push(p))
-            .ok();
-
-        Ok(model)
+        self.load_with(&BTreeMap::new())
     }
+
+    /// `load`, with some files' text replaced: the model a command's edits would produce.
+    pub fn load_with(&self, edits: &BTreeMap<String, String>) -> Result<Model> {
+        let read = |rel: &str| match edits.get(rel) {
+            Some(text) => Ok(Some(text.clone())),
+            None => self.read(rel),
+        };
+        build(&self.areas()?, read, |rel| {
+            bail!(
+                "{rel} is missing; restore it from git, or create it empty if there is nothing to record yet"
+            )
+        })
+    }
+
+    /// The model at a git revision, such as the base. A file the revision does not have counts as
+    /// empty, since the base can predate Statute.
+    pub fn load_at(&self, rev: &str) -> Result<Model> {
+        let rule_files = git::files_under(&self.root, rev, paths::RULES_DIR)?;
+        let areas: Vec<String> = rule_files
+            .iter()
+            .filter_map(|f| f.strip_prefix(&format!("{}/", paths::RULES_DIR)))
+            .filter_map(|f| f.strip_suffix(".md"))
+            .filter(|a| !a.contains('/'))
+            .map(str::to_string)
+            .collect();
+        let mut wanted = vec![
+            paths::CONFIG.to_string(),
+            paths::TERMS.to_string(),
+            paths::DECISIONS.to_string(),
+            paths::GAPS.to_string(),
+            paths::LOCK.to_string(),
+        ];
+        wanted.extend(areas.iter().map(|a| paths::rule_file(a)));
+        let refs: Vec<&str> = wanted.iter().map(String::as_str).collect();
+        let blobs = git::read_at(&self.root, rev, &refs)?;
+        let files: BTreeMap<&str, String> = refs
+            .iter()
+            .zip(blobs)
+            .filter_map(|(p, b)| Some((*p, String::from_utf8_lossy(&b?).into_owned())))
+            .collect();
+        let empty = |rel: &str| match rel {
+            paths::LOCK => Ok(store::LOCK_TEMPLATE.to_string()),
+            _ => Ok(String::new()),
+        };
+        build(&areas, |rel| Ok(files.get(rel).cloned()), empty)
+    }
+}
+
+/// Parses every Statute file that `read` returns; `missing` decides what a missing layout file means.
+fn build(
+    areas: &[String],
+    read: impl Fn(&str) -> Result<Option<String>>,
+    missing: impl Fn(&str) -> Result<String>,
+) -> Result<Model> {
+    let required = |rel: &str| -> Result<String> {
+        match read(rel)? {
+            Some(text) => Ok(text),
+            None => missing(rel),
+        }
+    };
+    let mut model = Model::default();
+
+    if let Some(text) = read(paths::CONFIG)? {
+        match store::parse_config(&text) {
+            Ok(config) => model.config = config,
+            Err(problem) => model.problems.push(problem),
+        }
+    }
+
+    for area in areas {
+        let path = paths::rule_file(area);
+        let text = read(&path)?.unwrap_or_default();
+        let parsed = store::rules::parse(&path, area, &text);
+        model.rule_files.push(parsed.file);
+        model.rules.extend(parsed.rules);
+        model.problems.extend(parsed.problems);
+    }
+
+    let parsed = store::terms::parse(&required(paths::TERMS)?);
+    model.terms = parsed.terms;
+    model.problems.extend(parsed.problems);
+
+    model.decisions = store::parse_decisions(&required(paths::DECISIONS)?)
+        .map_err(|p| model.problems.push(p))
+        .ok();
+    model.gaps = store::parse_gaps(&required(paths::GAPS)?)
+        .map_err(|p| model.problems.push(p))
+        .ok();
+    model.links = store::lock::parse(&required(paths::LOCK)?)
+        .map_err(|p| model.problems.push(p))
+        .ok();
+    Ok(model)
 }

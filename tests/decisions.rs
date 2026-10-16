@@ -1,4 +1,4 @@
-//! End-to-end tests for decisions: `decide`.
+//! End-to-end tests for decisions: `decide`, `ratify`, and the history checks in `check`.
 
 mod common;
 
@@ -234,4 +234,291 @@ fn decide_edit_keeps_a_draft_it_cannot_record() {
         "no rule ATTR-009",
     );
     assert_eq!(repo.read(DECISIONS), before);
+}
+
+const BILLING: &str = "statute/rules/billing.md";
+
+fn refused(run: Run, message: &str) {
+    assert_eq!(run.code, 2, "{}", run.stdout);
+    assert!(run.stderr.contains(message), "{}", run.stderr);
+}
+
+fn errors(repo: &TestRepo) -> Vec<String> {
+    repo.run(&["check", "--json"]).error_codes()
+}
+
+/// From the appendix, "A PM adds a feature that needs a new rule": the rule is agreed before any code
+/// is written, and built once both links exist.
+#[test]
+fn ratify_agrees_a_new_rule_and_term_before_the_code() {
+    let repo = TestRepo::fixture("valid");
+    repo.commit("Initial");
+    let rule = ok(repo.run(&["rule", "new", "billing", "Refunds over $1,000 are logged"]));
+    let rule = rule.stdout.trim().to_string();
+    let text = repo.read(BILLING).replace(
+        "terms: []\nexceptions: []\nprotects: []\nboundary: []",
+        "terms: [Approver]\nexceptions: []\nprotects: [A $1,200 refund is logged.]\nboundary: [A $900 refund is not logged.]",
+    );
+    repo.write(BILLING, &text);
+    repo.write(
+        TERMS,
+        &format!(
+            "{}\n## Approver\n\nThe second person who approves a large refund.\n",
+            repo.read(TERMS)
+        ),
+    );
+    let id = ok(repo.run(&[
+        "decide",
+        "--establishes",
+        &rule,
+        "--terms",
+        "Approver",
+        "--summary",
+        "Log large refunds.",
+        "--rationale",
+        "Audit.",
+        "--json",
+    ]))
+    .json()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let report = ok(repo.run(&["ratify", &id, "--json"])).json();
+    assert_eq!(report["agreed_rules"], serde_json::json!([rule]));
+    assert_eq!(report["agreed_terms"], serde_json::json!(["Approver"]));
+    assert_eq!(report["built_rules"], serde_json::json!([]));
+    assert_eq!(report["ratified_by"]["name"], "Pat Example");
+
+    let entry = decision(&repo, &id);
+    assert_eq!(entry["status"], "active");
+    assert_eq!(entry["ratified_by"]["email"], "pat@example.com");
+    assert!(repo.read(TERMS).ends_with("```yaml\nagreed: agreed\n```\n"));
+    let rules = repo.read(BILLING);
+    let section = &rules[rules.find(&rule).unwrap()..];
+    assert!(section.contains("agreed: agreed "), "{section}");
+    assert!(errors(&repo).is_empty(), "{:?}", errors(&repo));
+
+    // The code and the test come after; the second link completes the rule.
+    repo.write("billing/log.go", "package billing\n\nfunc Log() {}\n");
+    repo.write(
+        "billing/log_test.go",
+        "package billing\n\nfunc TestLog() {}\n",
+    );
+    ok(repo.run(&["link", &rule, "billing/log.go#Log"]));
+    let run = ok(repo.run(&[
+        "link",
+        &rule,
+        "billing/log_test.go#TestLog",
+        "--test",
+        "--json",
+    ]));
+    assert_eq!(run.json()["built"], true);
+
+    let run = repo.run(&["ratify", &id]);
+    refused(run, "is already active");
+}
+
+/// `ratify` refuses when the result would have errors about what it ratifies, and changes nothing.
+#[test]
+fn ratify_refuses_a_rule_without_cases_and_writes_nothing() {
+    let repo = TestRepo::fixture("valid");
+    let id = ok(repo.run(&[
+        "decide",
+        "--establishes",
+        "BILL-001",
+        "--summary",
+        "S.",
+        "--rationale",
+        "R.",
+        "--json",
+    ]))
+    .json()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let before = (repo.read(DECISIONS), repo.read(BILLING));
+    let run = repo.run(&["ratify", &id]);
+    refused(run, "rule.cases");
+    assert_eq!((repo.read(DECISIONS), repo.read(BILLING)), before);
+
+    refused(
+        repo.run(&["ratify", "D261231-zzzzz"]),
+        "no decision D261231-zzzzz",
+    );
+    // Errors about other items do not block: D261014-x4p9t is still ratified with BILL-001 broken.
+    ok(repo.run(&["ratify", "D261014-x4p9t"]));
+}
+
+/// From the appendix, "A rule needs to change", ending with a retirement: `ratify` retires the rule and
+/// removes its links.
+#[test]
+fn ratify_retires_a_rule_and_removes_its_links() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("src/keep.go", "package src\n\nfunc Keep() {}\n");
+    ok(repo.run(&["link", "ATTR-001", "src/keep.go#Keep"]));
+    let id = ok(repo.run(&[
+        "decide",
+        "--retires",
+        "ATTR-001",
+        "--summary",
+        "S.",
+        "--rationale",
+        "R.",
+        "--json",
+    ]))
+    .json()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let report = ok(repo.run(&["ratify", &id, "--json"])).json();
+    assert_eq!(report["retired_rules"], serde_json::json!(["ATTR-001"]));
+    assert_eq!(report["removed_links"], 1);
+    assert_eq!(repo.read("statute.lock"), "{\"version\": 1}\n");
+    assert!(
+        repo.read(ATTRIBUTION)
+            .contains("agreed: retired           #")
+    );
+}
+
+#[test]
+fn ratify_needs_the_approver_from_git() {
+    let repo = TestRepo::fixture("valid");
+    repo.git(&["config", "--unset", "user.email"]);
+    let run = repo.run_env(
+        &[
+            ("GIT_CONFIG_GLOBAL", "/dev/null"),
+            ("GIT_CONFIG_NOSYSTEM", "1"),
+        ],
+        &["ratify", "D261014-x4p9t"],
+    );
+    refused(run, "user.email");
+}
+
+/// Spec 4.1 and 4.2: an agreed rule or term edited without a decision, and an active decision edited
+/// or deleted, are errors against the base.
+#[test]
+fn check_reports_history_changes_against_the_base() {
+    let repo = TestRepo::fixture("valid");
+    repo.commit("Initial");
+    assert!(errors(&repo).is_empty());
+
+    let rules = repo.read(ATTRIBUTION);
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace(
+            "and stores it like any other Session.",
+            "and stores it   like any\nother Session.\n\nMore notes.",
+        ),
+    );
+    assert!(
+        errors(&repo).is_empty(),
+        "whitespace and notes are not compared"
+    );
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace("and stores it like any other Session.", "for 30 days."),
+    );
+    let terms = repo.read(TERMS);
+    repo.write(
+        TERMS,
+        &terms.replace("code: [Commit]", "code: [Commit, Sha]"),
+    );
+    assert_eq!(
+        errors(&repo),
+        [
+            "rule.changed_without_decision",
+            "term.changed_without_decision"
+        ]
+    );
+
+    // A proposed decision that lists the rule and the term carries the change.
+    ok(repo.run(&[
+        "decide",
+        "--changes",
+        "ATTR-001",
+        "--terms",
+        "Commit",
+        "--summary",
+        "S.",
+        "--rationale",
+        "R.",
+    ]));
+    assert!(errors(&repo).is_empty(), "{:?}", errors(&repo));
+
+    let decisions = repo.read(DECISIONS);
+    repo.write(
+        DECISIONS,
+        &decisions
+            .replace("Sessions no longer expire.", "Sessions never expire.")
+            .replace("D261001-a2b3c", "D261001-zzzzz"),
+    );
+    let codes = errors(&repo);
+    assert!(
+        codes.contains(&"decision.history_deleted".to_string()),
+        "{codes:?}"
+    );
+    assert!(
+        codes.contains(&"decision.history_edited".to_string()),
+        "{codes:?}"
+    );
+}
+
+/// `ratify` after the proposal has already reached the default branch.
+#[test]
+fn ratify_works_when_the_proposal_is_already_on_the_default_branch() {
+    let origin = TestRepo::fixture("valid");
+    let rules = origin.read(ATTRIBUTION);
+    origin.write(
+        ATTRIBUTION,
+        &rules.replace("and stores it like any other Session.", "for 30 days."),
+    );
+    ok(origin.run(&[
+        "decide",
+        "--changes",
+        "ATTR-001",
+        "--summary",
+        "S.",
+        "--rationale",
+        "R.",
+    ]));
+    origin.commit("Propose a change to ATTR-001");
+
+    let clone = origin.clone_repo();
+    let id = decision_ids(&clone).pop().unwrap();
+    ok(clone.run(&["ratify", &id]));
+    assert!(errors(&clone).is_empty(), "{:?}", errors(&clone));
+    clone.commit("Ratify");
+    assert!(errors(&clone).is_empty(), "{:?}", errors(&clone));
+}
+
+fn decision_ids(repo: &TestRepo) -> Vec<String> {
+    repo.read(DECISIONS)
+        .lines()
+        .filter_map(|l| l.strip_prefix("- id: "))
+        .map(str::to_string)
+        .collect()
+}
+
+/// `ratify` sets `built: built` on a rule it agrees that is complete.
+#[test]
+fn ratify_builds_a_complete_rule() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("src/link.go", "package src\n\nfunc Link() {}\n");
+    ok(repo.run(&["link", "ATTR-002", "src/link.go#Link"]));
+    let rules = repo.read(ATTRIBUTION);
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace(
+            "agreed: proposed\nbuilt: planned\nterms: [Session, Commit]",
+            "agreed: proposed\nbuilt: planned\nmanual_check: \"Someone reads the commit log.\"\nterms: [Session, Commit]",
+        ),
+    );
+    let report = ok(repo.run(&["ratify", "D261014-x4p9t", "--json"])).json();
+    assert_eq!(report["built_rules"], serde_json::json!(["ATTR-002"]));
+    assert!(
+        repo.read(ATTRIBUTION)
+            .contains("agreed: agreed\nbuilt: built\nmanual_check")
+    );
+    assert!(errors(&repo).is_empty(), "{:?}", errors(&repo));
 }

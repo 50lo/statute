@@ -4,6 +4,7 @@ pub mod check;
 pub mod decide;
 pub mod init;
 pub mod link;
+pub mod ratify;
 pub mod review;
 pub mod rule_new;
 pub mod show;
