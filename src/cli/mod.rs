@@ -188,10 +188,12 @@ pub fn run() -> ExitCode {
                 retires: retires.clone(),
                 terms: terms.clone(),
             };
-            let draft = if *edit { edit_draft(&draft) } else { Ok(draft) };
-            draft
-                .and_then(commands::decide::run)
-                .map(|r| emit(json, &r, render::decide(&r), 0))
+            let report = if *edit {
+                decide_edited(&draft)
+            } else {
+                commands::decide::run(draft)
+            };
+            report.map(|r| emit(json, &r, render::decide(&r), 0))
         }
         Command::Status { area } => {
             commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))
@@ -208,9 +210,9 @@ pub fn run() -> ExitCode {
     })
 }
 
-/// Lets a person edit the draft in their editor. `cli` launches the editor; `commands` writes and
-/// reads the file.
-fn edit_draft(draft: &DecisionDraft) -> Result<DecisionDraft> {
+/// Lets a person edit the draft in their editor, then records it. `cli` launches the editor;
+/// `commands` writes, reads and removes the file.
+fn decide_edited(draft: &DecisionDraft) -> Result<commands::decide::DecideReport> {
     let editor = std::env::var("VISUAL")
         .or_else(|_| std::env::var("EDITOR"))
         .unwrap_or_else(|_| "vi".to_string());
@@ -221,11 +223,16 @@ fn edit_draft(draft: &DecisionDraft) -> Result<DecisionDraft> {
         .arg("sh")
         .arg(&path)
         .status();
-    let edited = commands::decide::read_draft_file(&path);
     match status {
-        Ok(s) if s.success() => edited,
-        Ok(s) => bail!("the editor `{editor}` exited with {s}; no decision was recorded"),
-        Err(e) => bail!("cannot run the editor `{editor}`: {e}"),
+        Ok(s) if s.success() => commands::decide::record_draft_file(&path),
+        Ok(s) => {
+            commands::decide::discard_draft_file(&path);
+            bail!("the editor `{editor}` exited with {s}; no decision was recorded")
+        }
+        Err(e) => {
+            commands::decide::discard_draft_file(&path);
+            bail!("cannot run the editor `{editor}`: {e}")
+        }
     }
 }
 

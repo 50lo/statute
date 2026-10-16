@@ -245,18 +245,39 @@ pub fn set_field(text: &str, block: Range<usize>, key: &str, value: &str) -> Opt
     None
 }
 
-/// The text with `key: value` added as the first line of a `yaml` block, at the indentation of the
-/// block's first content line. The caller re-parses the result.
+/// The text with `key: value` added to the mapping in a `yaml` block: as the first entry of a flow
+/// mapping (`{…}`), or as a line before the first key of a block mapping, at that key's indentation.
+/// Comments and a `---` marker before the mapping stay in front of it. The caller re-parses the result.
 pub fn insert_field(text: &str, block: Range<usize>, key: &str, value: &str) -> String {
-    let indent = text[block.clone()]
-        .lines()
-        .find(|l| !l.trim().is_empty())
-        .map_or(0, |l| l.len() - l.trim_start_matches(' ').len());
+    let mut at = block.start;
+    let mut first = None;
+    for line in text[block.clone()].split_inclusive('\n') {
+        let t = line.trim();
+        if !t.is_empty() && !t.starts_with('#') && t != "---" {
+            first = Some(line);
+            break;
+        }
+        at += line.len();
+    }
+    let Some(line) = first else {
+        return format!("{}{key}: {value}\n{}", &text[..at], &text[at..]);
+    };
+    let indent = line.len() - line.trim_start_matches(' ').len();
+    if line[indent..].starts_with('{') {
+        let open = at + indent + 1;
+        let empty = text[open..].trim_start().starts_with('}');
+        let sep = if empty { "" } else { ", " };
+        return format!(
+            "{}{key}: {value}{sep}{}",
+            &text[..open],
+            text[open..].trim_start_matches(' ')
+        );
+    }
     format!(
         "{}{}{key}: {value}\n{}",
-        &text[..block.start],
+        &text[..at],
         " ".repeat(indent),
-        &text[block.start..]
+        &text[at..]
     )
 }
 

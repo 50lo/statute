@@ -5,7 +5,7 @@ use crate::model::{
 use crate::repo::Repo;
 use crate::store;
 use crate::txn::{self, Txn};
-use anyhow::{Result, bail};
+use anyhow::{Result, anyhow, bail};
 use rand::RngExt;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -145,17 +145,31 @@ pub fn draft_file(draft: &DecisionDraft) -> Result<PathBuf> {
     txn::write_scratch("decision.yml", &store::render_draft(draft))
 }
 
-/// The draft after a person edited the file `draft_file` wrote. The file is removed.
-pub fn read_draft_file(path: &Path) -> Result<DecisionDraft> {
-    let text = Repo::read_scratch(path);
-    txn::remove_scratch(path);
-    match store::parse_draft(&text?) {
+/// Records the draft a person edited in the file `draft_file` wrote, and removes the file. A draft
+/// that cannot be recorded is kept, and the error says where; an empty summary discards it.
+pub fn record_draft_file(path: &Path) -> Result<DecideReport> {
+    let kept = || {
+        format!(
+            "no decision was recorded; your draft is kept in {}",
+            path.display()
+        )
+    };
+    let draft = match store::parse_draft(&Repo::read_scratch(path)?) {
         Ok(draft) if draft.summary.trim().is_empty() => {
+            txn::remove_scratch(path);
             bail!("the summary is empty; no decision was recorded")
         }
-        Ok(draft) => Ok(draft),
-        Err(e) => bail!("the edited decision does not parse: {e}; no decision was recorded"),
-    }
+        Ok(draft) => draft,
+        Err(e) => bail!("the edited decision does not parse: {e}; {}", kept()),
+    };
+    let report = run(draft).map_err(|e| anyhow!("{e:#}; {}", kept()))?;
+    txn::remove_scratch(path);
+    Ok(report)
+}
+
+/// Removes the file `draft_file` wrote, when the person gave up editing it.
+pub fn discard_draft_file(path: &Path) {
+    txn::remove_scratch(path);
 }
 
 /// Every rule and term the draft names exists, and none is in another proposed decision.

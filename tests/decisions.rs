@@ -198,3 +198,40 @@ fn decide_edit_records_the_edited_draft() {
     );
     assert_eq!(repo.read(DECISIONS), before);
 }
+
+/// A draft that cannot be recorded is kept, and the error names where.
+#[test]
+fn decide_edit_keeps_a_draft_it_cannot_record() {
+    let repo = TestRepo::fixture("valid");
+    let before = repo.read(DECISIONS);
+    let kept = |editor: &str, message: &str| {
+        let run = repo.run_env(
+            &[("EDITOR", editor)],
+            &[
+                "decide",
+                "--edit",
+                "--summary",
+                "Mine.",
+                "--rationale",
+                "R.",
+            ],
+        );
+        assert_eq!(run.code, 2, "{}", run.stdout);
+        assert!(run.stderr.contains(message), "{}", run.stderr);
+        let path = run.stderr.split("draft is kept in ").nth(1).unwrap().trim();
+        let draft = std::fs::read_to_string(path).unwrap();
+        assert!(draft.contains("Mine."), "{draft}");
+        std::fs::remove_file(path).unwrap();
+    };
+    // A YAML typo.
+    kept(
+        r#"f() { echo 'notes: "unclosed' >> "$1"; }; f"#,
+        "does not parse",
+    );
+    // A valid draft naming an unknown rule.
+    kept(
+        r#"f() { sed 's/^retires: \[\]/retires: [ATTR-009]/' "$1" > "$1.new" && mv "$1.new" "$1"; }; f"#,
+        "no rule ATTR-009",
+    );
+    assert_eq!(repo.read(DECISIONS), before);
+}

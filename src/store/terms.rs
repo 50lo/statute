@@ -134,6 +134,30 @@ mod tests {
     }
 
     #[test]
+    fn set_agreed_inserts_at_the_mapping_not_before_comments_or_markers() {
+        let set = |block: &str| {
+            let text = format!("## A\n\nD.\n\n```yaml\n{block}```\n");
+            set_agreed(&text, &parse(&text).terms[0], TermAgreed::Proposed).map(|t| {
+                t.replace("## A\n\nD.\n\n```yaml\n", "")
+                    .replace("```\n", "")
+            })
+        };
+        assert_eq!(
+            set("# identifier names\n  code: [A]\n").as_deref(),
+            Some("# identifier names\n  agreed: proposed\n  code: [A]\n")
+        );
+        assert_eq!(
+            set("---\ncode: [A]\n").as_deref(),
+            Some("---\nagreed: proposed\ncode: [A]\n")
+        );
+        assert_eq!(
+            set("{code: [A]}\n").as_deref(),
+            Some("{agreed: proposed, code: [A]}\n")
+        );
+        assert_eq!(set("{ }\n").as_deref(), Some("{agreed: proposed}\n"));
+    }
+
+    #[test]
     fn schema_errors_name_the_term() {
         let parsed = parse("## Session\n\nD.\n\n```yaml\nagreed: retired\n```\n");
         assert_eq!(parsed.problems[0].code, "term.schema");
