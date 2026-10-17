@@ -5,7 +5,7 @@
 //! block is for, without generics, `&` or a path, so methods of inherent and trait impls share one
 //! namespace. Trait items are `Trait.method`. `#Type` covers the type's own item, not its impl
 //! blocks; `#Trait` covers the whole trait. Items inside functions are not symbols. Outer attributes
-//! are part of the item. Comments, doc comments and trailing commas are dropped.
+//! are part of the item. Comments, doc comments and trailing commas outside macro tokens are dropped.
 
 use super::Missing;
 use super::syntax::{Input, Visit};
@@ -154,24 +154,31 @@ fn is_comment(node: Node) -> bool {
 }
 
 /// A `,` before a closing delimiter or at the end of its list, which rustfmt adds or removes when it
-/// reflows lines. The comma of a one-element tuple, `(x,)`, is code; so is a lone comma in a macro's
-/// tokens, where tuples cannot be told apart.
+/// reflows lines. The comma of a one-element tuple, `(x,)`, is code. So is every comma in a macro's
+/// or attribute's tokens, since a macro can match on a trailing comma.
 fn is_trailing_comma(node: Node) -> bool {
     if node.kind() != "," || node.child_count() != 0 {
+        return false;
+    }
+    let Some(parent) = node.parent() else {
+        return false;
+    };
+    let one_tuple = matches!(
+        parent.kind(),
+        "tuple_expression" | "tuple_type" | "tuple_pattern"
+    ) && (0..parent.named_child_count() as u32)
+        .filter_map(|i| parent.named_child(i))
+        .filter(|c| !is_comment(*c))
+        .count()
+        == 1;
+    if one_tuple || parent.kind() == "token_tree" {
         return false;
     }
     let mut next = node.next_sibling();
     while let Some(n) = next.filter(|n| is_comment(*n)) {
         next = n.next_sibling();
     }
-    let closes = next.is_none_or(|n| matches!(n.kind(), ")" | "]" | "}" | ">" | "|"));
-    let one_tuple = node.parent().is_some_and(|p| {
-        matches!(
-            p.kind(),
-            "tuple_expression" | "tuple_type" | "tuple_pattern" | "token_tree"
-        ) && p.named_child_count() == 1
-    });
-    closes && !one_tuple
+    next.is_none_or(|n| matches!(n.kind(), ")" | "]" | "}" | ">" | "|"))
 }
 
 #[cfg(test)]
@@ -276,6 +283,30 @@ mod tests {
             sign(fixture("parse_error.rs"), &["keep"]),
             vec![Err(Missing::ParseError)]
         );
+    }
+
+    fn one(source: &str, symbol: &str) -> Result<String, Missing> {
+        sign(source.as_bytes(), &[symbol]).remove(0)
+    }
+
+    /// A comment does not count as a tuple element: `(1, /* c */)` is still a one-element tuple.
+    #[test]
+    fn a_comment_does_not_hide_a_one_element_tuple() {
+        let f = |body: &str| one(&format!("fn f() -> (u8,) {{ {body} }}\n"), "f");
+        assert_ne!(f("(1, /* comment */)"), f("(1 /* comment */)"));
+        assert_eq!(f("(1,)"), f("(1, /* comment */)"));
+        let t = |ty: &str| one(&format!("fn f(x: {ty}) {{}}\n"), "f");
+        assert_eq!(t("(u8,)"), t("(u8, /* comment */)"));
+        assert_ne!(t("(u8, /* comment */)"), t("(u8 /* comment */)"));
+    }
+
+    /// A macro can match on a trailing comma, so commas in macro tokens are code.
+    #[test]
+    fn commas_in_macro_tokens_are_code() {
+        let f = |call: &str| one(&format!("fn f() -> u8 {{ {call} }}\n"), "f");
+        assert_ne!(f("choose!(1, 2)"), f("choose!(1, 2,)"));
+        let a = |attr: &str| one(&format!("{attr}\nstruct S;\n"), "S");
+        assert_ne!(a("#[derive(Debug, Clone)]"), a("#[derive(Debug, Clone,)]"));
     }
 
     #[test]

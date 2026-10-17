@@ -33,7 +33,7 @@
 {"source": "LINKS-001", "target": "src/fingerprint/go.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "ffa9bda36ce36a9486b75318aad673b24ac32386ff86a54ca87cd79cf5f54c7a"}
 {"source": "LINKS-001", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0ee0d9d266ba8b2056d34b5491108bbec65bf67850d41fe23885f2409c287526"}
 {"source": "LINKS-001", "target": "src/fingerprint/python.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "35ba5ff96038aecb63e48b62e58562736db39ec164f87880123a03775e8695ec"}
-{"source": "LINKS-001", "target": "src/fingerprint/rust.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "7bbaca0c4e05993ee094b8b691a5618b48912665dcd37c22f04eff044e4ff19f"}
+{"source": "LINKS-001", "target": "src/fingerprint/rust.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "3fcc59bca1971772e1b8d4c6de5a0c2bf33538e77b9aaedf56c7cc284bd9c729"}
 {"source": "LINKS-001", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d077c9d536120aaeaf8c5571ddd3f749ab5de39b177d5e0028a8900d004d7a2b"}
 {"source": "LINKS-001", "target": "tests/symbol_parse_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "3a40ee864d0305587f0e179953e7d4739f6cacac6fbbc4cd29f929b939803d5c"}
 {"source": "LINKS-002", "target": "src/commands/check.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "50da719684daeb9d71026c7c99c48250065852b7045c6f10481710f2b0ba738e"}

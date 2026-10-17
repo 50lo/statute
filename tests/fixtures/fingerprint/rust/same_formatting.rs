@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// Decides which Sessions contributed to a commit.
-#[derive(Debug, Clone,)]
+#[derive(Debug, Clone)]
 pub struct Publisher<T> { threshold: usize, items: Vec<T> }
 
 impl<T: Clone> Publisher<T> {
@@ -20,7 +20,7 @@ impl<T: Clone> Publisher<T> {
 }
 
 impl<T> fmt::Display for Publisher<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{} items", self.items.len(),) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{} items", self.items.len()) }
 }
 
 /// Something that can decide.
