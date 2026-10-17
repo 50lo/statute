@@ -215,3 +215,39 @@ not: []
 aliases: []
 avoid: []
 ```
+
+## Fingerprint
+
+A hash of a link target, computed by the link's mode, recorded in `statute.lock` as `sig`. Symbol modes ignore comments and formatting, so only a change in meaning alters the fingerprint.
+
+```yaml
+agreed: proposed
+code: [fingerprint::sign, sig]
+not: []
+aliases: []
+avoid: [checksum]
+```
+
+## Draft rule
+
+A proposed rule that no decision establishes yet. It is a pending item that `status` lists, not a finding.
+
+```yaml
+agreed: proposed
+code: [is_draft]
+not: []
+aliases: []
+avoid: []
+```
+
+## Proposed decision
+
+A decision that a person has not approved yet. Its rules and terms stay proposed until it is ratified; it can be edited or deleted, and it never blocks a merge.
+
+```yaml
+agreed: proposed
+code: [DecisionStatus::Proposed]
+not: []
+aliases: [pending decision]
+avoid: []
+```
