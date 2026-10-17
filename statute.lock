@@ -15,11 +15,11 @@
 {"source": "CORE-004", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
 {"source": "DEC-001", "target": "src/check/decisions.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "fbc661127598f478458978a4161c1ff7d056f50cdf9051546f80115d20cffd82"}
 {"source": "DEC-001", "target": "src/commands/decide.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "eb1a50a13899a3538513640208198515c4d904e9ad03699b23beee2f98ad25ac"}
-{"source": "DEC-001", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "0eb642c30bdeba383a5932644f61e3e195a04e764a713d4c58670a88a4206801"}
+{"source": "DEC-001", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
 {"source": "DEC-002", "target": "src/commands/ratify.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "69f7d30375ecb50a135d5e7891804af0aba0da0c7382426adc581e9f74ff42dc"}
-{"source": "DEC-002", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "0eb642c30bdeba383a5932644f61e3e195a04e764a713d4c58670a88a4206801"}
+{"source": "DEC-002", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
 {"source": "DEC-003", "target": "src/commands/ratify.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "69f7d30375ecb50a135d5e7891804af0aba0da0c7382426adc581e9f74ff42dc"}
-{"source": "DEC-003", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "0eb642c30bdeba383a5932644f61e3e195a04e764a713d4c58670a88a4206801"}
+{"source": "DEC-003", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
 {"source": "GAPS-001", "target": "src/commands/status.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "132357604e34c1a3088a1e494271b9a88752401a493b01bb106e0f1c40e163c9"}
 {"source": "GAPS-001", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d077c9d536120aaeaf8c5571ddd3f749ab5de39b177d5e0028a8900d004d7a2b"}
 {"source": "GAPS-001", "target": "tests/gaps_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "e43f0db845c771a1e52ba2bc16e905dfc0dc565c0e6fc0c0a095d680c0ab499c"}

@@ -37,7 +37,7 @@ boundary:
 
 # DEC-003 Ratify writes nothing when its items would have errors
 
-`statute ratify` must refuse and write nothing when `check` would report an error about the decisions it ratifies or their rules and terms afterwards, including a rule that would become agreed while using a term that is not agreed.
+`statute ratify` must refuse and write nothing when `check` would report an error about the decisions it ratifies or their rules and terms afterwards, including a rule that would become agreed while using a term that is not agreed. Stale and missing links never block it, because agreement is recorded separately from whether the code still matches.
 
 ```yaml
 agreed: proposed          # proposed | agreed | retired
@@ -49,5 +49,6 @@ protects:
   - Ratifying a decision that establishes a rule without protected or boundary cases is refused, and the decision and rule files are unchanged.
   - Ratifying a rule whose term is proposed in another decision is refused.
 boundary:
-  - A stale link on a rule the decision does not list does not block `ratify`.
+  - A stale or missing link on a rule the decision lists does not block `ratify`, so a rule can be approved while its code is mid-change, and retired after its code was deleted.
+  - An error about a rule the decision does not list does not block `ratify`.
 ```

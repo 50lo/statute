@@ -191,3 +191,36 @@ fn dec_003_errors_about_other_items_do_not_block_ratify() {
     ok(repo.run(&["ratify", PROPOSED]));
     assert_eq!(shown(&repo, "ATTR-002")["agreed"], "agreed");
 }
+
+#[test]
+fn dec_003_stale_and_missing_links_of_the_ratified_rules_do_not_block_ratify() {
+    let repo = TestRepo::fixture("valid");
+    repo.write(
+        "attribution/collector.go",
+        "package attribution\n\nfunc Keep() bool { return true }\n\nfunc Link() bool { return false }\n",
+    );
+    ok(repo.run(&["link", "ATTR-002", "attribution/collector.go#Link"]));
+    ok(repo.run(&["link", "ATTR-002", "attribution/collector.go"]));
+    ok(repo.run(&["link", "ATTR-001", "attribution/collector.go#Keep"]));
+    repo.commit("Base");
+
+    // The rule is approved while its code is mid-change: one link stale, one missing.
+    repo.write(
+        "attribution/collector.go",
+        "package attribution\n\nfunc Keep() bool { return true }\n\nfunc Contribute() bool { return false }\n",
+    );
+    assert_eq!(
+        repo.run(&["check", "--json"]).error_codes(),
+        ["link.stale", "link.missing"]
+    );
+    ok(repo.run(&["ratify", PROPOSED]));
+    assert_eq!(shown(&repo, "ATTR-002")["agreed"], "agreed");
+
+    // Retiring a rule whose code was deleted: its links are missing, and ratify removes them.
+    repo.remove("attribution/collector.go");
+    let retire = new_decision(&repo, &["--retires", "ATTR-001"]);
+    ok(repo.run(&["ratify", &retire]));
+    let retired = shown(&repo, "ATTR-001");
+    assert_eq!(retired["agreed"], "retired");
+    assert!(!repo.read("statute.lock").contains("\"ATTR-001\""));
+}
