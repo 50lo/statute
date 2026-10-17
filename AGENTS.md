@@ -6,6 +6,13 @@ Statute is a Rust CLI and agent plugin that keeps a product's rules written down
 - Behaviour, file formats, commands: [docs/Statute-spec.md](docs/Statute-spec.md) (source of truth)
 - Code structure: [docs/Architecture.md](docs/Architecture.md)
 
+## Issue tracker
+
+This project uses Beans (`beans`) as its issue tracker. Keep gap details in a Bean
+tagged `statute` and `gap`, then record its ID with `statute gap open RULE --ref st-xxxx`.
+After verifying that the rule holds, close the gap with `statute gap close st-xxxx`
+and complete the Bean.
+
 ## Module layering
 
 Statute is one crate, so the compiler does not stop a module from importing any other. These rules keep the layers apart. Each module may import only the modules listed for it (and external crates). `tests/layering.rs` reads this table and fails on an import it does not allow, so keep its format.
