@@ -105,17 +105,13 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
     }
 
     let now = jiff::Timestamp::now();
-    let date = now.strftime("%y%m%d").to_string();
-    let id = loop {
-        let mut rng = rand::rng();
-        let random: String = (0..5)
-            .map(|_| ids::RANDOM_ALPHABET[rng.random_range(0..ids::RANDOM_ALPHABET.len())] as char)
-            .collect();
-        let id = format!("D{date}-{random}");
-        if !decisions.iter().any(|d| d.id == id) {
-            break id;
-        }
-    };
+    let mut rng = rand::rng();
+    let id = ids::new_dated_id(
+        'D',
+        &now.strftime("%y%m%d").to_string(),
+        |id| decisions.iter().any(|d| d.id == id),
+        |n| rng.random_range(0..n),
+    );
     decisions.push(Decision {
         id: id.clone(),
         timestamp: now.strftime("%Y-%m-%dT%H:%M:%SZ").to_string(),

@@ -260,7 +260,7 @@ pub struct Gap {
     pub status: GapStatus,
     pub opened_at: String,
     /// Present for a gap kept in the gaps file; absent for a tracker issue.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 

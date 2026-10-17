@@ -245,6 +245,12 @@ pub fn status(r: &StatusReport) -> String {
             if rule.incomplete {
                 notes.push("incomplete".to_string());
             }
+            if rule.broken {
+                notes.push("broken".to_string());
+            }
+            if !rule.open_gaps.is_empty() {
+                notes.push(format!("open gaps: {}", rule.open_gaps.join(", ")));
+            }
             for (targets, what) in [(&rule.stale, "stale"), (&rule.missing, "missing")] {
                 if !targets.is_empty() {
                     notes.push(format!("{what}: {}", targets.join(", ")));
