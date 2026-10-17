@@ -22,7 +22,7 @@ src/
   model/             Rule, Term, Decision, Gap, Link, Mode, IDs, enums for agreed/built/status
   store/             parse each file kind from text and render edits back to text (below); no I/O
   git.rs             the only module that runs `git`
-  fingerprint/       bytes, go, python (tree-sitter); takes bytes, no I/O
+  fingerprint/       bytes, go, python, rust (tree-sitter); takes bytes, no I/O
   check/             one function per check; Finding with a stable code
   state.rs           derived state: in force, draft, incomplete, broken, stale, missing
   impact.rs          affected rules and terms against the base; verdicts for "Rule impact"
@@ -116,7 +116,7 @@ The `ChangeSet` type exposes the changed paths. It is the place to add diff hunk
 ## 6. Fingerprints
 
 ```rust
-enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1 }
+enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1, RustAstSha256V1 }
 ```
 
 - `Mode` lives in `model`, because every link stores its mode; `fingerprint` imports it from there.
@@ -132,10 +132,11 @@ Swift and TypeScript (milestone 7) are new variants with the same shape.
 The hash input decides how many false alarms and missed changes links produce, so each mode fixes it:
 
 - **Tokens, not text.** A symbol's hash covers the text of its leaf tokens in source order, each followed by a separator byte. Whitespace between tokens is not part of the input, so formatting does not change the hash.
-- **Comments.** Comment tokens are dropped. In Go, `//go:` directives directly above the declaration and the file's `//go:build` line are hashed with the symbol. In Python, a docstring (a string literal that is the first statement of a function or class body) is dropped like a comment.
+- **Comments.** Comment tokens are dropped. In Go, `//go:` directives directly above the declaration and the file's `//go:build` line are hashed with the symbol. In Python, a docstring (a string literal that is the first statement of a function or class body) is dropped like a comment. In Rust, doc comments are comments and are dropped; `#[doc = …]` attributes are kept.
 - **No node kinds.** Tree-sitter node kind names are not part of the input, so a grammar update that renames node kinds does not change hashes.
 - **Go symbols.** `Func`, `Type` and `Type.Method`. A method's receiver type is named without `*` and without type parameters, so `func (p *Publisher[T]) Decide` is `Publisher.Decide`. `#Type` covers the type declaration only, not its methods.
 - **Python symbols.** `func`, `Class` and `Class.method`, with nested classes as dotted paths. Decorators are part of the symbol. `#Class` covers the whole class, methods included.
+- **Rust symbols.** Functions, and types (struct, enum, union, trait, type alias) as `func` and `Type`; functions in `impl` and trait bodies as `Type.method`; items of inline modules as dotted paths, such as `tests.decides`. An impl's type is named without generics, `&` or a path, so `impl<T> fmt::Display for &billing::Publisher<T>` adds methods to `Publisher`; inherent and trait impls share that namespace, and a name defined in two impls is ambiguous. `#Type` covers the type's own item, not its impl blocks; `#Trait` covers the whole trait. Constants, statics, macros, modules themselves and items inside functions are not symbols. Outer attributes directly above an item are part of it. A trailing comma before a closing delimiter is formatting and is dropped, except in a one-element tuple.
 
 Grammar crate versions are pinned. Each mode has golden fixtures: edits that must keep the hash (a comment, reformatting, a change to another declaration) and edits that must change it (a body or signature change, a Go directive). A change to the hash input that alters any golden hash is a new mode version, never an edit to an existing one.
 
