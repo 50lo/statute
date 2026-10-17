@@ -218,7 +218,7 @@ avoid: []
 
 ## Fingerprint
 
-A hash of a link target, computed by the link's mode, recorded in `statute.lock` as `sig`. Symbol modes ignore comments and formatting, so only a change in meaning alters the fingerprint.
+A hash of a link target, computed by the link's mode, recorded in `statute.lock` as `sig`. Symbol modes ignore comments and formatting; any other change to the target's code alters the fingerprint, even when behavior stays the same.
 
 ```yaml
 agreed: proposed
