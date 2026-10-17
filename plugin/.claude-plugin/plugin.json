@@ -1,0 +1,6 @@
+{
+  "name": "statute",
+  "version": "0.1.0",
+  "description": "Keeps a product's rules written down, linked to code, and checked on every change. Needs the statute CLI.",
+  "homepage": "https://github.com/50lo/statute"
+}
