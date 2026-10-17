@@ -50,6 +50,12 @@ Implementation is still in progress. This branch supports `init`, `rule new`, `s
 
 Use `statute show` to inspect linked rules and terms, `statute decide` to record proposed decisions, and `statute ratify` to record a person's explicit approval of specific decisions. Report workflow steps that the current build cannot perform. Agreement and build states are set by the CLI.
 
+## Decision-making principles
+
+Apply these when a design choice trades one risk against another.
+
+1. A missed behaviour change is worse than a false alarm. When a change might alter behaviour, report it (for example, make the link stale) rather than treat it as formatting.
+
 <!-- statute:begin -->
 ## Statute
 
