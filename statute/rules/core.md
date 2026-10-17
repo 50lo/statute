@@ -8,10 +8,16 @@ An agreed rule must describe one requirement that a person or test can check. It
 
 ```yaml
 agreed: agreed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: ""
 terms: [Rule, Protected case, Boundary case]
 exceptions: []
+manual_check: >-
+  Before approving a new or changed rule, a person reads its statement and cases.
+  Confirm that it states one requirement, that someone can describe behavior that
+  satisfies it and behavior that violates it, and that its protected and boundary
+  cases match its intended scope. Ask for a rewrite or split before approval if
+  the requirement is vague, combines unrelated requirements, or has misleading cases.
 protects:
   - An agreed rule without a protected case or a boundary case is reported as invalid.
   - A rule that combines unrelated requirements must be split before it becomes agreed.
@@ -19,13 +25,17 @@ boundary:
   - A draft can remain proposed while its statement and cases are being written.
 ```
 
+Partial automated coverage is in `tests/core_rule_cases.rs`. Its test link is
+deferred until Beans bug `st-8j2x` supports rules that need both automated tests
+and a manual check.
+
 # CORE-002 Agreement and implementation are recorded separately
 
 Agreement status and build state must record separate facts. Approval alone must not mark a rule built, and implementation alone must not mark it agreed.
 
 ```yaml
 agreed: agreed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: ""
 terms: [Rule, Agreement status, Build state, Approval]
 exceptions: []
@@ -61,15 +71,25 @@ New rules and terms written by an agent must start as proposed. The agent must n
 
 ```yaml
 agreed: agreed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Agreement status]
 exceptions: []
+manual_check: >-
+  When changing the agent instructions for adding rules or terms, ask the agent
+  to add a rule and a term for behavior that already has implementation and tests.
+  Before giving approval, a person inspects the additions, the proposed decision
+  and the agent's response. Confirm that the additions are proposed and that the
+  agent does not call them agreed. After approving that specific decision, confirm
+  that ratification agrees only the rules and terms named by the approved decisions.
 protects:
   - A rule or term created by an agent starts as proposed even when the implementation and tests already exist.
 boundary:
   - A proposed rule or term can become agreed after a person explicitly approves the decision that names it.
 ```
+
+Partial automated coverage is in `tests/core_lifecycle.rs`. Its test link for
+this rule is deferred until Beans bug `st-8j2x` is fixed.
 
 # CORE-005 Only a person can approve a decision
 
@@ -81,9 +101,18 @@ built: planned            # planned | built
 scope: ""
 terms: [Decision, Approval]
 exceptions: []
+manual_check: >-
+  Before each ratification, a person checks the conversation for explicit human
+  approval of every decision the agent intends to ratify. Match the approval to
+  each decision's ID or unambiguous proposed contents. Passing tests, the agent's
+  own assessment and approval of another decision do not count. If approval is
+  missing or unclear for any selected decision, obtain it before ratifying that decision.
 protects:
   - An agent's confirmation that tests pass does not count as human approval of a decision.
   - Approval of one decision does not authorize the agent to activate another decision.
 boundary:
   - After a person explicitly approves a specific decision, the agent may run statute ratify for that decision to record the approval.
 ```
+
+Partial automated coverage is in `tests/core_lifecycle.rs`. Its test link for
+this rule is deferred until Beans bug `st-8j2x` is fixed.

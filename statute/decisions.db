@@ -46,3 +46,20 @@
   retires: []
   terms:
   - Link
+- id: D261017-q54ty
+  timestamp: 2026-10-17T00:30:57Z
+  actor: user
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-17T00:39:26Z
+  summary: Add manual checks for rule meaning, agent proposals and human approval, and strengthen the corresponding mechanical tests.
+  rationale: Automated tests can check case metadata and CLI lifecycle transitions, but cannot judge whether a requirement is meaningful, an agent presents work honestly, or a person explicitly approved a specific decision. Keep partial mechanical tests unlinked until mixed automated and manual verification is supported; track that limitation as a high priority Beans bug. Preserve the existing rule statements and fully automated coverage for CORE-002 and LINKS-001.
+  establishes: []
+  changes:
+  - CORE-001
+  - CORE-004
+  - CORE-005
+  retires: []
+  terms: []

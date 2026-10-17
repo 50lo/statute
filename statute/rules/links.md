@@ -8,7 +8,7 @@ A symbol link is missing when its file does not parse cleanly, even if the linke
 
 ```yaml
 agreed: proposed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: Links using a symbol fingerprint mode.
 terms: [Link]
 exceptions: []
