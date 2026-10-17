@@ -7,7 +7,7 @@ prefix: GAPS
 A rule that is not retired, has `built: built` and has at least one open gap must be reported as broken. Broken is derived from the gaps file and never stored in the rule.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule, Gap, Build state]

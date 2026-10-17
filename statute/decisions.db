@@ -91,8 +91,11 @@
 - id: D261017-rlpdd
   timestamp: 2026-10-17T06:06:51Z
   actor: agent
-  status: proposed
-  ratified_by: null
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-17T21:24:06Z
   summary: 'Record the missing-link, broken-rule and decision-lifecycle guarantees: a gone or ambiguous target is missing until relinked, a built rule with an open gap is broken, a rule or term is in at most one proposed decision, and ratify activates exactly the named decisions or writes nothing.'
   rationale: 'These checks keep a broken or unapproved state from being cleared quietly: review cannot clear a missing link, broken follows the gaps file, overlapping proposals cannot be approved by accident, and ratify never agrees more than the person approved or leaves an invalid result. Each area has a dedicated contract test. Fingerprint, Draft rule and Proposed decision are the vocabulary the CLI and these rules use.'
   establishes:

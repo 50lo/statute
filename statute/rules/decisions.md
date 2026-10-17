@@ -7,7 +7,7 @@ prefix: DEC
 A rule or term must not be listed in more than one proposed decision. `decide` refuses a decision that lists a rule or term already in a proposed decision, and `check` reports an overlap that arrives through a merge.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Proposed decision]
@@ -24,7 +24,7 @@ boundary:
 `statute ratify` must make active only the decisions named on its command line, and change the agreement status only of the rules and terms those decisions list. Other proposed decisions and their rules and terms stay proposed.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Decision, Proposed decision, Agreement status, Approval]
@@ -40,7 +40,7 @@ boundary:
 `statute ratify` must refuse and write nothing when `check` would report an error about the decisions it ratifies or their rules and terms afterwards, including a rule that would become agreed while using a term that is not agreed. Stale and missing links never block it, because agreement is recorded separately from whether the code still matches.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Decision, Rule, Term, Approval]

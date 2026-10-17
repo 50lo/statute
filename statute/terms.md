@@ -221,7 +221,7 @@ avoid: []
 A hash of a link target, computed by the link's mode, recorded in `statute.lock` as `sig`. Symbol modes ignore comments and formatting; any other change to the target's code alters the fingerprint, even when behavior stays the same.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [fingerprint::sign, sig]
 not: []
 aliases: []
@@ -233,7 +233,7 @@ avoid: [checksum]
 A proposed rule that no decision establishes yet. It is a pending item that `status` lists, not a finding.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [is_draft]
 not: []
 aliases: []
@@ -245,7 +245,7 @@ avoid: []
 A decision that a person has not approved yet. The rules it establishes or changes and the terms it lists stay proposed until it is ratified, while a rule it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [DecisionStatus::Proposed]
 not: []
 aliases: [pending decision]
