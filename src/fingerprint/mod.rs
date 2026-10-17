@@ -2,6 +2,7 @@
 
 mod go;
 mod python;
+mod rust;
 mod syntax;
 
 use crate::model::Mode;
@@ -65,6 +66,7 @@ pub fn sign(
             Mode::BytesSha256V1 => vec![Err(Missing::NoSymbol); names.len()],
             Mode::GoAstSha256V1 => go::sign(bytes, &names),
             Mode::PythonAstSha256V1 => python::sign(bytes, &names),
+            Mode::RustAstSha256V1 => rust::sign(bytes, &names),
         };
         for ((i, _), hash) in wanted.iter().zip(hashes) {
             results[*i] = hash;
@@ -82,6 +84,7 @@ pub fn mode_for(file: &str, symbol: Option<&str>) -> Option<Mode> {
     match file.rsplit_once('.').map(|(_, ext)| ext) {
         Some("go") => Some(Mode::GoAstSha256V1),
         Some("py") => Some(Mode::PythonAstSha256V1),
+        Some("rs") => Some(Mode::RustAstSha256V1),
         _ => None,
     }
 }
