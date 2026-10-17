@@ -43,5 +43,5 @@
 {"source": "LINKS-003", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
 {"source": "LINKS-003", "target": "tests/review_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "7044e9e164087a7565d97dc85dc969c1c8c69a3a515783305448dcf30b37c4bf"}
 {"source": "LINKS-004", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
-{"source": "LINKS-004", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "7344311a6034c341970062365ba246cca217d72961755693b0af7154ccb7b1cc"}
+{"source": "LINKS-004", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0ee0d9d266ba8b2056d34b5491108bbec65bf67850d41fe23885f2409c287526"}
 {"source": "LINKS-004", "target": "tests/missing_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "b0f4f7061d921ef21dee89e2c4a3e6d26249fe5ea1a8ad07cf5b55801409ee68"}
