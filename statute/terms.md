@@ -242,7 +242,7 @@ avoid: []
 
 ## Proposed decision
 
-A decision that a person has not approved yet. Its rules and terms stay proposed until it is ratified; it can be edited or deleted, and it never blocks a merge.
+A decision that a person has not approved yet. The rules it establishes or changes and the terms it lists stay proposed until it is ratified, while a rule it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
 
 ```yaml
 agreed: proposed
