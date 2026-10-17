@@ -224,6 +224,7 @@ Fingerprint modes:
 | `bytes-sha256-v1` | any file | Fallback for every language |
 | `go-ast-sha256-v1` | `file.go#Func`, `#Type`, `#Type.Method` | Ignores comments and formatting, except `//go:` directives, including the file's `//go:build` line |
 | `python-ast-sha256-v1` | `file.py#func`, `#Class`, `#Class.method` | Ignores comments, docstrings and formatting. Ported from nodrift |
+| `rust-ast-sha256-v1` | `file.rs#func`, `#Type`, `#Type.method`, `#module.func` | Ignores comments, doc comments, trailing commas and formatting; attributes count |
 
 The symbol modes are built on tree-sitter (5.1). Each mode's hash input is fixed by golden fixtures; a change that alters a fingerprint is a new mode version. Later modes (Swift, TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
 
@@ -316,7 +317,7 @@ The CLI is written in Rust and ships as one static binary per platform. Every de
 | YAML: metadata blocks, frontmatter, decisions, gaps, `statute.yml` | `yaml_serde` | The YAML organization's maintained fork of `serde_yaml` |
 | JSON: `statute.lock` (JSON Lines), `--json` | `serde_json` | |
 | Markdown: rule and term sections, frontmatter | `pulldown-cmark` | Byte offsets for headings and fenced blocks |
-| Symbol fingerprints | `tree-sitter` with `tree-sitter-go`, `tree-sitter-python`; later Swift and TypeScript | Grammars are C, compiled into the binary |
+| Symbol fingerprints | `tree-sitter` with `tree-sitter-go`, `tree-sitter-python`, `tree-sitter-rust`; later Swift and TypeScript | Grammars are C, compiled into the binary |
 | Hashing | `sha2` | |
 | Changed files, base versions of Statute files, approver name | the `git` command | `git diff -z`, plus `git ls-files --others --exclude-standard -z` for untracked files; base files through one `git cat-file --batch` process |
 | Repository walk for `check --all` | `ignore` | ripgrep's parallel walker; respects `.gitignore` |

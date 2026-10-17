@@ -85,3 +85,13 @@ fn go_symbol_is_missing_for_a_syntax_error_elsewhere_but_bytes_still_work() {
         "go-ast-sha256-v1",
     );
 }
+
+#[test]
+fn rust_symbol_is_missing_for_a_syntax_error_elsewhere_but_bytes_still_work() {
+    syntax_error_outside_the_symbol(
+        "src/example.rs",
+        "fn keep() -> u8 {\n    1\n}\n",
+        "fn keep() -> u8 {\n    1\n}\n\nfn broken( {\n}\n",
+        "rust-ast-sha256-v1",
+    );
+}
