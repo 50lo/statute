@@ -7,7 +7,7 @@ prefix: LINKS
 A symbol link is missing when its file does not parse cleanly, even if the linked declaration itself is valid.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Links using a symbol fingerprint mode.
 terms: [Link]
@@ -23,7 +23,7 @@ boundary:
 `check` must report a link as stale when the current fingerprint of its target differs from the fingerprint recorded in `statute.lock`. This applies to code links and test links alike.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Links whose target changed since the base, or every link with `check --all`.
 terms: [Link, Stale link, Code link, Test link, Base]
@@ -40,7 +40,7 @@ boundary:
 The recorded fingerprint of an existing link must change only through `statute review` with a verdict that `review` accepts: `ok`, `changed D…` when the decision lists the rule in `changes` or `retires`, or `gap REF` when the rule has that open gap. A refused verdict leaves `statute.lock` unchanged.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Link, Stale link, Rule review, Decision, Gap]

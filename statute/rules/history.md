@@ -7,7 +7,7 @@ prefix: HIST
 `check` must report an error when a decision that is active in the base is edited or deleted. A wrong active decision is corrected by a new decision that changes or retires its rules.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Decisions that are active in the base.
 terms: [Decision, Base]
@@ -24,7 +24,7 @@ boundary:
 When a rule is agreed in the base, `check` must report an error if its statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` or `manual_check` changes, or the rule is removed, unless a decision that is proposed or became active since the base lists the rule in `changes`.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Rules that are agreed in the base.
 terms: [Rule, Decision, Agreement status, Base]
@@ -41,7 +41,7 @@ boundary:
 When a term is agreed in the base, `check` must report an error if its definition, `code` or `not` changes, or the term is removed, unless a decision that is proposed or became active since the base lists the term in `terms`.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Terms that are agreed in the base.
 terms: [Term, Decision, Agreement status, Base]

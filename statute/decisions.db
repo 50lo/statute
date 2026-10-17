@@ -36,8 +36,11 @@
 - id: D261017-6x46f
   timestamp: 2026-10-16T13:16:07Z
   actor: user
-  status: proposed
-  ratified_by: null
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-17T05:51:42Z
   summary: Clarify symbol-link parsing and correct Link's code-name metadata.
   rationale: Symbol fingerprint modes require a clean parse of the whole file; byte fingerprints do not parse source syntax. Replace the misleading JSON-as-invalid-Python example with an actual syntax-error case and a byte-mode boundary. Reference is a conceptual distinction, not an existing code name, so keep it in prose rather than the not list.
   establishes: []
@@ -66,8 +69,11 @@
 - id: D261017-4zy7n
   timestamp: 2026-10-17T05:28:33Z
   actor: agent
-  status: proposed
-  ratified_by: null
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-17T05:51:42Z
   summary: 'Record the history and stale-link guarantees that let Statute keep rules true: active decisions are immutable, agreed rules and terms change only with a decision, changed targets make links stale, and only a review verdict refreshes them.'
   rationale: These are the checks behind the one-pager's promise that nobody quietly edits a rule to match the code and that a change to linked code or tests brings the rule up for review. Each rule gets a dedicated contract test so its test link changes only when its own cases change. Base, Stale link and Missing link are the vocabulary these rules and the CLI output use.
   establishes:
