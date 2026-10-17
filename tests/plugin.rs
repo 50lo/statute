@@ -95,8 +95,70 @@ fn manifests_parse_and_the_hook_command_exists() {
     let command = hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
         .as_str()
         .unwrap();
-    let script = command.strip_prefix("${CLAUDE_PLUGIN_ROOT}/").unwrap();
-    assert!(plugin(script).is_file(), "{script}");
+    assert!(command.contains("hooks/stop.sh"), "{command}");
+}
+
+/// Claude Code runs the hook command through a shell, so the command must work when the plugin is
+/// installed under a path with spaces.
+#[test]
+fn hook_command_runs_from_a_path_with_spaces() {
+    let hooks: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(plugin("hooks/hooks.json")).unwrap())
+            .unwrap();
+    let command = hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
+        .as_str()
+        .unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("plugin with spaces");
+    std::fs::create_dir_all(root.join("hooks")).unwrap();
+    std::fs::copy(plugin("hooks/stop.sh"), root.join("hooks/stop.sh")).unwrap();
+    let mut child = Command::new("sh")
+        .args(["-c", command])
+        .current_dir(dir.path())
+        .env("CLAUDE_PLUGIN_ROOT", &root)
+        .stdin(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(INPUT.as_bytes())
+        .unwrap();
+    assert!(child.wait().unwrap().success(), "{command}");
+}
+
+/// A deleted target with no replacement: the `change` skill removes the link, and the commands it
+/// names for the verdict then succeed.
+#[test]
+fn change_skill_handles_a_deleted_target() {
+    let skill = std::fs::read_to_string(plugin("skills/change/SKILL.md")).unwrap();
+    assert!(
+        skill.contains("deleted") && skill.contains("`statute link RULE OLD_TARGET --remove`"),
+        "the change skill has no path for a deleted target"
+    );
+
+    let repo = linked_repo();
+    repo.remove("billing/refund.go");
+    let check = repo.run(&["check", "--json"]);
+    assert!(check.codes().contains(&"link.missing".to_string()));
+    let gap = repo.run(&["gap", "open", "BILL-001", "--note", "Approve was deleted."]);
+    assert_eq!(gap.code, 0, "{}", gap.stderr);
+    let id = gap.stdout.trim();
+    let review = repo.run(&["review", "BILL-001", "gap", id]);
+    assert_eq!(review.code, 2, "review refuses while the link is missing");
+
+    let remove = repo.run(&["link", "BILL-001", "billing/refund.go#Approve", "--remove"]);
+    assert_eq!(remove.code, 0, "{}", remove.stderr);
+    let review = repo.run(&["review", "BILL-001", "gap", id]);
+    assert_eq!(review.code, 0, "{}", review.stderr);
+    let check = repo.run(&["check", "--json"]);
+    assert!(
+        !check.codes().iter().any(|c| c.starts_with("link.")),
+        "{}",
+        check.stdout
+    );
+    assert_eq!(stop_hook(&repo.path("."), INPUT), "");
 }
 
 /// Each skill names itself as its directory does, and every `statute` command the plugin mentions

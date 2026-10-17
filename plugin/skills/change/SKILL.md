@@ -13,6 +13,13 @@ First run `statute --version`. If the command is missing, stop and tell the user
 
 1. Run `statute check --json`. Findings with code `link.stale` or `link.missing` name a `rule` and a `target`. Fix any other errors it reports first.
 2. For each `link.missing` target: if the code moved or was renamed, find its new location, then run `statute link RULE NEW_TARGET` (add `--test` for a test link) and `statute link RULE OLD_TARGET --remove`. Relinking says the rule still holds, so check the rule as in step 3 before you relink. If the file no longer parses, fix the file.
+
+   If the target was deleted and nothing replaces it, `review` refuses while the link is missing. Check the rule as in step 3 against what remains, then run `statute link RULE OLD_TARGET --remove` and record the outcome:
+   - The behaviour still exists elsewhere: link the code or test that has it now.
+   - The behaviour was removed on purpose: use the `decide` skill to propose changing or retiring the rule.
+   - The behaviour was lost by mistake: open a gap (below).
+
+   Removing a rule's last code or test link leaves a built rule incomplete, and `check` reports it until the rule is relinked, changed or retired. Leave that finding visible and tell the user.
 3. For each rule with stale or missing links, run `statute show RULE` and read its statement, terms, `protects` and `boundary` cases. Read the changed code at every linked target. Try each protected and boundary case against the new code. Then decide which one applies:
    - **Holds**: every case still behaves as the rule says. Run `statute review RULE ok`.
    - **Changing on purpose**: the user asked for behaviour that the rule forbids. Name the rule to the user, use the `decide` skill to propose the change, then run `statute review RULE changed D…` with the new decision's ID.
