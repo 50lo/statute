@@ -1,7 +1,7 @@
 use super::SCHEMA;
 use crate::fingerprint;
 use crate::impact;
-use crate::model::{Agreed, Built, Impact, Link};
+use crate::model::{Agreed, Built, GapStatus, Impact, Link};
 use crate::repo::Repo;
 use crate::state::{self, Health};
 use anyhow::{Result, bail};
@@ -35,14 +35,18 @@ pub struct RuleStatus {
     pub draft: bool,
     /// Built, not retired, and lacking a code link, or both a test link and a `manual_check`.
     pub incomplete: bool,
+    /// Not retired, built, and with an open gap.
+    pub broken: bool,
+    /// IDs of the rule's open gaps.
+    pub open_gaps: Vec<String>,
     /// Targets of links whose fingerprint changed.
     pub stale: Vec<String>,
     /// Targets of links that are not found, ambiguous, or in a file that does not parse.
     pub missing: Vec<String>,
 }
 
-/// Per area: every rule with its agreed and built state, drafts, incomplete rules, and stale and
-/// missing links, and the "Rule impact" section against the base. Unlike `check`, every link is
+/// Per area: every rule with its agreed and built state, drafts, incomplete and broken rules, open
+/// gaps, and stale and missing links, and the "Rule impact" section against the base. Unlike `check`, every link is
 /// fingerprinted, as with `check --all`.
 pub fn run(area: Option<&str>) -> Result<StatusReport> {
     let repo = Repo::discover()?;
@@ -84,6 +88,14 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
                     built: rule.meta.as_ref().map(|m| m.built),
                     draft: state::is_draft(rule, &model, &establishers),
                     incomplete: state::is_incomplete(rule, &model),
+                    broken: state::is_broken(rule, &model),
+                    open_gaps: model
+                        .gaps
+                        .iter()
+                        .flatten()
+                        .filter(|g| g.rule == rule.id && g.status == GapStatus::Open)
+                        .map(|g| g.id.clone())
+                        .collect(),
                     stale: unhealthy(&rule.id, |h| *h == Health::Stale),
                     missing: unhealthy(&rule.id, |h| matches!(h, Health::Missing(_))),
                 })

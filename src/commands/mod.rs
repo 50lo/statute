@@ -2,6 +2,7 @@
 
 pub mod check;
 pub mod decide;
+pub mod gap;
 pub mod init;
 pub mod link;
 pub mod ratify;

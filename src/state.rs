@@ -1,7 +1,7 @@
 //! Derived state, computed from the model and never stored.
 
 use crate::fingerprint::Missing;
-use crate::model::{Agreed, Built, Link, LinkRole, Model, Rule};
+use crate::model::{Agreed, Built, GapStatus, Link, LinkRole, Model, Rule};
 use std::collections::BTreeMap;
 
 /// For each rule ID, the decisions whose `establishes` lists it.
@@ -69,4 +69,16 @@ pub fn is_incomplete(rule: &Rule, model: &Model) -> bool {
         .as_ref()
         .is_some_and(|m| m.agreed != Agreed::Retired && m.built == Built::Built)
         && !is_complete(rule, links)
+}
+
+/// Broken: not retired, `built: built`, and at least one open gap.
+pub fn is_broken(rule: &Rule, model: &Model) -> bool {
+    rule.meta
+        .as_ref()
+        .is_some_and(|m| m.agreed != Agreed::Retired && m.built == Built::Built)
+        && model
+            .gaps
+            .iter()
+            .flatten()
+            .any(|g| g.rule == rule.id && g.status == GapStatus::Open)
 }

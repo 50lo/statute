@@ -41,6 +41,11 @@ pub fn render_decisions(decisions: &[Decision]) -> String {
     yaml_serde::to_string(decisions).expect("decisions serialize")
 }
 
+/// `gaps.yml` in its one fixed format. The CLI rewrites the whole file, so comments are not kept.
+pub fn render_gaps(gaps: &[Gap]) -> String {
+    yaml_serde::to_string(gaps).expect("gaps serialize")
+}
+
 const DRAFT_HEADER: &str = "# The decision `statute decide` will record. Edit it, save and close.\n# An empty summary records nothing.\n";
 
 /// A draft as YAML for `decide --edit`.

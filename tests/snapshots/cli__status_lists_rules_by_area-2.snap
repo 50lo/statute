@@ -11,11 +11,13 @@ expression: "repo.run(&[\"status\", \"--area\", \"billing\", \"--json\"]).json()
       "rules": [
         {
           "agreed": "proposed",
+          "broken": false,
           "built": "planned",
           "draft": true,
           "id": "BILL-001",
           "incomplete": false,
           "missing": [],
+          "open_gaps": [],
           "stale": [],
           "title": "Large refunds need a second approval"
         }

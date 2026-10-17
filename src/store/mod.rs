@@ -8,7 +8,7 @@ pub mod terms;
 
 pub use lists::{
     CONFIG_TEMPLATE, EMPTY_LIST, LOCK_TEMPLATE, parse_config, parse_decisions, parse_draft,
-    parse_gaps, render_decisions, render_draft,
+    parse_gaps, render_decisions, render_draft, render_gaps,
 };
 
 use crate::model::Finding;

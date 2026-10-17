@@ -30,6 +30,25 @@ pub fn is_dated_id(s: &str, marker: char) -> bool {
         && random.bytes().all(|b| RANDOM_ALPHABET.contains(&b))
 }
 
+/// A new decision or gap ID for the UTC date `yymmdd` that `taken` does not hold. `pick(n)` returns a
+/// random index below `n`; the caller supplies the randomness.
+pub fn new_dated_id(
+    marker: char,
+    yymmdd: &str,
+    taken: impl Fn(&str) -> bool,
+    mut pick: impl FnMut(usize) -> usize,
+) -> String {
+    loop {
+        let random: String = (0..5)
+            .map(|_| RANDOM_ALPHABET[pick(RANDOM_ALPHABET.len())] as char)
+            .collect();
+        let id = format!("{marker}{yymmdd}-{random}");
+        if !taken(&id) {
+            return id;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

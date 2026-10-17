@@ -98,7 +98,12 @@ enum Command {
         #[arg(required = true, value_name = "DECISION")]
         ids: Vec<String>,
     },
-    /// Per area: rules by agreed and built state, drafts, incomplete rules, stale and missing links
+    /// Record that a rule no longer holds, or that it holds again
+    Gap {
+        #[command(subcommand)]
+        command: GapCommand,
+    },
+    /// Per area: rules by agreed and built state, drafts, incomplete and broken rules, stale and missing links, open gaps, and pending decisions
     Status {
         /// Show only this area
         #[arg(long)]
@@ -117,6 +122,29 @@ enum VerdictArg {
     },
     /// The rule no longer holds: the rule has an open gap with this reference
     Gap {
+        #[arg(value_name = "REF")]
+        reference: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum GapCommand {
+    /// Add an open gap and print its ID
+    Open {
+        rule: String,
+        /// The tracker issue's ID or URL; the notes stay in the tracker
+        #[arg(long = "ref", value_name = "REF")]
+        reference: Option<String>,
+        /// What does not hold; required without `--ref`
+        #[arg(
+            long,
+            conflicts_with = "reference",
+            required_unless_present = "reference"
+        )]
+        note: Option<String>,
+    },
+    /// Mark a gap closed
+    Close {
         #[arg(value_name = "REF")]
         reference: String,
     },
@@ -211,6 +239,19 @@ pub fn run() -> ExitCode {
         Command::Ratify { ids } => {
             commands::ratify::run(ids).map(|r| emit(json, &r, render::ratify(&r), 0))
         }
+        Command::Gap {
+            command:
+                GapCommand::Open {
+                    rule,
+                    reference,
+                    note,
+                },
+        } => commands::gap::open(rule, reference.as_deref(), note.as_deref())
+            .map(|r| emit(json, &r, r.id.clone(), 0)),
+        Command::Gap {
+            command: GapCommand::Close { reference },
+        } => commands::gap::close(reference)
+            .map(|r| emit(json, &r, format!("{} on {} is closed", r.id, r.rule), 0)),
         Command::Status { area } => {
             commands::status::run(area.as_deref()).map(|r| emit(json, &r, render::status(&r), 0))
         }
