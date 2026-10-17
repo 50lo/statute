@@ -2,7 +2,7 @@
 {"source": "CORE-001", "target": "src/check/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "17267afbc0b0f4fb517b1e979fa34b6fd67387ce195ce8090673d48a99d59212"}
 {"source": "CORE-002", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}
 {"source": "CORE-002", "target": "src/commands/ratify.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "69f7d30375ecb50a135d5e7891804af0aba0da0c7382426adc581e9f74ff42dc"}
-{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "244e9593228d56bc71685bcdaffbe589876ddb29182b635be2d263789cd54c09"}
+{"source": "CORE-002", "target": "src/model/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41127a84d96d7aeb38b6070603c2c3b26116b1d9dcb64c51d63822859ec2c50a"}
 {"source": "CORE-002", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
 {"source": "CORE-002", "target": "tests/core_lifecycle.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "040e966fb57d139136b50602a7bfca6772811611b917d2c20e80e70b171fee3d"}
 {"source": "CORE-002", "target": "tests/decisions.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "24b2a1ff1068aab654c0d155761663c568d4fc2810e09c87345baee1f15d73ba"}
@@ -31,10 +31,11 @@
 {"source": "HIST-003", "target": "tests/history_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "30700accd2a58a3dfc80d0ed6aaa1905d88dbff483a02e8d74d8501dbbc0793a"}
 {"source": "LINKS-001", "target": "src/check/links.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "b5f442963e85f4e97e2b1731ebe876c71eec3539ca0c39a4a8095320c97e8bdd"}
 {"source": "LINKS-001", "target": "src/fingerprint/go.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "ffa9bda36ce36a9486b75318aad673b24ac32386ff86a54ca87cd79cf5f54c7a"}
-{"source": "LINKS-001", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "7344311a6034c341970062365ba246cca217d72961755693b0af7154ccb7b1cc"}
+{"source": "LINKS-001", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0ee0d9d266ba8b2056d34b5491108bbec65bf67850d41fe23885f2409c287526"}
 {"source": "LINKS-001", "target": "src/fingerprint/python.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "35ba5ff96038aecb63e48b62e58562736db39ec164f87880123a03775e8695ec"}
+{"source": "LINKS-001", "target": "src/fingerprint/rust.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "3fcc59bca1971772e1b8d4c6de5a0c2bf33538e77b9aaedf56c7cc284bd9c729"}
 {"source": "LINKS-001", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d077c9d536120aaeaf8c5571ddd3f749ab5de39b177d5e0028a8900d004d7a2b"}
-{"source": "LINKS-001", "target": "tests/symbol_parse_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "e30976b7db678589ff7cb9f62e8fe1e755f8809122740c4b4a582d66cc3a843e"}
+{"source": "LINKS-001", "target": "tests/symbol_parse_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "3a40ee864d0305587f0e179953e7d4739f6cacac6fbbc4cd29f929b939803d5c"}
 {"source": "LINKS-002", "target": "src/commands/check.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "50da719684daeb9d71026c7c99c48250065852b7045c6f10481710f2b0ba738e"}
 {"source": "LINKS-002", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d077c9d536120aaeaf8c5571ddd3f749ab5de39b177d5e0028a8900d004d7a2b"}
 {"source": "LINKS-002", "target": "tests/review_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "7044e9e164087a7565d97dc85dc969c1c8c69a3a515783305448dcf30b37c4bf"}
@@ -42,5 +43,5 @@
 {"source": "LINKS-003", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
 {"source": "LINKS-003", "target": "tests/review_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "7044e9e164087a7565d97dc85dc969c1c8c69a3a515783305448dcf30b37c4bf"}
 {"source": "LINKS-004", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
-{"source": "LINKS-004", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "7344311a6034c341970062365ba246cca217d72961755693b0af7154ccb7b1cc"}
+{"source": "LINKS-004", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "0ee0d9d266ba8b2056d34b5491108bbec65bf67850d41fe23885f2409c287526"}
 {"source": "LINKS-004", "target": "tests/missing_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "b0f4f7061d921ef21dee89e2c4a3e6d26249fe5ea1a8ad07cf5b55801409ee68"}

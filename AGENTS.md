@@ -46,9 +46,15 @@ When a change needs an import these rules forbid, change the rules here first, w
 
 New fingerprint modes, link sources and impact reasons are new enum variants (docs/Architecture.md, section 8). Do not add traits, registries or plugin mechanisms for them.
 
-Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms, decision IDs, files and symbols, `check [--all]`, whole-file and Go/Python symbol `link`, `review`, `check --md`, `decide`, `ratify`, `gap open`, `gap close`, and `status`. The agent plugin, with the `adopt`, `change`, `decide` and `ratify` skills, is in `plugin/`. Check `statute --help` for the installed build.
+Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms, decision IDs, files and symbols, `check [--all]`, whole-file and Go/Python/Rust symbol `link`, `review`, `check --md`, `decide`, `ratify`, `gap open`, `gap close`, and `status`. The agent plugin, with the `adopt`, `change`, `decide` and `ratify` skills, is in `plugin/`. Check `statute --help` for the installed build.
 
 Use `statute show` to inspect linked rules and terms, `statute decide` to record proposed decisions, and `statute ratify` to record a person's explicit approval of specific decisions. Report workflow steps that the current build cannot perform. Agreement and build states are set by the CLI.
+
+## Decision-making principles
+
+Apply these when a design choice trades one risk against another.
+
+1. A missed behaviour change is worse than a false alarm. When a change might alter behaviour, report it (for example, make the link stale) rather than treat it as formatting.
 
 <!-- statute:begin -->
 ## Statute
