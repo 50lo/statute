@@ -51,3 +51,20 @@ protects:
 boundary:
   - "`review RULE ok` refreshes every stale link of that rule at once."
 ```
+
+# LINKS-004 A link whose target is gone or ambiguous is missing
+
+`check` must report a link as missing when its target file does not exist, its symbol is not found, or more than one symbol matches it. `review` must refuse a rule while any of its links is missing, so the link stays reported until the file is fixed or the target is relinked.
+
+```yaml
+agreed: agreed            # proposed | agreed | retired
+built: built              # planned | built
+scope: Links whose target changed since the base, or every link with `check --all`.
+terms: [Link, Missing link, Rule review]
+exceptions: []
+protects:
+  - A link to a Go function that was renamed is reported as missing.
+  - "`review RULE ok` is refused while one of the rule's links is missing, and `statute.lock` is unchanged."
+boundary:
+  - Removing the missing link and linking the new location clears the finding.
+```

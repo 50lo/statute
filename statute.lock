@@ -13,6 +13,16 @@
 {"source": "CORE-003", "target": "tests/links.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "83c8cdb2a2010794dbe5ad579d1668492b25ed0571733992a543e9b8bf1aced9"}
 {"source": "CORE-004", "target": "src/commands/rule_new.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8c9355c9ab0cf38337c8588e7b38dde23dd1c3be257c5df63cf10247ee6f1aa8"}
 {"source": "CORE-004", "target": "src/store/rules.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "41b89530949c317ca98c05873988ce438205184b3cb0653b1c48df512c90d63c"}
+{"source": "DEC-001", "target": "src/check/decisions.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "fbc661127598f478458978a4161c1ff7d056f50cdf9051546f80115d20cffd82"}
+{"source": "DEC-001", "target": "src/commands/decide.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "eb1a50a13899a3538513640208198515c4d904e9ad03699b23beee2f98ad25ac"}
+{"source": "DEC-001", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
+{"source": "DEC-002", "target": "src/commands/ratify.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "69f7d30375ecb50a135d5e7891804af0aba0da0c7382426adc581e9f74ff42dc"}
+{"source": "DEC-002", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
+{"source": "DEC-003", "target": "src/commands/ratify.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "69f7d30375ecb50a135d5e7891804af0aba0da0c7382426adc581e9f74ff42dc"}
+{"source": "DEC-003", "target": "tests/decisions_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "78378948ced141f7c73d910c87c40e62ffa4a6a5c912e3f88b6ea622207429c5"}
+{"source": "GAPS-001", "target": "src/commands/status.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "132357604e34c1a3088a1e494271b9a88752401a493b01bb106e0f1c40e163c9"}
+{"source": "GAPS-001", "target": "src/state.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d077c9d536120aaeaf8c5571ddd3f749ab5de39b177d5e0028a8900d004d7a2b"}
+{"source": "GAPS-001", "target": "tests/gaps_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "e43f0db845c771a1e52ba2bc16e905dfc0dc565c0e6fc0c0a095d680c0ab499c"}
 {"source": "HIST-001", "target": "src/check/history.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "b688b8f96ffe43e147f5720f9029bc37ede3a0443f7e4681091fad35c7808535"}
 {"source": "HIST-001", "target": "tests/history_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "30700accd2a58a3dfc80d0ed6aaa1905d88dbff483a02e8d74d8501dbbc0793a"}
 {"source": "HIST-002", "target": "src/check/history.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "b688b8f96ffe43e147f5720f9029bc37ede3a0443f7e4681091fad35c7808535"}
@@ -31,3 +41,6 @@
 {"source": "LINKS-003", "target": "src/commands/link.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "d7518c0d77dca98e88459f6a2111fa72c66663ab6f7ac5848ab25c81421f8502"}
 {"source": "LINKS-003", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
 {"source": "LINKS-003", "target": "tests/review_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "7044e9e164087a7565d97dc85dc969c1c8c69a3a515783305448dcf30b37c4bf"}
+{"source": "LINKS-004", "target": "src/commands/review.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "8ace6b6fcfea00fdc46f94cf5ef08ac03e3ebff350df022513b0f1d8b753b6fc"}
+{"source": "LINKS-004", "target": "src/fingerprint/mod.rs", "role": "code", "mode": "bytes-sha256-v1", "sig": "7344311a6034c341970062365ba246cca217d72961755693b0af7154ccb7b1cc"}
+{"source": "LINKS-004", "target": "tests/missing_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "b0f4f7061d921ef21dee89e2c4a3e6d26249fe5ea1a8ad07cf5b55801409ee68"}
