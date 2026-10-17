@@ -179,3 +179,39 @@ not: []
 aliases: []
 avoid: []
 ```
+
+## Base
+
+The commit that `check` compares against: the merge-base of `HEAD` with the default branch, or `HEAD` when there is no default branch. Changes since the base include the branch's commits and the uncommitted and untracked files in the working tree.
+
+```yaml
+agreed: proposed
+code: [git::base]
+not: []
+aliases: [merge-base]
+avoid: []
+```
+
+## Stale link
+
+A link whose target's current fingerprint differs from the one recorded in `statute.lock`. It brings its rule up for review, and only a review verdict refreshes it.
+
+```yaml
+agreed: proposed
+code: [Health::Stale]
+not: []
+aliases: []
+avoid: []
+```
+
+## Missing link
+
+A link whose target is not found, matches more than one symbol, or sits in a file that does not parse cleanly. It brings its rule up for review; a moved target is relinked at its new location after the rule is checked.
+
+```yaml
+agreed: proposed
+code: [Health::Missing]
+not: []
+aliases: []
+avoid: []
+```

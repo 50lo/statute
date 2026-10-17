@@ -63,3 +63,22 @@
   - CORE-005
   retires: []
   terms: []
+- id: D261017-4zy7n
+  timestamp: 2026-10-17T05:28:33Z
+  actor: agent
+  status: proposed
+  ratified_by: null
+  summary: 'Record the history and stale-link guarantees that let Statute keep rules true: active decisions are immutable, agreed rules and terms change only with a decision, changed targets make links stale, and only a review verdict refreshes them.'
+  rationale: These are the checks behind the one-pager's promise that nobody quietly edits a rule to match the code and that a change to linked code or tests brings the rule up for review. Each rule gets a dedicated contract test so its test link changes only when its own cases change. Base, Stale link and Missing link are the vocabulary these rules and the CLI output use.
+  establishes:
+  - HIST-001
+  - HIST-002
+  - HIST-003
+  - LINKS-002
+  - LINKS-003
+  changes: []
+  retires: []
+  terms:
+  - Base
+  - Stale link
+  - Missing link
