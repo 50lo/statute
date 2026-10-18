@@ -1,13 +1,13 @@
 ---
 # st-jycx
 title: Protect whole term sections and retired items in history checks
-status: in-progress
+status: completed
 type: bug
 priority: high
 tags:
     - statute
 created_at: 2026-10-18T10:50:00Z
-updated_at: 2026-10-18T20:18:49Z
+updated_at: 2026-10-18T20:51:04Z
 blocking:
     - st-25bl
     - st-9flm
