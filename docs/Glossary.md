@@ -6,7 +6,7 @@ Every term has an exact definition in [statute/terms.md](../statute/terms.md). C
 
 This glossary does not change any meaning:
 
-- If this glossary and `terms.md` seem to disagree, the definition in `terms.md` counts. Please report the difference, so that the glossary can be fixed.
+- If this glossary and an agreed definition in `terms.md` seem to disagree, the agreed definition counts. Please report the difference, so that the glossary can be fixed.
 - To change what a term means, change its definition in `terms.md` together with a proposed decision. Editing this glossary does not approve anything.
 
 Each section starts with a list of the terms it explains. Each term name in that list, and in the text, is a Markdown link to the term's definition in `terms.md`. The [index](#index) at the end lists every term and the section that explains it.
@@ -26,7 +26,7 @@ Sections:
 
 ## Terms, rules and decisions
 
-Main terms: [Term](../statute/terms.md#term), [Rule](../statute/terms.md#rule), [Decision](../statute/terms.md#decision). Also mentions: [Agreement status](../statute/terms.md#agreement-status).
+Main terms: [Term](../statute/terms.md#term), [Rule](../statute/terms.md#rule), [Decision](../statute/terms.md#decision). Also mentions: [Agreement status](../statute/terms.md#agreement-status), [Approval](../statute/terms.md#approval), [Proposed decision](../statute/terms.md#proposed-decision), [Link](../statute/terms.md#link).
 
 This section explains Statute's three basic records: the words that the product uses, the things that must be true, and the choices behind them. Links, which connect rules to code and tests, are explained in [Links and fingerprints](#links-and-fingerprints).
 
@@ -49,7 +49,7 @@ How the three fit together:
 
 ## What a rule says
 
-Main terms: [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case), [Manual check](../statute/terms.md#manual-check). Also mentions: [Rule](../statute/terms.md#rule), [Test link](../statute/terms.md#test-link), [Code link](../statute/terms.md#code-link).
+Main terms: [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case), [Manual check](../statute/terms.md#manual-check). Also mentions: [Rule](../statute/terms.md#rule), [Test link](../statute/terms.md#test-link), [Code link](../statute/terms.md#code-link), [Link](../statute/terms.md#link), [Missing link](../statute/terms.md#missing-link), [Decision](../statute/terms.md#decision), [Approval](../statute/terms.md#approval).
 
 The statement of a [rule](../statute/terms.md#rule) says what must be true. But people can read the same words in different ways. So a rule also carries concrete cases.
 
@@ -84,7 +84,7 @@ The **[agreement status](../statute/terms.md#agreement-status)** of a [rule](../
 
 Agreement status records acceptance only. It is separate from whether the code implements the rule (rule CORE-002). A rule can be agreed before anyone writes its code.
 
-Nobody edits the agreement status by hand. The CLI sets it. New rules and terms that an agent writes start as proposed (rule CORE-004). `statute ratify` makes them agreed or retired.
+The CLI sets the agreement status ([spec 4.1](Statute-spec.md#41-rules)). New rules and terms that an agent writes start as proposed (rule CORE-004). `statute ratify` makes them agreed or retired. One exception: when a person rejects a proposed decision, the [ratify skill](../plugin/skills/ratify/SKILL.md) tells the agent to restore the earlier agreed text and status of the rules and terms that the decision changed.
 
 ### From draft to agreed
 
@@ -131,7 +131,7 @@ The spec and the rules add these points:
 
 ## Links and fingerprints
 
-Main terms: [Link](../statute/terms.md#link), [Code link](../statute/terms.md#code-link), [Test link](../statute/terms.md#test-link), [Fingerprint](../statute/terms.md#fingerprint), [Stale link](../statute/terms.md#stale-link), [Missing link](../statute/terms.md#missing-link). Also mentions: [Affected rule](../statute/terms.md#affected-rule), [Rule review](../statute/terms.md#rule-review), [Build state](../statute/terms.md#build-state), [Manual check](../statute/terms.md#manual-check), [Gap](../statute/terms.md#gap).
+Main terms: [Link](../statute/terms.md#link), [Code link](../statute/terms.md#code-link), [Test link](../statute/terms.md#test-link), [Fingerprint](../statute/terms.md#fingerprint), [Stale link](../statute/terms.md#stale-link), [Missing link](../statute/terms.md#missing-link). Also mentions: [Rule](../statute/terms.md#rule), [Affected rule](../statute/terms.md#affected-rule), [Rule review](../statute/terms.md#rule-review), [Build state](../statute/terms.md#build-state), [Manual check](../statute/terms.md#manual-check), [Gap](../statute/terms.md#gap).
 
 ### Links
 
@@ -177,7 +177,7 @@ A [gap](../statute/terms.md#gap) can refer to an issue in an external issue trac
 
 ## Build state and gaps
 
-Main terms: [Build state](../statute/terms.md#build-state), [Gap](../statute/terms.md#gap). Also mentions: [Code link](../statute/terms.md#code-link), [Test link](../statute/terms.md#test-link), [Manual check](../statute/terms.md#manual-check), [Agreement status](../statute/terms.md#agreement-status), [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case).
+Main terms: [Build state](../statute/terms.md#build-state), [Gap](../statute/terms.md#gap). Also mentions: [Code link](../statute/terms.md#code-link), [Test link](../statute/terms.md#test-link), [Manual check](../statute/terms.md#manual-check), [Agreement status](../statute/terms.md#agreement-status), [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case), [Rule](../statute/terms.md#rule), [Link](../statute/terms.md#link), [Missing link](../statute/terms.md#missing-link), [Proposed decision](../statute/terms.md#proposed-decision).
 
 ### Build state
 
@@ -207,12 +207,12 @@ Where gaps are kept ([spec 4.5](Statute-spec.md#45-gaps)):
 
 ## Checking a change
 
-Main terms: [Base](../statute/terms.md#base), [Affected rule](../statute/terms.md#affected-rule), [Rule review](../statute/terms.md#rule-review). Also mentions: [Stale link](../statute/terms.md#stale-link), [Missing link](../statute/terms.md#missing-link), [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case), [Gap](../statute/terms.md#gap), [Proposed decision](../statute/terms.md#proposed-decision), [Manual check](../statute/terms.md#manual-check).
+Main terms: [Base](../statute/terms.md#base), [Affected rule](../statute/terms.md#affected-rule), [Rule review](../statute/terms.md#rule-review). Also mentions: [Stale link](../statute/terms.md#stale-link), [Missing link](../statute/terms.md#missing-link), [Protected case](../statute/terms.md#protected-case), [Boundary case](../statute/terms.md#boundary-case), [Gap](../statute/terms.md#gap), [Proposed decision](../statute/terms.md#proposed-decision), [Manual check](../statute/terms.md#manual-check), [Rule](../statute/terms.md#rule), [Link](../statute/terms.md#link), [Decision](../statute/terms.md#decision), [Approval](../statute/terms.md#approval), [Term](../statute/terms.md#term).
 
 Every change goes through the same loop:
 
 1. Before coding, the agent runs `statute show` on the files it will change. It reads the rules and terms that come back.
-2. After coding, `statute check` compares the work with the base and reports the affected rules.
+2. After coding, `statute check` compares the work with the base and reports stale and missing links. A rule with such a link is an affected rule.
 3. The agent reviews each affected rule and records the result (a verdict).
 4. `statute check --md` writes the "Rule impact" section for the PR.
 
@@ -244,7 +244,7 @@ A **[rule review](../statute/terms.md#rule-review)** is the agent's assessment o
 | The rule changes on purpose | The agent proposes a decision that changes or retires the rule (a [proposed decision](../statute/terms.md#proposed-decision)). | `statute review RULE changed D…` |
 | The rule is broken | The agent opens a [gap](../statute/terms.md#gap). | `statute review RULE gap REF` |
 
-When `statute review` accepts the verdict, it refreshes all stale links of the rule (rule LINKS-003).
+When `statute review` accepts the verdict, it refreshes all stale links of the rule ([spec 4.4](Statute-spec.md#44-links)).
 
 Who does what in a rule review:
 
@@ -255,6 +255,8 @@ Who does what in a rule review:
 Example from this repository: a change edits the code of the function `health` in `src/state.rs`, not only its comments. Rules LINKS-001, LINKS-002 and LINKS-004 link to it. Their links to `health` become stale, so the three rules are affected. The agent reviews each rule. If all three still hold, it runs `statute review` with `ok` for each one, and the links are refreshed.
 
 ## Keeping this glossary correct
+
+Main terms: none. Also mentions: [Term](../statute/terms.md#term), [Rule review](../statute/terms.md#rule-review).
 
 A PR that changes this glossary, or the text, `code` or `not` of a term in `terms.md`, includes a glossary consistency review. The reviewer compares each changed glossary section with the definitions of the terms it explains, and each changed definition with the glossary sections that link to it. The "Glossary" section of AGENTS.md describes the review and its record. A consistency review is not a rule review, and it approves nothing.
 

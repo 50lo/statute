@@ -51,4 +51,4 @@ Blocked by st-jycx, which settles what the approved definition is. Can run in pa
 
 ## Progress
 
-2026-10-19: Implemented on branch `claude/st-25bl-glossary` (commit 1d6077e). The glossary keeps the plan's six sections and adds a short "Keeping this glossary correct" section. The PR description holds the first glossary consistency record. Complete this Bean after the PR merges.
+2026-10-19: Implemented on branch `claude/st-25bl-glossary`. The glossary keeps the plan's six sections and adds a short "Keeping this glossary correct" section. The PR description holds the first glossary consistency record. Complete this Bean after the PR merges.
