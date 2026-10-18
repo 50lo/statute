@@ -72,3 +72,22 @@ boundary:
   - Changing a retired rule's notes, the whitespace of its statement, or its `built` value gives no finding.
   - A rule that a proposed decision retires is still agreed until the decision is ratified, so HIST-002 governs its changes until then.
 ```
+
+# HIST-005 A retired term never changes
+
+When a term is retired in the base, `check` must report an error if its definition, `code` or `not` changes, its `agreed` value is no longer `retired`, or the term is removed, even when a decision lists it. `decide` refuses a decision that lists a retired term in `terms` or `retires_terms`, and writes nothing.
+
+```yaml
+agreed: proposed          # proposed | agreed | retired
+built: planned            # planned | built
+scope: Terms that are retired in the base, and decisions drafted with `decide`.
+terms: [Term, Decision, Agreement status, Base]
+exceptions: []
+protects:
+  - Rewording a retired term's definition is reported as an error, even when a proposed decision lists the term in `terms`.
+  - "Setting a retired term back to `agreed: agreed`, or deleting its section and adding a new term with the same name, is reported as an error."
+  - "`decide --terms Commit` is refused while Commit is retired, and nothing is written."
+boundary:
+  - Changing a retired term's `aliases` or `avoid` words, the whitespace of its definition, or a comment in its `yaml` block gives no finding.
+  - A term that a proposed decision retires is still agreed until the decision is ratified, so HIST-003 governs its changes until then, and listing it in `retires_terms` does not carry a change.
+```

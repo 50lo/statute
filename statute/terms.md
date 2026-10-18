@@ -122,10 +122,10 @@ avoid: []
 
 ## Agreement status
 
-Whether a rule is proposed, agreed or retired, or a term is proposed or agreed. Agreement records acceptance separately from whether the code implements the rule.
+Whether a rule or term is proposed, agreed or retired. Agreement records acceptance separately from whether the code implements the rule.
 
 ```yaml
-agreed: agreed
+agreed: proposed
 code: [Agreed, TermAgreed]
 not: []
 aliases: []
@@ -242,10 +242,10 @@ avoid: []
 
 ## Proposed decision
 
-A decision that a person has not approved yet. The rules it establishes or changes and the terms it lists stay proposed until it is ratified, while a rule it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
+A decision that a person has not approved yet. The rules it establishes or changes and the terms it introduces or redefines stay proposed until it is ratified, while a rule or term it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
 
 ```yaml
-agreed: agreed
+agreed: proposed
 code: [DecisionStatus::Proposed]
 not: []
 aliases: [pending decision]
