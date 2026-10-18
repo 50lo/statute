@@ -64,6 +64,14 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
         for term in &d.terms {
             terms.entry(term).or_default().insert(reason());
         }
+        for term in &d.retires_terms {
+            let decision = d.id.clone();
+            let reason = match d.status {
+                DecisionStatus::Proposed => Reason::RetirementProposed { decision },
+                DecisionStatus::Active => Reason::Retired { decision },
+            };
+            terms.entry(term).or_default().insert(reason);
+        }
     }
 
     let gaps = model.gaps.as_deref().unwrap_or_default();
@@ -141,7 +149,7 @@ pub fn compute(model: &Model, base: &Model, health: &[(&str, &str, Health)]) -> 
         .filter(|d| d.status == DecisionStatus::Proposed)
         .filter(|d| {
             d.rules().any(|r| rules.contains_key(r.as_str()))
-                || d.terms.iter().any(|t| terms.contains_key(t.as_str()))
+                || d.all_terms().any(|t| terms.contains_key(t.as_str()))
         })
         .map(pending_decision)
         .collect();
@@ -171,5 +179,6 @@ fn pending_decision(d: &Decision) -> PendingDecision {
         summary: d.summary.clone(),
         rules: d.rules().cloned().collect(),
         terms: d.terms.clone(),
+        retires_terms: d.retires_terms.clone(),
     }
 }

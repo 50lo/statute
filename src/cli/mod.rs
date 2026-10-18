@@ -66,7 +66,7 @@ enum Command {
         #[command(subcommand)]
         verdict: VerdictArg,
     },
-    /// Append a proposed decision, set its changed rules and its terms to proposed, and print its ID
+    /// Append a proposed decision, set the rules it changes and the terms it defines to proposed, and print its ID
     Decide {
         /// One to three sentences
         #[arg(long, required_unless_present = "edit")]
@@ -86,6 +86,9 @@ enum Command {
         /// Terms this decision introduces or redefines
         #[arg(long, value_delimiter = ',', value_name = "TERMS")]
         terms: Vec<String>,
+        /// Agreed terms this decision retires
+        #[arg(long, value_delimiter = ',', value_name = "TERMS")]
+        retires_terms: Vec<String>,
         /// Who initiated the decision; informational only
         #[arg(long, value_enum, default_value = "agent")]
         actor: ActorArg,
@@ -214,6 +217,7 @@ pub fn run() -> ExitCode {
             changes,
             retires,
             terms,
+            retires_terms,
             actor,
             edit,
         } => {
@@ -228,6 +232,7 @@ pub fn run() -> ExitCode {
                 changes: changes.clone(),
                 retires: retires.clone(),
                 terms: terms.clone(),
+                retires_terms: retires_terms.clone(),
             };
             let report = if *edit {
                 decide_edited(&draft)

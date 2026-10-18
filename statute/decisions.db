@@ -141,3 +141,37 @@
   - DEC-001
   retires: []
   terms: []
+- id: D261018-m21p6
+  timestamp: 2026-10-18T21:01:10Z
+  actor: user
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-18T21:23:20Z
+  summary: 'An agreed term can be retired by a decision that lists it in `retires_terms`. It stays agreed until ratified, then reads `agreed: retired` and keeps its section as a record. Only retired rules and active decisions may then name it. `show` labels it, and name and `avoid` checks skip it (spec only).'
+  rationale: 'Removing a term breaks the active decisions and retired rules that name it, and history keeps those immutable, so a term nobody uses any more had to stay agreed for ever. Keeping the retired section as a record keeps every historical reference valid. `retires_terms` is a separate field, so `retires` keeps meaning rule IDs and `terms` keeps meaning introduces or redefines. A decision cannot redefine and retire the same term: the record keeps the approved meaning, and a successor is a new term. DEC-003 changes because a rule outside the ratified decisions that still uses a retiring term now blocks `ratify`. Agreement status and Proposed decision now cover retired terms. Rejected: deleting retired terms, aliases that redirect to a successor, a machine-readable replacement field, and reviving a retired term.'
+  establishes:
+  - DEC-004
+  - DEC-005
+  changes:
+  - DEC-003
+  retires: []
+  terms:
+  - Agreement status
+  - Proposed decision
+- id: D261018-0yeyg
+  timestamp: 2026-10-18T21:01:16Z
+  actor: user
+  status: active
+  ratified_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-18T21:23:20Z
+  summary: 'A term retired in the base never changes: its section, definition, `code`, `not` and `agreed: retired` stay, whatever decision lists it, and `decide` refuses to list it. Ratify with or after D261018-m21p6, which redefines Agreement status, a term HIST-005 uses.'
+  rationale: 'Active decisions keep naming a retired term, so its meaning must stay what they approved, as HIST-004 keeps a retired rule. This is a separate rule rather than a wider HIST-003, because HIST-003 lets a decision carry a change and this rule lets none; a new meaning gets a new term name. It reuses HIST-004''s history check rather than adding a second mechanism. Rejected: reviving a retired term through `decide --terms`, which would let one name mean different things over time.'
+  establishes:
+  - HIST-005
+  changes: []
+  retires: []
+  terms: []

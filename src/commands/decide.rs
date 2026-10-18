@@ -19,10 +19,12 @@ pub struct DecideReport {
     pub proposed_rules: Vec<String>,
     /// Terms this command set to `agreed: proposed`.
     pub proposed_terms: Vec<String>,
+    /// Terms the decision retires. They stay agreed until it is ratified.
+    pub retiring_terms: Vec<String>,
 }
 
 /// Appends a proposed decision, and sets `agreed: proposed` on the rules it changes and the terms it
-/// lists.
+/// introduces or redefines. The terms it retires stay agreed until it is ratified.
 pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
     if draft.summary.trim().is_empty() || draft.rationale.trim().is_empty() {
         bail!("a decision needs a summary and a rationale");
@@ -34,6 +36,8 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
     };
     refuse_unknown_or_pending(&model, &draft)?;
     refuse_retired(&model, &draft)?;
+    refuse_retired_terms(&model, &draft)?;
+    refuse_unagreed_retirement(&model, &draft)?;
 
     let mut txn = Txn::new(&repo);
     let mut proposed_rules = Vec::new();
@@ -125,6 +129,7 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         changes: draft.changes,
         retires: draft.retires,
         terms: draft.terms,
+        retires_terms: draft.retires_terms.clone(),
     });
     txn.write(paths::DECISIONS, store::render_decisions(&decisions));
     txn.commit()?;
@@ -134,6 +139,7 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         id,
         proposed_rules,
         proposed_terms,
+        retiring_terms: draft.retires_terms,
     })
 }
 
@@ -181,7 +187,8 @@ fn refuse_unknown_or_pending(model: &Model, draft: &DecisionDraft) -> Result<()>
             bail!("no rule {id}");
         }
     }
-    for name in &draft.terms {
+    let terms = draft.terms.iter().chain(&draft.retires_terms);
+    for name in terms.clone() {
         if !model.terms.iter().any(|t| &t.name == name) {
             bail!("no term `{name}` in {}", paths::TERMS);
         }
@@ -198,7 +205,7 @@ fn refuse_unknown_or_pending(model: &Model, draft: &DecisionDraft) -> Result<()>
                 d.id
             );
         }
-        if let Some(name) = draft.terms.iter().find(|t| d.terms.contains(t)) {
+        if let Some(name) = terms.clone().find(|t| d.all_terms().any(|n| n == *t)) {
             bail!(
                 "term `{name}` is already in proposed decision {}; a term is in at most one proposed decision",
                 d.id
@@ -219,6 +226,41 @@ fn refuse_retired(model: &Model, draft: &DecisionDraft) -> Result<()> {
             bail!(
                 "{id} is retired, and a retired rule never changes; give new behaviour a new rule with `statute rule new`"
             );
+        }
+    }
+    Ok(())
+}
+
+/// No term in `terms` or `retires_terms` is retired: a retired term never changes.
+fn refuse_retired_terms(model: &Model, draft: &DecisionDraft) -> Result<()> {
+    for name in draft.terms.iter().chain(&draft.retires_terms) {
+        if model
+            .terms
+            .iter()
+            .any(|t| &t.name == name && t.is_retired())
+        {
+            bail!(
+                "term `{name}` is retired, and a retired term never changes; give a new meaning a new term name"
+            );
+        }
+    }
+    Ok(())
+}
+
+/// Every term in `retires_terms` is agreed, and the decision does not also introduce or redefine it.
+fn refuse_unagreed_retirement(model: &Model, draft: &DecisionDraft) -> Result<()> {
+    for name in &draft.retires_terms {
+        if draft.terms.contains(name) {
+            bail!(
+                "term `{name}` is in both `terms` and `retires_terms`; a decision cannot redefine and retire the same term"
+            );
+        }
+        let term = model.terms.iter().find(|t| &t.name == name);
+        if term.is_some_and(|t| t.meta.is_none()) {
+            bail!("term `{name}` has no readable `yaml` block; run `statute check`");
+        }
+        if term.and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
+            bail!("term `{name}` is not agreed; only an agreed term can be retired");
         }
     }
     Ok(())

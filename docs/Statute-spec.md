@@ -143,6 +143,7 @@ Decisions are append-only events in `statute/decisions.db` (YAML).
   changes: [ATTR-003]                  # rules whose text this decision changes
   retires: []
   terms: [Approver]                    # terms this decision introduces or redefines
+  retires_terms: [Refund approver]     # agreed terms this decision retires; omitted when empty
 ```
 
 `ratified_by` records a person and a time: `{name: "Anton Solo", email: "…", at: "2026-10-15T09:00:00Z"}`. Any human can approve; there are no rule owners.
@@ -150,16 +151,18 @@ Decisions are append-only events in `statute/decisions.db` (YAML).
 `statute ratify D…` makes each decision active:
 
 - It sets `status: active` and `ratified_by`, taking the person from git `user.name` and `user.email`.
-- It sets `agreed: agreed` on the rules the decision establishes or changes and on the terms it lists, and `agreed: retired` on the rules it retires. It removes the links of retired rules.
+- It sets `agreed: agreed` on the rules the decision establishes or changes and on the terms it lists in `terms`, and `agreed: retired` on the rules it retires and the terms it lists in `retires_terms`. It removes the links of retired rules.
 - It sets `built: built` on every rule it touches that is complete (4.1).
-- It refuses when `check` would report an error about the ratified decisions, their rules or their terms after ratification: for example, a rule becoming agreed without `protects` and `boundary` cases, or a rule using a term that is neither agreed nor approved in the same decision. Errors about other items and stale or missing links do not block it.
+- It refuses when `check` would report an error about the ratified decisions, their rules or their terms after ratification: for example, a rule becoming agreed without `protects` and `boundary` cases, a rule using a term that is neither agreed nor approved in the same decision, or any rule that is not retired and still uses a term being retired, whether or not a ratified decision lists that rule. Errors about other items and stale or missing links do not block it.
+- Before changing anything, it refuses when a ratified decision retires a term that is not agreed, names a term that is retired, or retires a term that a decision in the same call lists in `terms`.
 
 Checks:
 
 - IDs are unique and have the form `DYYMMDD-xxxxx`: the marker `D`, the UTC date, and five random lowercase letters or digits, for example `D261015-k7m2q`. The random part lets agents in parallel worktrees add decisions without conflicting IDs.
-- Every rule ID in `establishes`, `changes`, `retires` exists, and every entry in `terms` resolves to a term.
+- Every rule ID in `establishes`, `changes`, `retires` exists, and every entry in `terms` and `retires_terms` resolves to a term.
 - A rule appears in the `establishes` of at most one decision (exactly one once it is agreed or retired, 4.1).
-- A rule or term appears in at most one proposed decision. `decide` refuses a second one, and `check` reports an overlap that arrives through a merge.
+- A rule or term appears in at most one proposed decision, counting both `terms` and `retires_terms`. `decide` refuses a second one, and `check` reports an overlap that arrives through a merge.
+- A proposed decision names no retired term, in `terms` or `retires_terms`.
 - `status: active` requires `ratified_by`.
 - History is immutable from `active` on. `check` compares `decisions.db` with the merge-base and fails when an active entry was edited or deleted. Proposed entries may be edited or deleted; a rejected proposal is deleted, and git keeps its history. A wrong decision is corrected by a new decision that changes or retires its rules.
 - Summary length is capped (`summary_max` in `statute.yml`, default 600 characters). A long summary usually means several rules hiding in one decision.
@@ -176,7 +179,7 @@ Terms live in `statute/terms.md`. `#` headings group terms for readability and c
 One conversation between a developer and a coding agent.
 
 ```yaml
-agreed: agreed                   # proposed | agreed
+agreed: agreed                   # proposed | agreed | retired
 code: [Session, SessionID, sessioncommit]
 not:
   - {name: sessions, means: the sign-in sessions table}
@@ -193,12 +196,19 @@ Term names are unique across the repo. A word that means different things in two
 
 Terms are approved like rules, because a term's wording steers how agents name and structure code, and a wrong term can cost a feature rewrite. A decision lists the terms it introduces or redefines in `terms`. `decide` sets `agreed: proposed` on them, adding the field to a new term, and `ratify` makes them agreed together with the decision's rules. An agreed term's definition, `code` or `not` changes only together with a proposed decision that lists it, so the term stays `proposed` until that decision is ratified.
 
+A term nobody should use any more is retired, not deleted, because active decisions and retired rules still name it. A decision lists the terms it retires in `retires_terms` (`decide --retires-terms`). Only an agreed term can be retired, and a decision cannot also list it in `terms`: the retired section keeps the approved meaning, and a new meaning gets a new term. The term stays `agreed: agreed`, and its current references stay valid, until the decision is ratified; rejecting the retirement deletes only the decision. `ratify` then sets `agreed: retired`, and refuses while a rule that is not retired still uses the term, so the same `ratify` call changes those rules to a successor term or retires them. There is no replacement field: the decision's summary or rationale names any successor.
+
+Retirement is final. A retired term keeps its heading, definition, `code`, `not` and `agreed: retired`, and its name is never reused; `decide` refuses to list it in `terms` or `retires_terms`. `show` still finds it by its exact name and labels it retired, also in the term list of a rule that names it. It is a record of what earlier decisions meant, not current vocabulary: `check --all` does not search for its `code` and `not` names, and its `avoid` words give no warnings.
+
 Checks:
 
 - Term headings are unique.
-- The definition, `code` and `not` of a term that is agreed in the base change only together with a decision that lists the term in `terms` and is proposed or became active since the base. The definition is compared with whitespace collapsed; `aliases`, `avoid`, `agreed` and comments in the `yaml` block are not compared.
-- `avoid` words in rule statements produce a warning.
-- `check --all` warns when a `code` or `not` name no longer appears as a whole identifier in any file outside Statute's own files (`statute.yml`, `statute.lock`, `statute/`) and Markdown files.
+- The definition, `code` and `not` of a term that is agreed in the base change only together with a decision that lists the term in `terms` and is proposed or became active since the base. The definition is compared with whitespace collapsed; `aliases`, `avoid`, `agreed` and comments in the `yaml` block are not compared. Listing the term in `retires_terms` does not carry a change.
+- A term that is retired in the base keeps its section, its definition, `code` and `not`, and stays `agreed: retired`, even when a decision lists it. `aliases`, `avoid`, comments and whitespace are not compared.
+- A rule that is not retired uses no retired term. Retired rules and active decisions may keep naming it.
+- Every retired term is listed in the `retires_terms` of some decision.
+- `avoid` words of current terms in rule statements produce a warning.
+- `check --all` warns when a `code` or `not` name of a current term no longer appears as a whole identifier in any file outside Statute's own files (`statute.yml`, `statute.lock`, `statute/`) and Markdown files.
 
 Terms are vocabulary for people and agents. `check` does not match them against diffs.
 
@@ -295,17 +305,17 @@ The base for `check` is the merge-base of `HEAD` with the default branch (`origi
 | --- | --- |
 | `init` | Writes `statute.yml`, the default layout and the AGENTS.md snippet (6.1) |
 | `rule new AREA "TITLE"` | Appends a rule skeleton (statement, `scope`, `exceptions`, `protects`, `boundary`) to `rules/<area>.md` with the next free ID for the file's `prefix`, `agreed: proposed` and `built: planned`; prints the ID |
-| `show X...` | Takes one or more files, symbols, rule IDs, terms or decision IDs, and prints each rule once. A file or symbol shows the rules linked to it, with their text and terms. A rule shows its text, links, terms, the decisions that established and changed it, and its gaps. A term shows its definition and the rules that use it. A decision shows its entry |
-| `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for term `code` and `not` names across the repo. `--md` prints the PR "Rule impact" section |
+| `show X...` | Takes one or more files, symbols, rule IDs, terms or decision IDs, and prints each rule once. A file or symbol shows the rules linked to it, with their text and terms. A rule shows its text, links, terms, the decisions that established and changed it, and its gaps. A term shows its definition, the rules that use it, and the decisions that define or retire it. A retired term is labelled retired, also in a rule's term list. A decision shows its entry |
+| `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for the `code` and `not` names of current terms across the repo. `--md` prints the PR "Rule impact" section |
 | `link RULE TARGET [--test] [--remove]` | Adds a link with the current fingerprint, or removes one. Refuses an unknown rule and an existing link. Sets `built: built` when the rule becomes complete |
 | `review RULE ok\|changed D…\|gap REF` | Records one verdict for the rule (4.4) and refreshes every stale link of that rule |
-| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. Refuses an unknown rule or term, one already in a proposed decision, and a retired rule in `--changes` or `--retires`. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
-| `ratify D...` | Activates the decisions and updates their rules and terms (4.2) |
+| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--retires-terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. The terms in `--retires-terms` stay agreed until the decision is ratified. Refuses an unknown rule or term, one already in a proposed decision, a retired rule in `--changes` or `--retires`, a retired term in `--terms` or `--retires-terms`, and a term in `--retires-terms` that is not agreed or is also in `--terms`. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
+| `ratify D...` | Activates the decisions and updates their rules and terms, retiring the terms in `retires_terms` (4.2) |
 | `gap open RULE [--ref REF] [--note …]` | Adds an open gap and prints its ID. Without `--ref` it writes a full entry and requires `--note`; with `--ref` it records a tracker issue (4.5) |
 | `gap close REF` | Closes a gap |
 | `status [--area]` | Per area: rules by agreed/built, broken, stale, incomplete, draft rules, pending decisions with the rules and terms awaiting approval, open gaps, and every manual check |
 
-The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, was added or removed, or was refreshed by `review` (its fingerprint in the lock differs from the base) since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions.
+The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, was added or removed, or was refreshed by `review` (its fingerprint in the lock differs from the base) since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed; a retirement that is still proposed is reported apart from a completed one, and a term keeps `agreed: agreed` until its retirement is ratified. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions, which name the terms they retire apart from the terms they define.
 
 Approval: `ratify` is run by the agent in the session, only after a human has explicitly approved the specific decisions. This is a convention, not an identity check. Pending items never block a merge, so contributors in other timezones are not held up.
 
@@ -362,8 +372,8 @@ The CLI is a prerequisite; each skill checks for it and stops with install instr
 | --- | --- | --- | --- |
 | `adopt` | Setting Statute up in a repo | Read existing docs, contracts, ADRs and decision logs and convert them into the Statute format; draft terms with `code` and `not` entries; draft rules per area with `rule new` (statement, terms, protected and boundary cases), each with a code link and a test link | One decision per area that establishes its rules and lists its terms, `statute check` passing, a list for human approval |
 | `change` | After any code change in the repo | `statute check`; relink missing targets at their new location; for each rule with stale or missing links: read the rule and code, try the protected and boundary cases, decide holds / changing on purpose / broken; for each open tracker gap whose issue is closed, check the rule against the current code and close the gap only if it holds | `statute review RULE …` per rule, `decide` or a gap as needed, `statute check --md` in the PR, written so a PM or designer can follow it |
-| `decide` | A choice passes the decision gates (kept from Footprints AGENTS.md), or a rule or term needs to change | Write summary and rationale; draft new or changed rule sections and terms; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
-| `ratify` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute ratify D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term it introduced; run `statute check` until no reference to the removed items remains |
+| `decide` | A choice passes the decision gates (kept from Footprints AGENTS.md), or a rule or term needs to change, or a term should no longer be used | Write summary and rationale; draft new or changed rule sections and terms; list a term to retire in `retires_terms`, leaving its section, and move the rules that use it to a successor or retire them; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
+| `ratify` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute ratify D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term in its `terms` that was never agreed; leave each term in its `retires_terms` agreed and unchanged; run `statute check` until no reference to the removed items remains |
 
 ### 6.3 Hook (Claude Code)
 

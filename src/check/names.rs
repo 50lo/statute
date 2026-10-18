@@ -1,4 +1,5 @@
-//! `check --all`: term `code` and `not` names that no longer appear anywhere in the repository.
+//! `check --all`: current term `code` and `not` names that no longer appear anywhere in the
+//! repository. Retired terms are records, so their names are not searched for.
 
 use crate::model::{Finding, Model, paths};
 use aho_corasick::AhoCorasick;
@@ -15,6 +16,7 @@ impl NameSearch {
         let mut names: Vec<String> = model
             .terms
             .iter()
+            .filter(|t| !t.is_retired())
             .filter_map(|t| t.meta.as_ref())
             .flat_map(|m| m.code.iter().chain(m.not.iter().map(|n| &n.name)))
             .filter(|n| !n.is_empty())
@@ -63,7 +65,7 @@ impl NameSearch {
                 .is_some_and(|i| !self.found[i])
         };
         let mut out = Vec::new();
-        for term in &model.terms {
+        for term in model.terms.iter().filter(|t| !t.is_retired()) {
             let Some(meta) = &term.meta else { continue };
             let names = meta
                 .code
@@ -132,6 +134,15 @@ mod tests {
             .map(|f| f.message.split('`').nth(1).unwrap().to_string())
             .collect();
         assert_eq!(missing, ["Session", "sessions"]);
+    }
+
+    #[test]
+    fn names_of_a_retired_term_are_not_searched() {
+        let mut model = model(&["Session"], &["sessions"]);
+        model.terms[0].meta.as_mut().unwrap().agreed = Some(crate::model::TermAgreed::Retired);
+        let mut search = NameSearch::new(&model);
+        search.scan(b"nothing here");
+        assert!(search.findings(&model).is_empty());
     }
 
     #[test]

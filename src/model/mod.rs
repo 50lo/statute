@@ -151,6 +151,18 @@ pub struct Term {
     pub span: Span,
 }
 
+impl Term {
+    /// The `agreed` field; `None` when it is absent or the block does not parse.
+    pub fn agreed(&self) -> Option<TermAgreed> {
+        self.meta.as_ref().and_then(|m| m.agreed)
+    }
+
+    /// A retired term is a record of what earlier decisions meant, not current vocabulary.
+    pub fn is_retired(&self) -> bool {
+        self.agreed() == Some(TermAgreed::Retired)
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TermMeta {
@@ -172,6 +184,7 @@ pub struct TermMeta {
 pub enum TermAgreed {
     Proposed,
     Agreed,
+    Retired,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -199,8 +212,13 @@ pub struct Decision {
     pub changes: Vec<String>,
     #[serde(default)]
     pub retires: Vec<String>,
+    /// Terms this decision introduces or redefines.
     #[serde(default)]
     pub terms: Vec<String>,
+    /// Terms this decision retires. Omitted when empty, so entries written before the field existed
+    /// render unchanged.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub retires_terms: Vec<String>,
 }
 
 impl Decision {
@@ -210,6 +228,11 @@ impl Decision {
             .iter()
             .chain(&self.changes)
             .chain(&self.retires)
+    }
+
+    /// Every term the decision names: the ones it introduces or redefines, then the ones it retires.
+    pub fn all_terms(&self) -> impl Iterator<Item = &String> {
+        self.terms.iter().chain(&self.retires_terms)
     }
 }
 
@@ -229,6 +252,8 @@ pub struct DecisionDraft {
     pub retires: Vec<String>,
     #[serde(default)]
     pub terms: Vec<String>,
+    #[serde(default)]
+    pub retires_terms: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]

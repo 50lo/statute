@@ -1,7 +1,7 @@
 use super::SCHEMA;
 use crate::model::{
-    Agreed, Built, Decision, DecisionStatus, Gap, Link, LinkRole, Model, Rule, Span, paths,
-    split_target,
+    Agreed, Built, Decision, DecisionStatus, Gap, Link, LinkRole, Model, Rule, Span, Term,
+    TermAgreed, paths, split_target,
 };
 use crate::repo::Repo;
 use anyhow::{Result, bail};
@@ -48,6 +48,8 @@ pub struct RuleShow {
 #[derive(Serialize)]
 pub struct TermRef {
     pub name: String,
+    /// `None` when no term has this name, or its `agreed` field is absent or does not parse.
+    pub agreed: Option<TermAgreed>,
     /// `None` when no term has this name, or the term has no definition.
     pub definition: Option<String>,
 }
@@ -61,7 +63,7 @@ pub struct LinkRef {
 #[derive(Serialize)]
 pub struct DecisionRef {
     pub id: String,
-    /// How the decision names the rule.
+    /// How the decision names the rule or term.
     pub role: Role,
     pub status: DecisionStatus,
     pub summary: String,
@@ -73,6 +75,8 @@ pub enum Role {
     Establishes,
     Changes,
     Retires,
+    /// A term the decision introduces or redefines: it is in `terms`.
+    Defines,
 }
 
 #[derive(Serialize)]
@@ -80,9 +84,13 @@ pub struct TermShow {
     pub name: String,
     pub file: String,
     pub line: usize,
+    /// `None` when the `agreed` field is absent or the block does not parse.
+    pub agreed: Option<TermAgreed>,
     /// The term's section as written: heading, definition and block.
     pub text: String,
     pub rules: Vec<RuleRef>,
+    /// The decisions that define or retire the term. `None` when `decisions.db` does not parse.
+    pub decisions: Option<Vec<DecisionRef>>,
 }
 
 #[derive(Serialize)]
@@ -110,8 +118,13 @@ pub fn run(names: &[String]) -> Result<ShowReport> {
                 name: term.name.clone(),
                 file: paths::TERMS.to_string(),
                 line: term.line,
+                agreed: term.agreed(),
                 text: section(&repo, &mut texts, paths::TERMS, &term.span)?,
                 rules: rules_using(&model, &term.name),
+                decisions: model
+                    .decisions
+                    .as_ref()
+                    .map(|ds| decisions_naming_term(ds, &term.name)),
             })]
         } else if let Some(rules) = linked_to(&repo, &model, name) {
             if rules.is_empty() {
@@ -190,13 +203,13 @@ fn rule_item<'a>(
             .meta
             .iter()
             .flat_map(|m| &m.terms)
-            .map(|t| TermRef {
-                name: t.clone(),
-                definition: model
-                    .terms
-                    .iter()
-                    .find(|term| term.name == *t)
-                    .and_then(|term| term.definition.clone()),
+            .map(|t| {
+                let term = model.terms.iter().find(|term| term.name == *t);
+                TermRef {
+                    name: t.clone(),
+                    agreed: term.and_then(Term::agreed),
+                    definition: term.and_then(|term| term.definition.clone()),
+                }
             })
             .collect(),
         links: model.links.as_ref().map(|links| {
@@ -245,6 +258,23 @@ fn decisions_naming(decisions: &[Decision], rule: &str) -> Vec<DecisionRef> {
         ];
         for (role, ids) in roles {
             if ids.iter().any(|id| id == rule) {
+                out.push(DecisionRef {
+                    id: d.id.clone(),
+                    role,
+                    status: d.status,
+                    summary: d.summary.clone(),
+                });
+            }
+        }
+    }
+    out
+}
+
+fn decisions_naming_term(decisions: &[Decision], term: &str) -> Vec<DecisionRef> {
+    let mut out = Vec::new();
+    for d in decisions {
+        for (role, names) in [(Role::Defines, &d.terms), (Role::Retires, &d.retires_terms)] {
+            if names.iter().any(|n| n == term) {
                 out.push(DecisionRef {
                     id: d.id.clone(),
                     role,

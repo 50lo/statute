@@ -20,5 +20,5 @@ Defined twice.
 Second person on a refund.
 
 ```yaml
-agreed: retired
+agreed: dropped
 ```

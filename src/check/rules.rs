@@ -111,6 +111,36 @@ pub fn terms_resolve(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
+/// A rule that is not retired uses no retired term. The finding names the term too, so `ratify`
+/// refuses to retire a term that a rule outside its decisions still uses.
+pub fn retired_terms(model: &Model, out: &mut Vec<Finding>) {
+    let retired: BTreeSet<&str> = model
+        .terms
+        .iter()
+        .filter(|t| t.is_retired())
+        .map(|t| t.name.as_str())
+        .collect();
+    for rule in &model.rules {
+        let Some(meta) = &rule.meta else { continue };
+        if meta.agreed == Agreed::Retired {
+            continue;
+        }
+        for term in meta.terms.iter().filter(|t| retired.contains(t.as_str())) {
+            out.push(at(
+                Finding::error(
+                    "rule.term_retired",
+                    format!(
+                        "{} uses term `{term}`, which is retired; change the rule to a current term, or retire the rule",
+                        rule.id
+                    ),
+                )
+                .term(term),
+                rule,
+            ));
+        }
+    }
+}
+
 /// An agreed rule has at least one `protects` and one `boundary` case.
 pub fn cases(model: &Model, out: &mut Vec<Finding>) {
     for rule in &model.rules {
@@ -168,9 +198,10 @@ pub fn establishment(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// A rule statement that uses a term's `avoid` word gets a warning.
+/// A rule statement that uses a current term's `avoid` word gets a warning. Retired terms give no
+/// wording advice.
 pub fn avoid_words(model: &Model, out: &mut Vec<Finding>) {
-    for term in &model.terms {
+    for term in model.terms.iter().filter(|t| !t.is_retired()) {
         for word in term.meta.iter().flat_map(|m| &m.avoid) {
             for rule in &model.rules {
                 if rule
