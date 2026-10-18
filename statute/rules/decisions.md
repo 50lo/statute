@@ -61,7 +61,7 @@ boundary:
 
 ```yaml
 agreed: proposed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: Decisions drafted with `decide`, and decisions named to `ratify`.
 terms: [Decision, Term, Agreement status, Proposed decision]
 exceptions: []
@@ -79,7 +79,7 @@ boundary:
 
 ```yaml
 agreed: proposed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Decision, Proposed decision, Agreement status]
 exceptions: []

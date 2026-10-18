@@ -79,7 +79,7 @@ When a term is retired in the base, `check` must report an error if its definiti
 
 ```yaml
 agreed: proposed          # proposed | agreed | retired
-built: planned            # planned | built
+built: built              # planned | built
 scope: Terms that are retired in the base, and decisions drafted with `decide`.
 terms: [Term, Decision, Agreement status, Base]
 exceptions: []
