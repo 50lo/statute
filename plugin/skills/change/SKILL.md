@@ -7,7 +7,7 @@ description: Run after any code change in a repository that uses Statute (it has
 
 Run this after changing code, and whenever `statute check` reports stale or missing links.
 
-First run `statute --version`. If the command is missing, stop and tell the user to install the CLI with `cargo install --git https://github.com/50lo/statute`.
+First run `statute --version`. If the command is missing, stop and tell the user to install the CLI with `cargo install statute-cli --locked`.
 
 ## Steps
 

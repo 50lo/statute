@@ -3,7 +3,7 @@
 Skills and a hook that let a coding agent keep a repository's Statute rules current. They need the `statute` CLI on the `PATH`:
 
 ```sh
-cargo install --git https://github.com/50lo/statute
+cargo install statute-cli --locked
 ```
 
 | Part | What it does |

@@ -5,7 +5,7 @@ description: Use in a repository with statute.yml when proposed decisions are pe
 
 # Statute: ratify
 
-First run `statute --version`. If the command is missing, stop and tell the user to install the CLI with `cargo install --git https://github.com/50lo/statute`.
+First run `statute --version`. If the command is missing, stop and tell the user to install the CLI with `cargo install statute-cli --locked`.
 
 Only a person approves. Run `statute ratify` only for decisions the person in this session explicitly approved, one by one.
 
