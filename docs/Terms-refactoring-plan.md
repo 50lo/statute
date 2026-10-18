@@ -1,6 +1,6 @@
 # Terms refactoring: implementation plan
 
-Status: in progress. Choices A and B below were made on 2026-10-18; choice C is open. This plan orders and details the work that [the terms refactoring proposal](Terms-refactoring-proposal.md) accepted. It changes no agreed terms, rules or CLI behaviour. Each work item makes its own changes in its own PR, through proposed decisions where agreed items change.
+Status: in progress. Choices A and B below were made on 2026-10-18. For choice C, the compaction audit is preserved in st-uvvi; its migrations are chosen in item 3a. This plan orders and details the work that [the terms refactoring proposal](Terms-refactoring-proposal.md) accepted. It changes no agreed terms, rules or CLI behaviour. Each work item makes its own changes in its own PR, through proposed decisions where agreed items change.
 
 Work items 1 and 2 are planned in detail here. Work items 3, 4 and 5 already have their own plans or need a human review first, so this document gives only their order, dependencies and the constraints that come from items 1 and 2.
 
