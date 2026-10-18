@@ -57,6 +57,7 @@
 {"source": "LINKS-001", "target": "src/state.rs#Health", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "7f63680b12adf4241b13b7f20777aa7d8456e1c6977bb13aae14ec478907ff71"}
 {"source": "LINKS-001", "target": "src/state.rs#health", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "6b4b23fe1c8fa745d86b467df53d5a213f08f5001a5959abceb013254121760f"}
 {"source": "LINKS-001", "target": "tests/symbol_parse_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "3a40ee864d0305587f0e179953e7d4739f6cacac6fbbc4cd29f929b939803d5c"}
+{"source": "LINKS-002", "target": "src/check/links.rs#freshness", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "2b80de1092f9f9be34dd202a5d649daff68a9c3b649bd1fce90a0fb27e785751"}
 {"source": "LINKS-002", "target": "src/commands/check.rs#CheckReport", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "07d550a7a4b40f56d51827a0c740fa8293a7c6eabb69926d6840ba89c8ca9c70"}
 {"source": "LINKS-002", "target": "src/commands/check.rs#CheckReport.failed", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "a692ed71479930620038a56475cfccfa486e33dc39f6936b00b52a57723cba74"}
 {"source": "LINKS-002", "target": "src/commands/check.rs#run", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "2ff2e9d1062fde8ecd2cdb7245f00c16f95e6fe32c31aa0055c7e7aae48a327a"}
@@ -67,7 +68,12 @@
 {"source": "LINKS-003", "target": "src/commands/review.rs#Verdict", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "30965b488403004b120553a44a8a46109424a1b39c33e3435684cdea9f6eb906"}
 {"source": "LINKS-003", "target": "src/commands/review.rs#run", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "35b8e9f356508600edd3cb0f697dde0d58cb5e3915e18f508c7dda272d9e4e0d"}
 {"source": "LINKS-003", "target": "tests/review_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "7044e9e164087a7565d97dc85dc969c1c8c69a3a515783305448dcf30b37c4bf"}
+{"source": "LINKS-004", "target": "src/check/links.rs#freshness", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "2b80de1092f9f9be34dd202a5d649daff68a9c3b649bd1fce90a0fb27e785751"}
 {"source": "LINKS-004", "target": "src/commands/review.rs#run", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "35b8e9f356508600edd3cb0f697dde0d58cb5e3915e18f508c7dda272d9e4e0d"}
+{"source": "LINKS-004", "target": "src/fingerprint/go.rs#sign", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "2c9dd3bb067bb9152eae363af2184e955b763aaf9fded4f557dea11e80df8f22"}
 {"source": "LINKS-004", "target": "src/fingerprint/mod.rs#Missing", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "89f239af4d63b72e746d972908f0d1c9543112bdb58a858629a3ef24d50ab78e"}
 {"source": "LINKS-004", "target": "src/fingerprint/mod.rs#sign", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "3378af0721ab55f9dfd81c6c068633a57fb0f918688419b3dbfed9e278390e04"}
+{"source": "LINKS-004", "target": "src/fingerprint/python.rs#sign", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "322ee3b7f41622696c084fc0e3d04de4ba17f70a144b6154c7d1ec94204ac769"}
+{"source": "LINKS-004", "target": "src/fingerprint/rust.rs#sign", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "5138b6bbc5336d31145010d356f765e55a976c02b646b248b451dbce3ac3e4c4"}
+{"source": "LINKS-004", "target": "src/state.rs#health", "role": "code", "mode": "rust-ast-sha256-v1", "sig": "6b4b23fe1c8fa745d86b467df53d5a213f08f5001a5959abceb013254121760f"}
 {"source": "LINKS-004", "target": "tests/missing_contract.rs", "role": "test", "mode": "bytes-sha256-v1", "sig": "b0f4f7061d921ef21dee89e2c4a3e6d26249fe5ea1a8ad07cf5b55801409ee68"}
