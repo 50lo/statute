@@ -78,7 +78,7 @@ boundary:
 When a term is retired in the base, `check` must report an error if its definition, `code` or `not` changes, its `agreed` value is no longer `retired`, or the term is removed, even when a decision lists it. `decide` refuses a decision that lists a retired term in `terms` or `retires_terms`, and writes nothing.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Terms that are retired in the base, and decisions drafted with `decide`.
 terms: [Term, Decision, Agreement status, Base]
