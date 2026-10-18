@@ -110,3 +110,28 @@
   - Fingerprint
   - Draft rule
   - Proposed decision
+- id: D261018-avopb
+  timestamp: 2026-10-18T20:20:31Z
+  actor: user
+  status: proposed
+  ratified_by: null
+  summary: Everything in an agreed term's section except its `yaml` block is its definition, changes only with a decision, and is shown next to the rules that use the term. Link's paragraph after its `yaml` block, present when D261017-6x46f approved Link, now counts as part of Link's definition.
+  rationale: 'A paragraph after the first can qualify a term''s meaning, as Link''s does, but the history check compared only the first paragraph and the rule and file views of `statute show` printed only that paragraph. A missed meaning change is worse than a false alarm (AGENTS.md, principle 1), and the human glossary needs one clear approved text to stay consistent with. `aliases`, `avoid`, `agreed` and comments in the `yaml` block stay uncompared. Rejected: treating later paragraphs as notes that are not compared, as rule notes are; a note that qualifies the meaning would then be caught only by review.'
+  establishes: []
+  changes:
+  - HIST-003
+  retires: []
+  terms: []
+- id: D261018-d0ld8
+  timestamp: 2026-10-18T20:29:04Z
+  actor: user
+  status: proposed
+  ratified_by: null
+  summary: 'A rule retired in the base never changes: it keeps its section, its compared fields and `agreed: retired` whatever decision lists it, and `decide` refuses to list it in `changes` or `retires`. DEC-001''s boundary case now names agreed rules only.'
+  rationale: 'Spec 4.1 says a retired rule keeps its section and its ID is never reused, and active decisions still name it, but the history check protected only agreed rules, and `decide --changes` set a retired rule back to proposed, which revived it. This is a separate rule rather than a wider HIST-002, because HIST-002 lets a decision carry a change and this rule lets none. DEC-001''s boundary said any rule established by an active decision can be listed in a new proposed decision, which is no longer true of retired rules. Rejected: reviving a retired rule through a decision, which would let one ID mean different things over time.'
+  establishes:
+  - HIST-004
+  changes:
+  - DEC-001
+  retires: []
+  terms: []

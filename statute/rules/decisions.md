@@ -7,7 +7,7 @@ prefix: DEC
 A rule or term must not be listed in more than one proposed decision. `decide` refuses a decision that lists a rule or term already in a proposed decision, and `check` reports an overlap that arrives through a merge.
 
 ```yaml
-agreed: agreed            # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Proposed decision]
@@ -16,7 +16,7 @@ protects:
   - "`decide --terms Commit` is refused while another proposed decision lists `Commit`."
   - Two proposed decisions listing the same rule after a merge are reported as an error.
 boundary:
-  - A rule established by an active decision can be listed in a new proposed decision.
+  - An agreed rule established by an active decision can be listed in a new proposed decision.
 ```
 
 # DEC-002 Ratify activates only the decisions it names

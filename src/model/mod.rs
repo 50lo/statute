@@ -143,6 +143,8 @@ pub enum Built {
 pub struct Term {
     pub name: String,
     pub line: usize,
+    /// Everything in the section after the heading except the `yaml` block, as written; `None` when
+    /// that is blank.
     pub definition: Option<String>,
     /// Defaults when the term has no `yaml` block; `None` when the block does not match the schema.
     pub meta: Option<TermMeta>,

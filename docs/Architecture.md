@@ -76,7 +76,7 @@ Repo::open
 Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) follows the same steps:
 
 1. Load the model.
-2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses an unknown rule or term and one that is already in a proposed decision.
+2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses an unknown rule or term, one that is already in a proposed decision, and a retired rule in `changes` or `retires`.
 3. Plan edits in `txn`: byte-range patches for Markdown, full rewrites for YAML and the lock.
 4. Apply the edits in memory and re-parse the touched files. A file that no longer parses is a bug in the command, which fails without writing.
 5. Write every touched file to a temp file next to it, then rename each into place.
@@ -93,7 +93,7 @@ Each rename is atomic; a command that writes several files is not. All temp file
 | --- | --- | --- |
 | `statute.yml` | `yaml_serde` into a typed struct | `init` only |
 | `rules/<area>.md` | `pulldown-cmark` events with byte offsets: frontmatter, `#` headings, first paragraph, first `yaml` block, notes | append a section (`rule new`); patch the `agreed:` or `built:` line inside the block |
-| `terms.md` | same, with `#` groups and `##` terms | patch or insert the `agreed:` line |
+| `terms.md` | same, with `#` groups and `##` terms; a term's definition is its whole section except the heading and the `yaml` block | patch or insert the `agreed:` line |
 | `decisions.db` | `yaml_serde` into a list of entries | full rewrite in one fixed format; YAML comments are not kept |
 | `gaps.yml` | same | full rewrite |
 | `statute.lock` | `serde_json`, one line at a time | full rewrite: version line, then links sorted by source and target |
@@ -158,7 +158,8 @@ A finding has a stable code, a severity and the item it is about:
 `check::history` compares the model with the base:
 
 - Active decisions are unchanged: an entry that is active in the base has the same parsed fields and is not deleted.
-- Agreed rules and terms change only with a decision. For each rule that is agreed in the base, it compares the statement (with whitespace collapsed) and the parsed `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check`; for each term that is agreed in the base, the definition, `code` and `not`. Notes, `agreed`, `built` and formatting are not compared. A difference requires a decision that lists the item (`changes` for a rule, `terms` for a term) and is either proposed or became active since the base. Rules and terms that are proposed in the base are not compared: their text is a proposal, and restoring a rejected proposal must not trip the check.
+- Agreed rules and terms change only with a decision. For each rule that is agreed in the base, it compares the statement (with whitespace collapsed) and the parsed `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check`; for each term that is agreed in the base, the definition (its whole section except the heading and the `yaml` block, with whitespace collapsed), `code` and `not`. Notes, `agreed`, `built` and formatting are not compared. A difference requires a decision that lists the item (`changes` for a rule, `terms` for a term) and is either proposed or became active since the base. Rules and terms that are proposed in the base are not compared: their text is a proposal, and restoring a rejected proposal must not trip the check.
+- Retired rules never change. For each rule that is retired in the base, it compares the same fields as for an agreed rule and requires `agreed: retired`, and no decision exempts it. The finding is `rule.retired_changed`, not `rule.changed_without_decision`, because `decide` cannot carry the change.
 
 ### 7.2 Impact
 
