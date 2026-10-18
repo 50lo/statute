@@ -8,7 +8,7 @@ tags:
     - statute
     - planning
 created_at: 2026-10-18T09:53:27Z
-updated_at: 2026-10-18T09:53:27Z
+updated_at: 2026-10-18T12:09:14Z
 ---
 
 # Term retirement with preserved historical references
@@ -76,3 +76,9 @@ Existing term files and decisions parse unchanged: `retires_terms` defaults to e
 ## Non-goals
 
 No actual glossary migration or term compaction, glossary-section fingerprints, bidirectional glossary consistency records, automatic affected-rule discovery from code names, aliases as redirects, historical decision rewriting, generalized plugin/registry architecture, or broad transaction redesign.
+
+
+
+## Ordering (added 2026-10-18)
+
+Blocked by st-jycx, which makes retirement of a rule final in history checks and makes everything in a term section after the heading, except its `yaml` block, the compared definition. Retired terms reuse that retired-item check (item 8 above) rather than a second mechanism, and a retired term's protected text is that whole definition plus `code` and `not`. If the human glossary (st-25bl) has landed, retiring a term also updates the glossary sections that link to it, with a glossary consistency record in the PR. Order of all terms work: docs/Terms-refactoring-plan.md.

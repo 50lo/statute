@@ -8,7 +8,9 @@ tags:
     - statute
     - glossary
 created_at: 2026-10-18T09:52:23Z
-updated_at: 2026-10-18T09:52:23Z
+updated_at: 2026-10-18T12:09:14Z
+blocked_by:
+    - st-25bl
 ---
 
 ## Purpose
@@ -33,7 +35,7 @@ Start when the manual stage gives evidence for automation: drift between the glo
 
 ## Design work before implementation
 
-Specify the reference syntax and owner, stable section identity, heading rename/move and duplicate handling, versioned Markdown fingerprint normalization, storage of review state, CLI review command/refusals, JSON findings, rule-impact presentation, and behavior for pending decisions. The boundary between a term's compared definition and its notes is settled first, in st-jycx.
+Specify the reference syntax and owner, stable section identity, heading rename/move and duplicate handling, versioned Markdown fingerprint normalization, storage of review state, CLI review command/refusals, JSON findings, rule-impact presentation, and behavior for pending decisions. st-jycx settles first that everything in a term section except its `yaml` block is the compared definition; terms have no uncompared notes.
 
 Use existing closed enum extensions and module layering; introduce no registry or generic plugin framework. Scope the implementation to this relationship. General guide links and automatic code-name-to-rule impact matching remain separate features. Term retirement and operational term compaction are also separate PRs and are not prerequisites for drafting or manually reviewing Statute's glossary.
 
