@@ -27,9 +27,13 @@ Proposal: docs/Terms-refactoring-proposal.md. PR: https://github.com/50lo/statut
 - Include documentation references with compact term context in show output. Full human explanations can be retrieved explicitly rather than injected into every task. Group review output for shared sections without erasing the individual affected terms.
 - Keep term/glossary consistency separate from rule code/test completeness and term-to-code matching. Do not count documentation references as implementation or verification links.
 
+## When to start
+
+Start when the manual stage gives evidence for automation: drift between the glossary and a term definition reaches the default branch, or the review records in PRs that edit either side show missed counterparts or review effort out of proportion to the edit. Until then, the manual stage stays the workflow.
+
 ## Design work before implementation
 
-Specify the reference syntax and owner, stable section identity, heading rename/move and duplicate handling, versioned Markdown fingerprint normalization, storage of review state, CLI review command/refusals, JSON findings, rule-impact presentation, and behavior for pending decisions. Review the current first-paragraph definition/history boundary: no implementation should silently treat unprotected explanatory notes as approved operational meaning.
+Specify the reference syntax and owner, stable section identity, heading rename/move and duplicate handling, versioned Markdown fingerprint normalization, storage of review state, CLI review command/refusals, JSON findings, rule-impact presentation, and behavior for pending decisions. The boundary between a term's compared definition and its notes is settled first, in st-jycx.
 
 Use existing closed enum extensions and module layering; introduce no registry or generic plugin framework. Scope the implementation to this relationship. General guide links and automatic code-name-to-rule impact matching remain separate features. Term retirement and operational term compaction are also separate PRs and are not prerequisites for drafting or manually reviewing Statute's glossary.
 

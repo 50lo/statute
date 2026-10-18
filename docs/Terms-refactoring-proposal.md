@@ -35,7 +35,7 @@ When asking a person to approve a meaning change, show the compact definition an
 
 ## First stage: a glossary and manual review
 
-Draft `docs/Glossary.md` for Statute while keeping the existing operational terms and identities intact. Use ordinary Markdown links from the explanations to the relevant term entries. Add ordinary references from terms to their human explanations without introducing a new metadata field or changing the approved meaning. Several terms can reference one section, and one term can reference several sections.
+Draft `docs/Glossary.md` for Statute while keeping the existing operational terms and identities intact. Use ordinary Markdown links from the explanations to the relevant term entries. Links run one way, from the glossary to terms. A reference from a term back to the glossary has no working place yet: in the definition paragraph it changes compared text, so every agreed term would need a decision; in a later paragraph `show` does not return it, so agents would not see it. References from terms to the glossary belong to the automation feature.
 
 Explain relationships, examples, and workflow in the glossary, and point to the authoritative term entries for exact definitions. It can use familiar words in context without turning them into additional operational terms. The glossary may not introduce a condition or exception that is absent from the relevant approved definition.
 
@@ -48,7 +48,7 @@ Start with sections broad enough to read coherently. Review one changed explanat
 | Change | What needs review |
 | --- | --- |
 | A glossary section changes | Identify every operational term it explains, following its links and checking for omitted associations. Compare the explanation with each compact definition. |
-| An operational definition changes | Follow its references and search the glossary for the term and its uses. Review every relevant explanation against the changed definition. |
+| An operational definition changes | Search the glossary for links to the term and for its uses. Review every relevant explanation against the changed definition. |
 | A reference changes, or a section disappears or becomes ambiguous | Check the mapping and its meaning. Repair the references or explain the new association before considering it reviewed. |
 
 Changed text requests review; it does not prove that its counterpart must be edited. A clearer example or a wording change may leave the other representation correct.
@@ -61,7 +61,7 @@ For example, clarifying the glossary's explanation of a missing link can be revi
 
 ## Intended design: automated consistency review
 
-Automation remains accepted follow-up work, tracked in [st-uzzw](../.beans/st-uzzw--automate-bidirectional-review-of-glossary-and-oper.md). The manual first stage informs its design; it does not replace the intended detection and review guarantees.
+Automation remains accepted follow-up work, tracked in [st-uzzw](../.beans/st-uzzw--automate-bidirectional-review-of-glossary-and-oper.md). The manual first stage informs its design; it does not replace the intended detection and review guarantees. Start the automation when the manual stage gives evidence for it: drift between the glossary and a term definition reaches the default branch, or the review records in PRs that edit either side show missed counterparts or review effort out of proportion to the edit.
 
 Automated references should identify all relevant counterparts when either a glossary section or an operational definition changes. Missing, ambiguous, removed, and retargeted sections must remain visible until addressed. A review record should identify the exact versions compared, and relevant later edits on either side must invalidate that confirmation. Shared sections can be grouped for readable output while retaining attribution to each term.
 
@@ -95,7 +95,7 @@ The implementation plan is recorded in high-priority feature [st-9flm](../.beans
 
 This is a proposal for a documentation relationship and workflow, not a feature already supported by the CLI. Current links belong to rules and have code or test roles; they do not represent consistency between a term and a glossary section. Markdown section fingerprinting is also deferred in the current spec. This relationship needs explicit support and must not affect a rule's implementation or verification completeness.
 
-Current rule retrieval returns a term's first-paragraph definition. History checks compare that definition and its `code` and `not` metadata. Additional explanatory paragraphs are not a substitute for approved operational meaning. The new retrieval behavior should include glossary references alongside compact definitions, allowing an agent to fetch human context when needed without loading the whole glossary by default.
+Current rule retrieval returns a term's first-paragraph definition. History checks compare that definition and its `code` and `not` metadata, so later paragraphs in a term's section can change without a decision. The rule that the glossary may not add a condition absent from the approved definition needs that boundary to be unambiguous, so it is fixed before the glossary is drafted, in high-priority bug [st-jycx](../.beans/st-jycx--protect-whole-term-sections-and-retired-items-in-hist.md). With automation, retrieval should include glossary references alongside compact definitions, allowing an agent to fetch human context when needed without loading the whole glossary by default.
 
 The delivery boundaries are explicit: this PR records the approach and follow-up work; the initial glossary work uses manual review; automation, operational terms compaction, and term retirement are separate implementation PRs. The need for those follow-ups is accepted, while detailed plans and specific changes to agreed meanings still receive their own review.
 
