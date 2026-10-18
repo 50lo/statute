@@ -255,11 +255,11 @@ fn refuse_unagreed_retirement(model: &Model, draft: &DecisionDraft) -> Result<()
                 "term `{name}` is in both `terms` and `retires_terms`; a decision cannot redefine and retire the same term"
             );
         }
-        let agreed = model
-            .terms
-            .iter()
-            .any(|t| &t.name == name && t.agreed() == Some(TermAgreed::Agreed));
-        if !agreed {
+        let term = model.terms.iter().find(|t| &t.name == name);
+        if term.is_some_and(|t| t.meta.is_none()) {
+            bail!("term `{name}` has no readable `yaml` block; run `statute check`");
+        }
+        if term.and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
             bail!("term `{name}` is not agreed; only an agreed term can be retired");
         }
     }

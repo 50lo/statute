@@ -248,6 +248,11 @@ fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()
             }
         }
         for name in &d.retires_terms {
+            if term(name).is_some_and(|t| t.meta.is_none()) {
+                bail!(
+                    "nothing was ratified; term `{name}` has no readable `yaml` block; run `statute check`"
+                );
+            }
             if term(name).and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
                 bail!(
                     "nothing was ratified; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",

@@ -278,3 +278,76 @@ fn decide_edit_records_retired_terms_and_keeps_a_draft_it_cannot_record() {
         serde_json::json!(["Repository"])
     );
 }
+
+fn decide(repo: &TestRepo, args: &[&str]) -> Run {
+    let mut all = vec!["decide", "--summary", "S.", "--rationale", "R.", "--json"];
+    all.extend_from_slice(args);
+    repo.run(&all)
+}
+
+fn new_decision(repo: &TestRepo, args: &[&str]) -> String {
+    ok(decide(repo, args)).json()["id"]
+        .as_str()
+        .unwrap()
+        .to_string()
+}
+
+#[test]
+fn one_call_can_retire_a_term_together_with_the_rules_that_use_it() {
+    let repo = TestRepo::fixture("valid");
+    repo.commit("Base");
+    let retire_rule = new_decision(&repo, &["--retires", "ATTR-001"]);
+    // ATTR-002 is proposed, so its terms change without a decision; PROPOSED establishes it.
+    let rules = repo.read(ATTRIBUTION);
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace("terms: [Session, Commit]", "terms: [Commit]"),
+    );
+    let retire_term = new_decision(&repo, &["--retires-terms", "Session"]);
+
+    ok(repo.run(&["ratify", &retire_rule, &retire_term, PROPOSED]));
+    assert_eq!(term(&repo, "ATTR-001")["agreed"], "retired");
+    assert_eq!(term(&repo, "ATTR-002")["agreed"], "agreed");
+    assert_eq!(term(&repo, "Session")["agreed"], "retired");
+    // Retired ATTR-001 and ATTR-003 keep naming Session.
+    assert_eq!(term(&repo, "ATTR-003")["terms"][0]["agreed"], "retired");
+    assert_eq!(errors(&repo), Vec::<String>::new());
+}
+
+#[test]
+fn a_term_whose_block_does_not_parse_is_not_retired() {
+    let repo = TestRepo::fixture("valid");
+    let block =
+        "## Old approver\n\nThe second person on a refund.\n\n```yaml\nagreed: agreed\n```\n";
+    repo.write(TERMS, &format!("{}\n{block}", repo.read(TERMS)));
+    repo.commit("Base");
+    let (terms, decisions) = (repo.read(TERMS), repo.read(DECISIONS));
+    let id = new_decision(&repo, &["--retires-terms", "Old approver"]);
+    let proposed = repo.read(DECISIONS);
+
+    let broken = terms.replace(block, &block.replace("agreed: agreed", "agreed: [agreed"));
+    assert_ne!(broken, terms);
+    repo.write(TERMS, &broken);
+    refused(
+        repo.run(&["ratify", &id]),
+        "term `Old approver` has no readable `yaml` block",
+    );
+    assert_eq!(
+        (repo.read(TERMS), repo.read(DECISIONS)),
+        (broken.clone(), proposed.clone())
+    );
+
+    repo.write(DECISIONS, &decisions);
+    refused(
+        decide(&repo, &["--retires-terms", "Old approver"]),
+        "term `Old approver` has no readable `yaml` block",
+    );
+    assert_eq!(repo.read(DECISIONS), decisions);
+
+    // Repaired, the term retires; its name has a space.
+    repo.write(TERMS, &terms);
+    repo.write(DECISIONS, &proposed);
+    ok(repo.run(&["ratify", &id]));
+    assert_eq!(term(&repo, "Old approver")["agreed"], "retired");
+    assert_eq!(errors(&repo), Vec::<String>::new());
+}
