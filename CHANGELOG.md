@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Retire agreed terms with `decide --retires-terms`. A retired term keeps its section as a record of what earlier decisions meant, `show` labels it, and the name and wording checks skip it.
+
 ## 0.1.0 - 2026-10-19
 
 First crates.io release, published as `statute-cli` with the `statute` command.

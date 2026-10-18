@@ -39,7 +39,7 @@ avoid: []
 A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target.
 
 ```yaml
-agreed: agreed                   # proposed | agreed
+agreed: agreed                   # proposed | agreed | retired
 code: [LinkLine]
 not: []
 aliases: []
