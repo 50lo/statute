@@ -1,14 +1,14 @@
 ---
 # st-9flm
 title: Retire operational terms without breaking historical references
-status: todo
+status: in-progress
 type: feature
 priority: high
 tags:
     - statute
     - planning
 created_at: 2026-10-18T09:53:27Z
-updated_at: 2026-10-18T12:09:14Z
+updated_at: 2026-10-18T21:13:01Z
 ---
 
 # Term retirement with preserved historical references
@@ -47,15 +47,15 @@ No machine-readable replacement field. Record the reason and any successor names
 
 ## Implementation work
 
-- [ ] Settle the decision field and flag spelling; update `docs/Statute-spec.md` before implementation. Record proposed changes to agreed project rules/terms with `statute decide`; likely affected definitions include Term and Agreement status, and contracts HIST-001/003 and DEC-001/002/003. Run `statute show` on each source file before modifying it. Do not ratify without explicit human approval of specific decisions.
-- [ ] Extend model enums, decision/draft schema and typed reports. Default missing `retires_terms` to empty so existing repos parse unchanged. Serialize empty new action lists with omission where practical. Old active decisions must compare semantically unchanged after the additive default, and their stored fields must not be rewritten to invent new events. Keep strict unknown-field validation.
-- [ ] Extend term state patching with parse-after-patch verification. Preserve heading, definition, metadata, comments and surrounding layout. Cover existing mapping forms, leading comments and YAML markers; avoid a new generic document rewrite subsystem.
-- [ ] Add pure validation for retirement actions, current-versus-historical references, proposal overlap, retired-name retention and retirement provenance. Update the existing checks rather than layering a parallel lifecycle engine. Trace checks against branches whose base already contains retired terms, and proposals already merged to the default branch.
-- [ ] Extend CLI argument parsing, `--edit` drafts, `decide` reports and refusal messages. Validate every requested action before writing. Reparse command output through existing `Txn` boundaries.
-- [ ] Extend `ratify` to accumulate term retirements, patch retained sections, activate exactly the named decisions, run resultant-model and history validation, and write only after successful preflight. Include affected external rule references in scoped refusal; maintain existing behavior for unrelated findings and stale/missing links.
-- [ ] Update `show` text/JSON, status pending actions, term impact/reasons and Markdown PR reporting. Distinguish retiring terms from redefining terms; do not announce retired while approval is pending. Preserve compact context behavior and label historical terms. Update name/avoid search filters.
-- [ ] Document lifecycle examples, cancellation and errors. Update plugin `decide`, `ratify`, `change` and `adopt` guidance where they handle term references or proposed decisions. Existing ratify rejection instructions must distinguish `terms` from `retires_terms` so rejecting a retirement cannot delete an agreed term. Update architecture/layering guidance only if actually needed; keep filesystem access and Git access in their current modules.
-- [ ] Add meaningful contract tests below, run the relevant suites then full Rust checks, run `statute check --all`, and complete the project's `change` skill. Leave any changed agreed meanings proposed until specifically approved.
+- [x] Settle the decision field and flag spelling; update `docs/Statute-spec.md` before implementation. Record proposed changes to agreed project rules/terms with `statute decide`; likely affected definitions include Term and Agreement status, and contracts HIST-001/003 and DEC-001/002/003. Run `statute show` on each source file before modifying it. Do not ratify without explicit human approval of specific decisions.
+- [x] Extend model enums, decision/draft schema and typed reports. Default missing `retires_terms` to empty so existing repos parse unchanged. Serialize empty new action lists with omission where practical. Old active decisions must compare semantically unchanged after the additive default, and their stored fields must not be rewritten to invent new events. Keep strict unknown-field validation.
+- [x] Extend term state patching with parse-after-patch verification. Preserve heading, definition, metadata, comments and surrounding layout. Cover existing mapping forms, leading comments and YAML markers; avoid a new generic document rewrite subsystem.
+- [x] Add pure validation for retirement actions, current-versus-historical references, proposal overlap, retired-name retention and retirement provenance. Update the existing checks rather than layering a parallel lifecycle engine. Trace checks against branches whose base already contains retired terms, and proposals already merged to the default branch.
+- [x] Extend CLI argument parsing, `--edit` drafts, `decide` reports and refusal messages. Validate every requested action before writing. Reparse command output through existing `Txn` boundaries.
+- [x] Extend `ratify` to accumulate term retirements, patch retained sections, activate exactly the named decisions, run resultant-model and history validation, and write only after successful preflight. Include affected external rule references in scoped refusal; maintain existing behavior for unrelated findings and stale/missing links.
+- [x] Update `show` text/JSON, status pending actions, term impact/reasons and Markdown PR reporting. Distinguish retiring terms from redefining terms; do not announce retired while approval is pending. Preserve compact context behavior and label historical terms. Update name/avoid search filters.
+- [x] Document lifecycle examples, cancellation and errors. Update plugin `decide`, `ratify`, `change` and `adopt` guidance where they handle term references or proposed decisions. Existing ratify rejection instructions must distinguish `terms` from `retires_terms` so rejecting a retirement cannot delete an agreed term. Update architecture/layering guidance only if actually needed; keep filesystem access and Git access in their current modules.
+- [x] Add meaningful contract tests below, run the relevant suites then full Rust checks, run `statute check --all`, and complete the project's `change` skill. Leave any changed agreed meanings proposed until specifically approved.
 
 ## Compatibility and retries
 
@@ -82,3 +82,12 @@ No actual glossary migration or term compaction, glossary-section fingerprints, 
 ## Ordering (added 2026-10-18)
 
 Blocked by st-jycx, which makes retirement of a rule final in history checks and makes everything in a term section after the heading, except its `yaml` block, the compared definition. Retired terms reuse that retired-item check (item 8 above) rather than a second mechanism, and a retired term's protected text is that whole definition plus `code` and `not`. If the human glossary (st-25bl) has landed, retiring a term also updates the glossary sections that link to it, with a glossary consistency record in the PR. Order of all terms work: docs/Terms-refactoring-plan.md.
+
+## Implementation (2026-10-19)
+
+Implemented on branch `claude/st-9flm-term-retirement`, after st-jycx (PR #23) merged. Spelling: decision field `retires_terms`, flag `decide --retires-terms`, term value `agreed: retired`. Proposed decisions, awaiting a person's approval:
+
+- D261018-m21p6: establishes DEC-004 (only an agreed term that the same decision or ratify call does not redefine can be retired) and DEC-005 (only retired rules and active decisions name a retired term), changes DEC-003 (a rule outside the ratified decisions that still uses a retiring term blocks `ratify`), and redefines the terms Agreement status and Proposed decision.
+- D261018-0yeyg: establishes HIST-005 (a term retired in the base never changes). Ratify it together with or after D261018-m21p6.
+
+`show` labelling and the exclusion of retired terms from name and `avoid` checks are in the spec and tests, without a rule. The `change` and `adopt` skills needed no change: neither proposes or rejects term actions. The glossary (st-25bl) had not landed, so no glossary section needed updating. Complete this Bean after the PR merges.
