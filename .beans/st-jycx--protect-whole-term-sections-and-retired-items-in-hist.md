@@ -1,13 +1,13 @@
 ---
 # st-jycx
 title: Protect whole term sections and retired items in history checks
-status: todo
+status: in-progress
 type: bug
 priority: high
 tags:
     - statute
 created_at: 2026-10-18T10:50:00Z
-updated_at: 2026-10-18T12:09:14Z
+updated_at: 2026-10-18T20:18:49Z
 blocking:
     - st-25bl
     - st-9flm
@@ -48,10 +48,10 @@ Retired terms (st-9flm) reuse this check later.
 
 ## Acceptance
 
-- [ ] Proposed decisions recorded with `statute decide` before code changes: one with `--changes HIST-003` (protected case for a later paragraph; its summary says that Link's paragraph after the `yaml` block, present when D261017-6x46f approved Link, now counts as part of Link's definition), one establishing the new retired-rule rule. Both stay proposed until a person explicitly approves them.
-- [ ] Spec 4.3 states that everything in a term section after the heading except the `yaml` block is the definition and is compared; spec 4.1 states that a rule retired in the base keeps its section, compared fields and `agreed: retired`; spec 5 lists the new `decide` refusal.
-- [ ] Changing any text of an agreed term outside its `yaml` block with no decision is `term.changed_without_decision`, including a paragraph or list item after the block. Editing `aliases`, `avoid` or a YAML comment gives no finding.
-- [ ] For a rule retired in the base, deleting it, changing its statement or a compared field, or changing its `agreed` value is a finding, even when a decision lists it in `changes`. Editing its notes is not.
-- [ ] `statute decide --changes RULE` and `--retires RULE` refuse a retired rule and write nothing.
-- [ ] `statute show` on a rule that uses a term with a later paragraph prints that paragraph in the rule's term list, in text and `--json`.
-- [ ] Link's text is unchanged; `cargo test` and `statute check --all` pass; the `change` skill ran and `statute check --md` is in the PR.
+- [x] Proposed decisions recorded with `statute decide` before code changes: one with `--changes HIST-003` (protected case for a later paragraph; its summary says that Link's paragraph after the `yaml` block, present when D261017-6x46f approved Link, now counts as part of Link's definition), one establishing the new retired-rule rule. Both stay proposed until a person explicitly approves them.
+- [x] Spec 4.3 states that everything in a term section after the heading except the `yaml` block is the definition and is compared; spec 4.1 states that a rule retired in the base keeps its section, compared fields and `agreed: retired`; spec 5 lists the new `decide` refusal.
+- [x] Changing any text of an agreed term outside its `yaml` block with no decision is `term.changed_without_decision`, including a paragraph or list item after the block. Editing `aliases`, `avoid` or a YAML comment gives no finding.
+- [x] For a rule retired in the base, deleting it, changing its statement or a compared field, or changing its `agreed` value is a finding, even when a decision lists it in `changes`. Editing its notes is not.
+- [x] `statute decide --changes RULE` and `--retires RULE` refuse a retired rule and write nothing.
+- [x] `statute show` on a rule that uses a term with a later paragraph prints that paragraph in the rule's term list, in text and `--json`.
+- [x] Link's text is unchanged; `cargo test` and `statute check --all` pass; the `change` skill ran and `statute check --md` is in the PR.

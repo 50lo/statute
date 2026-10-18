@@ -16,7 +16,7 @@ protects:
   - "`decide --terms Commit` is refused while another proposed decision lists `Commit`."
   - Two proposed decisions listing the same rule after a merge are reported as an error.
 boundary:
-  - A rule established by an active decision can be listed in a new proposed decision.
+  - An agreed rule established by an active decision can be listed in a new proposed decision.
 ```
 
 # DEC-002 Ratify activates only the decisions it names

@@ -311,6 +311,29 @@ fn show_prints_rules_terms_and_decisions_once() {
 }
 
 #[test]
+fn show_prints_a_terms_whole_definition_with_the_rules_that_use_it() {
+    let repo = TestRepo::fixture("valid");
+    let terms = repo.read("statute/terms.md").replace(
+        "avoid: [chat]\n```\n",
+        "avoid: [chat]\n```\n\nA Session ends when the agent exits.\n\n- It can span several commits.\n",
+    );
+    repo.write("statute/terms.md", &terms);
+
+    let text = repo.run(&["show", "ATTR-001"]).stdout;
+    assert!(
+        text.contains(
+            "  Session: One conversation between a developer and a coding agent.\n    A Session ends when the agent exits.\n    - It can span several commits.\n"
+        ),
+        "{text}"
+    );
+    let json = repo.run(&["show", "ATTR-001", "--json"]).json();
+    assert_eq!(
+        json["items"][0]["terms"][0]["definition"],
+        "One conversation between a developer and a coding agent.\n\nA Session ends when the agent exits.\n\n- It can span several commits."
+    );
+}
+
+#[test]
 fn show_refuses_an_unknown_name() {
     let repo = TestRepo::fixture("valid");
     let run = repo.run(&["show", "ATTR-001", "ATTR-999"]);

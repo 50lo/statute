@@ -33,6 +33,7 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         bail!("{} does not parse; run `statute check`", paths::DECISIONS);
     };
     refuse_unknown_or_pending(&model, &draft)?;
+    refuse_retired(&model, &draft)?;
 
     let mut txn = Txn::new(&repo);
     let mut proposed_rules = Vec::new();
@@ -201,6 +202,22 @@ fn refuse_unknown_or_pending(model: &Model, draft: &DecisionDraft) -> Result<()>
             bail!(
                 "term `{name}` is already in proposed decision {}; a term is in at most one proposed decision",
                 d.id
+            );
+        }
+    }
+    Ok(())
+}
+
+/// No rule in `changes` or `retires` is retired: retirement is final.
+fn refuse_retired(model: &Model, draft: &DecisionDraft) -> Result<()> {
+    for id in draft.changes.iter().chain(&draft.retires) {
+        let retired = model
+            .rules
+            .iter()
+            .any(|r| &r.id == id && r.meta.as_ref().is_some_and(|m| m.agreed == Agreed::Retired));
+        if retired {
+            bail!(
+                "{id} is retired, and a retired rule never changes; give new behaviour a new rule with `statute rule new`"
             );
         }
     }

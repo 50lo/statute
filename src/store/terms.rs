@@ -1,4 +1,4 @@
-use super::markdown::{self, Block};
+use super::markdown::{self, Block, Section};
 use super::yaml_finding;
 use crate::model::{Finding, Term, TermAgreed, TermMeta, paths};
 use pulldown_cmark::HeadingLevel;
@@ -26,6 +26,7 @@ pub fn parse(text: &str) -> ParsedTerms {
 
     let mut terms = Vec::new();
     for section in doc.sections {
+        let definition = definition(text, &section);
         let meta = match &section.block {
             None => Some(TermMeta::default()),
             Some(Block { text, line }) => match yaml_serde::from_str::<Option<TermMeta>>(text) {
@@ -42,12 +43,37 @@ pub fn parse(text: &str) -> ParsedTerms {
         terms.push(Term {
             name: section.heading,
             line: section.line,
-            definition: section.statement,
+            definition,
             meta,
             span: section.span,
         });
     }
     ParsedTerms { terms, problems }
+}
+
+/// Everything in the section after the heading except the `yaml` block, with blank lines around the
+/// parts removed, or `None` when nothing is left. Terms have no notes: a paragraph, list, table or other
+/// code block after the `yaml` block is part of the definition.
+fn definition(text: &str, section: &Section) -> Option<String> {
+    let body = section.span.heading.end..section.span.end;
+    let parts = match &section.fence {
+        Some(fence) => [&text[body.start..fence.start], &text[fence.end..body.end]],
+        None => [&text[body], ""],
+    };
+    let parts: Vec<&str> = parts
+        .into_iter()
+        .map(trim_blank_lines)
+        .filter(|p| !p.is_empty())
+        .collect();
+    (!parts.is_empty()).then(|| parts.join("\n\n"))
+}
+
+/// The text without leading blank lines and trailing whitespace. The first line keeps its indentation.
+fn trim_blank_lines(text: &str) -> &str {
+    let text = text.trim_end();
+    let first = text.len() - text.trim_start().len();
+    let line_start = text[..first].rfind('\n').map_or(0, |i| i + 1);
+    &text[line_start..]
 }
 
 /// `terms.md` with `agreed:` set on one term, adding the field, or a `yaml` block after the term's
@@ -155,6 +181,42 @@ mod tests {
             Some("{agreed: proposed, code: [A]}\n")
         );
         assert_eq!(set("{ }\n").as_deref(), Some("{agreed: proposed}\n"));
+    }
+
+    #[test]
+    fn the_definition_is_everything_but_the_heading_and_the_yaml_block() {
+        let text = "## A\n\nFirst\nparagraph.\n\n```yaml\ncode: [A]\n```\n\nLater.\n\n- an item\n\n| x | y |\n| - | - |\n\n```text\nkept\n```\n\n# Group\n\n## B\n\n```yaml\ncode: [B]\n```\n\nOnly after.\n\n## C\n\n```yaml\n```\n";
+        let parsed = parse(text);
+        assert!(parsed.problems.is_empty(), "{:?}", parsed.problems);
+        let definitions: Vec<_> = parsed
+            .terms
+            .iter()
+            .map(|t| t.definition.as_deref())
+            .collect();
+        assert_eq!(
+            definitions,
+            [
+                Some(
+                    "First\nparagraph.\n\nLater.\n\n- an item\n\n| x | y |\n| - | - |\n\n```text\nkept\n```"
+                ),
+                Some("Only after."),
+                None,
+            ]
+        );
+    }
+
+    #[test]
+    fn set_agreed_keeps_a_whole_definition_without_a_block() {
+        let text = "## A\n\nD.\n\n- an item\n\n## B\n\nE.\n";
+        let patched = set_agreed(text, &parse(text).terms[0], TermAgreed::Proposed).unwrap();
+        assert_eq!(
+            patched,
+            "## A\n\nD.\n\n- an item\n\n```yaml\nagreed: proposed\n```\n\n## B\n\nE.\n"
+        );
+        assert_eq!(
+            parse(&patched).terms[0].definition.as_deref(),
+            Some("D.\n\n- an item")
+        );
     }
 
     #[test]

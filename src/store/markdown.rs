@@ -2,7 +2,8 @@
 //!
 //! A section starts at a heading of the section level and runs to the next heading of the same or a
 //! higher level. Its statement is the first top-level paragraph before its `yaml` block; its block is
-//! the first top-level fenced block whose info string is `yaml`. Everything after the block is notes.
+//! the first top-level fenced block whose info string is `yaml`. In a rule, everything after the block
+//! is notes; in a term, everything but the block is the definition.
 
 use crate::model::Span;
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
@@ -25,6 +26,8 @@ pub struct Section {
     pub line: usize,
     pub statement: Option<String>,
     pub block: Option<Block>,
+    /// The whole `yaml` block, fences included.
+    pub fence: Option<Range<usize>>,
     pub span: Span,
 }
 
@@ -108,6 +111,7 @@ pub fn scan(text: &str, level: HeadingLevel) -> Document {
                                 line: lines.line(range.start),
                                 statement: None,
                                 block: None,
+                                fence: None,
                                 span: Span {
                                     heading: range,
                                     block: None,
@@ -122,6 +126,7 @@ pub fn scan(text: &str, level: HeadingLevel) -> Document {
                         else {
                             continue;
                         };
+                        s.fence = Some(range.clone());
                         let content = content.unwrap_or_else(|| {
                             let after_fence = text[range.clone()]
                                 .find('\n')
@@ -327,6 +332,8 @@ mod tests {
         assert_eq!(block.line, 13);
         let content = first.span.block.clone().unwrap();
         assert_eq!(&RULES[content], "agreed: proposed\n");
+        let fence = first.fence.clone().unwrap();
+        assert_eq!(&RULES[fence], "```yaml\nagreed: proposed\n```");
         assert_eq!(&RULES[first.span.end..][..10], "# ATTR-002");
 
         assert_eq!(second.statement, None);

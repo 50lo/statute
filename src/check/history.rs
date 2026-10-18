@@ -4,10 +4,11 @@ use crate::model::{
     Agreed, Decision, DecisionStatus, Finding, Model, Rule, Term, TermAgreed, paths,
 };
 
-/// Active decisions in the base are unchanged and not deleted, and the text of rules and terms agreed
-/// in the base changes only together with a decision that lists them and is proposed or became active
-/// since the base.
+/// Active decisions in the base are unchanged and not deleted, rules retired in the base never change,
+/// and the text of rules and terms agreed in the base changes only together with a decision that lists
+/// them and is proposed or became active since the base.
 pub fn history(model: &Model, base: &Model, out: &mut Vec<Finding>) {
+    retired_rules(model, base, out);
     let (Some(decisions), Some(base_decisions)) = (&model.decisions, &base.decisions) else {
         return;
     };
@@ -90,6 +91,36 @@ pub fn history(model: &Model, base: &Model, out: &mut Vec<Finding>) {
     }
 }
 
+/// A rule retired in the base keeps its section, its compared fields and `agreed: retired`. No decision
+/// exempts it, so the finding names a new rule ID as the way forward rather than `decide`.
+fn retired_rules(model: &Model, base: &Model, out: &mut Vec<Finding>) {
+    for old in base.rules.iter().filter(|r| retired_rule(r)) {
+        let now = model.rules.iter().find(|r| r.id == old.id);
+        if now.is_some_and(|r| r.meta.is_none()) {
+            continue; // A parse problem, reported on its own.
+        }
+        if now.is_some_and(|r| retired_rule(r) && same_rule(r, old)) {
+            continue;
+        }
+        let what = if now.is_some() { "changed" } else { "removed" };
+        let finding = Finding::error(
+            "rule.retired_changed",
+            format!("retired rule {} was {what}; a retired rule keeps its section, its text and `agreed: retired`, so give new behaviour a new rule ID with `statute rule new`", old.id),
+        )
+        .rule(&old.id);
+        out.push(match now {
+            Some(r) => finding.at(&r.file, Some(r.line)),
+            None => finding.at(&old.file, None),
+        });
+    }
+}
+
+fn retired_rule(rule: &Rule) -> bool {
+    rule.meta
+        .as_ref()
+        .is_some_and(|m| m.agreed == Agreed::Retired)
+}
+
 fn agreed_rule(rule: &Rule) -> bool {
     rule.meta
         .as_ref()
@@ -117,7 +148,8 @@ fn same_rule(a: &Rule, b: &Rule) -> bool {
         && x.manual_check == y.manual_check
 }
 
-/// The definition with whitespace collapsed, `code` and `not`.
+/// The definition (the section except its heading and `yaml` block) with whitespace collapsed, `code`
+/// and `not`.
 fn same_term(a: &Term, b: &Term) -> bool {
     let (Some(x), Some(y)) = (&a.meta, &b.meta) else {
         return false;

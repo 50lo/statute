@@ -286,7 +286,7 @@ pub fn show(r: &ShowReport) -> String {
                 }
                 for t in &rule.terms {
                     let definition = t.definition.as_deref().unwrap_or("(no definition)");
-                    let _ = writeln!(out, "  {}: {}", t.name, one_line(definition));
+                    term_definition(&mut out, &t.name, definition);
                 }
                 out.push_str("\nLinks:\n");
                 match &rule.links {
@@ -383,6 +383,16 @@ fn decision_status(s: DecisionStatus) -> &'static str {
 }
 
 /// Collapses whitespace, so a multi-line value fits on one line of a list.
+/// The first paragraph on the term's line, then the rest of the definition indented below it, line by
+/// line so lists, tables and code keep their shape.
+fn term_definition(out: &mut String, name: &str, definition: &str) {
+    let (first, rest) = definition.split_once("\n\n").unwrap_or((definition, ""));
+    let _ = writeln!(out, "  {name}: {}", one_line(first));
+    for line in rest.lines().filter(|l| !l.trim().is_empty()) {
+        let _ = writeln!(out, "    {}", line.trim_end());
+    }
+}
+
 fn one_line(s: &str) -> String {
     s.split_whitespace().collect::<Vec<_>>().join(" ")
 }

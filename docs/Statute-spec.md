@@ -111,6 +111,7 @@ How fields change:
 - `agreed` is set by the CLI: `rule new` writes `proposed`, `decide` sets `proposed` on the rules a decision changes, and `ratify` sets `agreed` or `retired` (4.2).
 - `built` is set by `link` and `ratify` when the rule becomes complete: at least one code link, and at least one test link or a `manual_check`. Nobody edits `built` by hand.
 - The statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check` change only together with a proposed decision that lists the rule in `changes`. `decide` sets the rule back to `agreed: proposed` until that decision is ratified. Pending items never block a merge, so the default branch can carry the proposed text; `status` and the PR "Rule impact" section show the rule as awaiting approval.
+- Retirement is final. A retired rule keeps its section, its statement and the fields above, and `agreed: retired`, whatever decision lists it. `decide` refuses to list it in `changes` or `retires`; new behaviour gets a new rule ID.
 
 Checks (`statute check`):
 
@@ -122,6 +123,7 @@ Checks (`statute check`):
 - Every agreed or retired rule is established by exactly one decision. A proposed rule that no decision establishes yet is a draft: it is a pending item, not a finding, and `status` lists it.
 - The statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check` of a rule that is agreed in the base change only together with a decision that lists the rule in `changes` and is proposed or became active since the base. Notes and formatting are not compared.
 - A retired rule keeps its section and has no links.
+- A rule that is retired in the base keeps its section, its statement and its `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check`, and stays `agreed: retired`, even when a decision lists it. Notes, `built` and formatting are not compared.
 
 Rule IDs use counters because they are readable. Two branches can create the same ID. `rule new` appends to the end of the rule file, so their rule files conflict on merge, and whoever resolves the conflict renumbers the rule that is not yet on the default branch, together with its links, gaps and decisions. `check` reports any duplicate that slips through.
 
@@ -164,7 +166,7 @@ Checks:
 
 ### 4.3 Terms
 
-Terms live in `statute/terms.md`. `#` headings group terms for readability and carry no meaning. Each `##` heading is a term and runs to the next heading. The first paragraph is the definition; a fenced `yaml` block carries metadata.
+Terms live in `statute/terms.md`. `#` headings group terms for readability and carry no meaning. Each `##` heading is a term and runs to the next heading. A fenced `yaml` block carries metadata. Everything else in the section after the heading is the definition: paragraphs, lists, tables and any other code block, before or after the `yaml` block. Terms have no notes.
 
 ````markdown
 # Sessions and commits
@@ -194,7 +196,7 @@ Terms are approved like rules, because a term's wording steers how agents name a
 Checks:
 
 - Term headings are unique.
-- The definition, `code` and `not` of a term that is agreed in the base change only together with a decision that lists the term in `terms` and is proposed or became active since the base.
+- The definition, `code` and `not` of a term that is agreed in the base change only together with a decision that lists the term in `terms` and is proposed or became active since the base. The definition is compared with whitespace collapsed; `aliases`, `avoid`, `agreed` and comments in the `yaml` block are not compared.
 - `avoid` words in rule statements produce a warning.
 - `check --all` warns when a `code` or `not` name no longer appears as a whole identifier in any file outside Statute's own files (`statute.yml`, `statute.lock`, `statute/`) and Markdown files.
 
@@ -297,7 +299,7 @@ The base for `check` is the merge-base of `HEAD` with the default branch (`origi
 | `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for term `code` and `not` names across the repo. `--md` prints the PR "Rule impact" section |
 | `link RULE TARGET [--test] [--remove]` | Adds a link with the current fingerprint, or removes one. Refuses an unknown rule and an existing link. Sets `built: built` when the rule becomes complete |
 | `review RULE ok\|changed D…\|gap REF` | Records one verdict for the rule (4.4) and refreshes every stale link of that rule |
-| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. Refuses an unknown rule or term, and one already in a proposed decision. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
+| `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. Refuses an unknown rule or term, one already in a proposed decision, and a retired rule in `--changes` or `--retires`. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
 | `ratify D...` | Activates the decisions and updates their rules and terms (4.2) |
 | `gap open RULE [--ref REF] [--note …]` | Adds an open gap and prints its ID. Without `--ref` it writes a full entry and requires `--note`; with `--ref` it records a tracker issue (4.5) |
 | `gap close REF` | Closes a gap |
