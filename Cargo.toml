@@ -1,10 +1,32 @@
 [package]
-name = "statute"
+name = "statute-cli"
 version = "0.1.0"
 edition = "2024"
 description = "Keeps a product's rules written down, linked to code, and checked on every change"
 license = "MIT"
-publish = false
+repository = "https://github.com/50lo/statute"
+homepage = "https://github.com/50lo/statute"
+readme = "README.md"
+keywords = ["rules", "cli", "agents"]
+categories = ["command-line-utilities", "development-tools"]
+publish = ["crates-io"]
+include = [
+    "src/**",
+    "tests/**",
+    "plugin/**",
+    "docs/Architecture.md",
+    "docs/One-pager.md",
+    "docs/Statute-spec.md",
+    "AGENTS.md",
+    "Cargo.toml",
+    "Cargo.lock",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+]
+
+[lib]
+name = "statute"
 
 [[bin]]
 name = "statute"
