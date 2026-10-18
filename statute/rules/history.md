@@ -41,7 +41,7 @@ boundary:
 When a term is agreed in the base, `check` must report an error if its definition, `code` or `not` changes, or the term is removed, unless a decision that is proposed or became active since the base lists the term in `terms`. A term's definition is everything in its section after the heading except the `yaml` block, compared with whitespace collapsed.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Terms that are agreed in the base.
 terms: [Term, Decision, Agreement status, Base]
@@ -59,7 +59,7 @@ boundary:
 When a rule is retired in the base, `check` must report an error if its statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` or `manual_check` changes, its `agreed` value is no longer `retired`, or the rule is removed, even when a decision lists it. `decide` refuses a decision that lists a retired rule in `changes` or `retires`, and writes nothing.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Rules that are retired in the base, and decisions drafted with `decide`.
 terms: [Rule, Decision, Agreement status, Base]

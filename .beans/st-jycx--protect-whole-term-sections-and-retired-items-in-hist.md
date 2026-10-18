@@ -54,4 +54,4 @@ Retired terms (st-9flm) reuse this check later.
 - [x] For a rule retired in the base, deleting it, changing its statement or a compared field, or changing its `agreed` value is a finding, even when a decision lists it in `changes`. Editing its notes is not.
 - [x] `statute decide --changes RULE` and `--retires RULE` refuse a retired rule and write nothing.
 - [x] `statute show` on a rule that uses a term with a later paragraph prints that paragraph in the rule's term list, in text and `--json`.
-- [ ] Link's text is unchanged; `cargo test` and `statute check --all` pass; the `change` skill ran and `statute check --md` is in the PR.
+- [x] Link's text is unchanged; `cargo test` and `statute check --all` pass; the `change` skill ran and `statute check --md` is in the PR.
