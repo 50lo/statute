@@ -26,7 +26,7 @@ Reasons for this order:
 
 ## Choices made before item 1
 
-Anton Solo made choices A and B on 2026-10-18. Choice C is still open.
+Anton Solo made choices A and B on 2026-10-18. The audit input for C is now preserved in st-uvvi; specific migration choices still need human review.
 
 ### A. Everything in a term section except its `yaml` block is the approved definition
 
@@ -59,7 +59,7 @@ Chosen: a rule retired in the base keeps its section, its compared fields and `a
 
 ### C. Where the compaction audit is
 
-Open. PR #20 says a compaction audit was saved for later human review outside the repository. Item 3a starts from it and needs its location.
+The complete audit is embedded in [st-uvvi](../.beans/st-uvvi--review-the-operational-terms-compaction-audit-and.md), with its findings, proposed definitions, rule mappings, validation evidence, and next steps. It was produced on 2026-10-18 against commit `5a7d6fe3eaccb380ea8c9a58181f97464d1deb73`. Item 3a starts from that preserved snapshot and revalidates assumptions against the current implementation; it no longer depends on a temporary file. Its recommendations are not approved migrations.
 
 ## Item 1: approved term text and retired rules (st-jycx)
 
