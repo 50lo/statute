@@ -85,9 +85,9 @@ Blocked by st-jycx, which makes retirement of a rule final in history checks and
 
 ## Implementation (2026-10-19)
 
-Implemented on branch `claude/st-9flm-term-retirement`, after st-jycx (PR #23) merged. Spelling: decision field `retires_terms`, flag `decide --retires-terms`, term value `agreed: retired`. Proposed decisions, awaiting a person's approval:
+Implemented on branch `claude/st-9flm-term-retirement`, after st-jycx (PR #23) merged. Spelling: decision field `retires_terms`, flag `decide --retires-terms`, term value `agreed: retired`. Decisions, ratified on 2026-10-19 after Anton Solo approved both:
 
 - D261018-m21p6: establishes DEC-004 (only an agreed term that the same decision or ratify call does not redefine can be retired) and DEC-005 (only retired rules and active decisions name a retired term), changes DEC-003 (a rule outside the ratified decisions that still uses a retiring term blocks `ratify`), and redefines the terms Agreement status and Proposed decision.
-- D261018-0yeyg: establishes HIST-005 (a term retired in the base never changes). Ratify it together with or after D261018-m21p6.
+- D261018-0yeyg: establishes HIST-005 (a term retired in the base never changes). It had to be ratified together with or after D261018-m21p6.
 
 `show` labelling and the exclusion of retired terms from name and `avoid` checks are in the spec and tests, without a rule. The `change` and `adopt` skills needed no change: neither proposes or rejects term actions. The glossary (st-25bl) had not landed, so no glossary section needed updating. Complete this Bean after the PR merges.
