@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "statute": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/solo/code/statute"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "statute@statute": true
+  }
+}
