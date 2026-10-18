@@ -28,6 +28,7 @@ expression: "repo.run(&[\"status\", \"--area\", \"billing\", \"--json\"]).json()
     "awaiting_approval": [
       {
         "id": "D261014-x4p9t",
+        "retires_terms": [],
         "rules": [
           "ATTR-002"
         ],

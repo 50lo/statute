@@ -82,6 +82,7 @@ pub fn set_agreed(text: &str, term: &Term, agreed: TermAgreed) -> Option<String>
     let value = match agreed {
         TermAgreed::Proposed => "proposed",
         TermAgreed::Agreed => "agreed",
+        TermAgreed::Retired => "retired",
     };
     let expected = TermMeta {
         agreed: Some(agreed),
@@ -220,8 +221,21 @@ mod tests {
     }
 
     #[test]
+    fn set_agreed_retires_a_term_and_keeps_its_whole_section() {
+        let text = "## A\n\nD.\n\n```yaml\nagreed: agreed   # proposed | agreed | retired\ncode: [A]\naliases: [a]\n```\n\nLater.\n\n## B\n\nE.\n";
+        let patched = set_agreed(text, &parse(text).terms[0], TermAgreed::Retired).unwrap();
+        assert_eq!(
+            patched,
+            text.replace("agreed: agreed   #", "agreed: retired  #")
+        );
+        let retired = &parse(&patched).terms[0];
+        assert!(retired.is_retired());
+        assert_eq!(retired.definition.as_deref(), Some("D.\n\nLater."));
+    }
+
+    #[test]
     fn schema_errors_name_the_term() {
-        let parsed = parse("## Session\n\nD.\n\n```yaml\nagreed: retired\n```\n");
+        let parsed = parse("## Session\n\nD.\n\n```yaml\nagreed: dropped\n```\n");
         assert_eq!(parsed.problems[0].code, "term.schema");
         assert_eq!(parsed.problems[0].term.as_deref(), Some("Session"));
         assert!(parsed.terms[0].meta.is_none());

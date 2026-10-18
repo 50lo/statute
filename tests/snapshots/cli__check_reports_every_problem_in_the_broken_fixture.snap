@@ -46,7 +46,7 @@ expression: run.json()
       "code": "term.schema",
       "file": "statute/terms.md",
       "line": 23,
-      "message": "term block does not parse: agreed: unknown variant `retired`, expected `proposed` or `agreed`",
+      "message": "term block does not parse: agreed: unknown variant `dropped`, expected one of `proposed`, `agreed`, `retired`",
       "severity": "error",
       "term": "Approver"
     },

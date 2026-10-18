@@ -29,7 +29,10 @@ pub struct PendingDecision {
     pub id: String,
     pub summary: String,
     pub rules: Vec<String>,
+    /// Terms the decision introduces or redefines.
     pub terms: Vec<String>,
+    /// Terms the decision retires; they stay agreed until it is ratified.
+    pub retires_terms: Vec<String>,
 }
 
 /// Why a rule or term is affected. A new kind of reason is a new variant.
@@ -54,8 +57,17 @@ pub enum Reason {
     LinkRefreshed {
         target: String,
     },
-    /// A decision that names it was added or changed.
+    /// A decision that names it was added or changed. For a term, one that introduces or redefines it.
     DecisionChanged {
+        decision: String,
+    },
+    /// A proposed decision that retires the term was added or changed. The term stays agreed until
+    /// the decision is ratified.
+    RetirementProposed {
+        decision: String,
+    },
+    /// A decision that retires the term became active since the base.
+    Retired {
         decision: String,
     },
     /// A gap on the rule was added or changed.

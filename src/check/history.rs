@@ -4,11 +4,12 @@ use crate::model::{
     Agreed, Decision, DecisionStatus, Finding, Model, Rule, Term, TermAgreed, paths,
 };
 
-/// Active decisions in the base are unchanged and not deleted, rules retired in the base never change,
-/// and the text of rules and terms agreed in the base changes only together with a decision that lists
-/// them and is proposed or became active since the base.
+/// Active decisions in the base are unchanged and not deleted, rules and terms retired in the base never
+/// change, and the text of rules and terms agreed in the base changes only together with a decision that
+/// lists them and is proposed or became active since the base.
 pub fn history(model: &Model, base: &Model, out: &mut Vec<Finding>) {
     retired_rules(model, base, out);
+    retired_terms(model, base, out);
     let (Some(decisions), Some(base_decisions)) = (&model.decisions, &base.decisions) else {
         return;
     };
@@ -112,6 +113,29 @@ fn retired_rules(model: &Model, base: &Model, out: &mut Vec<Finding>) {
             Some(r) => finding.at(&r.file, Some(r.line)),
             None => finding.at(&old.file, None),
         });
+    }
+}
+
+/// A term retired in the base keeps its section, its compared text and `agreed: retired`, as a retired
+/// rule does. No decision exempts it, so the finding names a new term as the way forward.
+fn retired_terms(model: &Model, base: &Model, out: &mut Vec<Finding>) {
+    for old in base.terms.iter().filter(|t| t.is_retired()) {
+        let now = model.terms.iter().find(|t| t.name == old.name);
+        if now.is_some_and(|t| t.meta.is_none()) {
+            continue; // A parse problem, reported on its own.
+        }
+        if now.is_some_and(|t| t.is_retired() && same_term(t, old)) {
+            continue;
+        }
+        let what = if now.is_some() { "changed" } else { "removed" };
+        out.push(
+            Finding::error(
+                "term.retired_changed",
+                format!("retired term `{}` was {what}; a retired term keeps its section, its text and `agreed: retired`, so give a new meaning a new term name", old.name),
+            )
+            .term(&old.name)
+            .at(paths::TERMS, now.map(|t| t.line)),
+        );
     }
 }
 

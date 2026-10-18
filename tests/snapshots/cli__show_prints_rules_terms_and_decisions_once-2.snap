@@ -29,6 +29,7 @@ expression: "repo.run(&[\"show\", \"ATTR-003\", \"--json\"]).json()"
       "links": [],
       "terms": [
         {
+          "agreed": "agreed",
           "definition": "One conversation between a developer and a coding agent.",
           "name": "Session"
         }

@@ -31,7 +31,8 @@ pub fn ids(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// Every rule in `establishes`, `changes` and `retires` exists, and every entry in `terms` is a term.
+/// Every rule in `establishes`, `changes` and `retires` exists, and every entry in `terms` and
+/// `retires_terms` is a term.
 pub fn references(model: &Model, out: &mut Vec<Finding>) {
     let rules: BTreeSet<&str> = model.rules.iter().map(|r| r.id.as_str()).collect();
     let terms: BTreeSet<&str> = model.terms.iter().map(|t| t.name.as_str()).collect();
@@ -46,7 +47,7 @@ pub fn references(model: &Model, out: &mut Vec<Finding>) {
                 d,
             ));
         }
-        for term in d.terms.iter().filter(|t| !terms.contains(t.as_str())) {
+        for term in d.all_terms().filter(|t| !terms.contains(t.as_str())) {
             out.push(at(
                 Finding::error(
                     "decision.term_unknown",
@@ -59,7 +60,7 @@ pub fn references(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// A rule or term appears in at most one proposed decision.
+/// A rule or term appears in at most one proposed decision, whichever list names it.
 pub fn overlap(model: &Model, out: &mut Vec<Finding>) {
     let mut rules: BTreeMap<&str, &str> = BTreeMap::new();
     let mut terms: BTreeMap<&str, &str> = BTreeMap::new();
@@ -81,7 +82,7 @@ pub fn overlap(model: &Model, out: &mut Vec<Finding>) {
                 ));
             }
         }
-        for term in d.terms.iter().collect::<BTreeSet<_>>() {
+        for term in d.all_terms().collect::<BTreeSet<_>>() {
             if let Some(other) = terms.insert(term, &d.id) {
                 out.push(at(
                     Finding::error(
@@ -92,6 +93,34 @@ pub fn overlap(model: &Model, out: &mut Vec<Finding>) {
                     d,
                 ));
             }
+        }
+    }
+}
+
+/// A proposed decision names no retired term, in `terms` or `retires_terms`: a retired term never
+/// changes. Active decisions keep naming the terms they retired or defined.
+pub fn retired_terms(model: &Model, out: &mut Vec<Finding>) {
+    let retired: BTreeSet<&str> = model
+        .terms
+        .iter()
+        .filter(|t| t.is_retired())
+        .map(|t| t.name.as_str())
+        .collect();
+    for d in model
+        .decisions
+        .iter()
+        .flatten()
+        .filter(|d| d.status == DecisionStatus::Proposed)
+    {
+        for term in d.all_terms().filter(|t| retired.contains(t.as_str())) {
+            out.push(at(
+                Finding::error(
+                    "decision.term_retired",
+                    format!("term `{term}` is retired, and a retired term never changes; name a new term for a new meaning"),
+                )
+                .term(term),
+                d,
+            ));
         }
     }
 }

@@ -6,10 +6,11 @@ use crate::commands::init::{AgentsMd, InitReport};
 use crate::commands::link::LinkReport;
 use crate::commands::ratify::RatifyReport;
 use crate::commands::review::ReviewReport;
-use crate::commands::show::{Item, Role, ShowReport};
+use crate::commands::show::{DecisionRef, Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
 use crate::model::{
-    Agreed, Built, DecisionStatus, GapStatus, Impact, LinkRole, Reason, Severity, Verdict,
+    Agreed, Built, DecisionStatus, GapStatus, Impact, LinkRole, Reason, Severity, TermAgreed,
+    Verdict,
 };
 use std::fmt::Write;
 
@@ -108,6 +109,7 @@ pub fn impact(r: &Impact) -> String {
         for d in &r.awaiting_approval {
             let mut names = d.rules.clone();
             names.extend(d.terms.iter().map(|t| format!("term {t}")));
+            names.extend(d.retires_terms.iter().map(|t| format!("retires term {t}")));
             let _ = writeln!(
                 out,
                 "- {}: {} ({})",
@@ -130,6 +132,10 @@ fn reasons(reasons: &[Reason]) -> String {
             Reason::LinkRemoved { target } => format!("no longer linked to `{target}`"),
             Reason::LinkRefreshed { target } => format!("`{target}` changed and was reviewed"),
             Reason::DecisionChanged { decision } => format!("decision {decision}"),
+            Reason::RetirementProposed { decision } => {
+                format!("decision {decision} proposes retiring it; it stays agreed until then")
+            }
+            Reason::Retired { decision } => format!("retired by decision {decision}"),
             Reason::GapChanged { gap } => format!("gap {gap}"),
         })
         .collect();
@@ -152,6 +158,12 @@ pub fn decide(r: &DecideReport) -> String {
             r.id
         ));
     }
+    for term in &r.retiring_terms {
+        out.push_str(&format!(
+            "\nterm `{term}` stays agreed until {} is ratified, and is retired then",
+            r.id
+        ));
+    }
     out
 }
 
@@ -170,6 +182,7 @@ pub fn ratify(r: &RatifyReport) -> String {
     line("Agreed rules", &r.agreed_rules);
     line("Retired rules", &r.retired_rules);
     line("Agreed terms", &r.agreed_terms);
+    line("Retired terms", &r.retired_terms);
     line("Built rules", &r.built_rules);
     if r.removed_links > 0 {
         out.push_str(&format!(
@@ -286,7 +299,11 @@ pub fn show(r: &ShowReport) -> String {
                 }
                 for t in &rule.terms {
                     let definition = t.definition.as_deref().unwrap_or("(no definition)");
-                    term_definition(&mut out, &t.name, definition);
+                    let name = match t.agreed {
+                        Some(TermAgreed::Retired) => format!("{} (retired)", t.name),
+                        _ => t.name.clone(),
+                    };
+                    term_definition(&mut out, &name, definition);
                 }
                 out.push_str("\nLinks:\n");
                 match &rule.links {
@@ -298,27 +315,7 @@ pub fn show(r: &ShowReport) -> String {
                         }
                     }
                 }
-                out.push_str("\nDecisions:\n");
-                match &rule.decisions {
-                    None => out.push_str("  (decisions.db does not parse; run `statute check`)\n"),
-                    Some(ds) if ds.is_empty() => out.push_str("  none\n"),
-                    Some(ds) => {
-                        for d in ds {
-                            let role = match d.role {
-                                Role::Establishes => "establishes",
-                                Role::Changes => "changes",
-                                Role::Retires => "retires",
-                            };
-                            let _ = writeln!(
-                                out,
-                                "  {} {role} ({}): {}",
-                                d.id,
-                                decision_status(d.status),
-                                one_line(&d.summary)
-                            );
-                        }
-                    }
-                }
+                decisions(&mut out, rule.decisions.as_deref());
                 out.push_str("\nGaps:\n");
                 match &rule.gaps {
                     None => out.push_str("  (gaps.yml does not parse; run `statute check`)\n"),
@@ -342,6 +339,9 @@ pub fn show(r: &ShowReport) -> String {
             }
             Item::Term(term) => {
                 let _ = writeln!(out, "{}:{}\n{}", term.file, term.line, term.text);
+                if term.agreed == Some(TermAgreed::Retired) {
+                    out.push_str("\nRetired: kept as a record of what earlier decisions meant. Only retired rules and active decisions may name it.\n");
+                }
                 out.push_str("\nRules:\n");
                 if term.rules.is_empty() {
                     out.push_str("  none\n");
@@ -349,6 +349,7 @@ pub fn show(r: &ShowReport) -> String {
                 for rule in &term.rules {
                     let _ = writeln!(out, "  {} {}", rule.id, rule.title);
                 }
+                decisions(&mut out, term.decisions.as_deref());
             }
             Item::Decision(d) => {
                 // The entry as it would read in decisions.db.
@@ -366,6 +367,32 @@ pub fn show(r: &ShowReport) -> String {
         blocks.push(format!("No rules are linked to {name}."));
     }
     blocks.join("\n\n")
+}
+
+/// The decisions that name a rule or term, with how each names it.
+fn decisions(out: &mut String, decisions: Option<&[DecisionRef]>) {
+    out.push_str("\nDecisions:\n");
+    match decisions {
+        None => out.push_str("  (decisions.db does not parse; run `statute check`)\n"),
+        Some([]) => out.push_str("  none\n"),
+        Some(ds) => {
+            for d in ds {
+                let role = match d.role {
+                    Role::Establishes => "establishes",
+                    Role::Changes => "changes",
+                    Role::Retires => "retires",
+                    Role::Defines => "defines",
+                };
+                let _ = writeln!(
+                    out,
+                    "  {} {role} ({}): {}",
+                    d.id,
+                    decision_status(d.status),
+                    one_line(&d.summary)
+                );
+            }
+        }
+    }
 }
 
 fn role(r: LinkRole) -> &'static str {

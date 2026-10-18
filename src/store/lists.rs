@@ -104,8 +104,37 @@ mod tests {
             changes: vec![],
             retires: vec![],
             terms: vec!["Approver".into()],
+            retires_terms: vec!["Old approver".into()],
         };
         assert_eq!(parse_draft(&render_draft(&draft)).unwrap(), draft);
+        let empty = DecisionDraft {
+            retires_terms: vec![],
+            ..draft
+        };
+        assert!(render_draft(&empty).contains("retires_terms: []"));
+    }
+
+    #[test]
+    fn entries_without_retired_terms_render_as_before() {
+        let text = "- id: D261014-k7m2q\n  timestamp: 2026-10-14T10:26:12Z\n  actor: agent\n  status: proposed\n  ratified_by: null\n  summary: S.\n  rationale: R.\n  establishes: []\n  changes: []\n  retires: []\n  terms:\n  - Session\n";
+        let decisions = parse_decisions(text).unwrap();
+        assert!(decisions[0].retires_terms.is_empty());
+        assert_eq!(render_decisions(&decisions), text);
+
+        let retiring = text.replace(
+            "  - Session\n",
+            "  - Session\n  retires_terms:\n  - Old session\n",
+        );
+        let decisions = parse_decisions(&retiring).unwrap();
+        assert_eq!(decisions[0].retires_terms, ["Old session"]);
+        assert_eq!(render_decisions(&decisions), retiring);
+    }
+
+    #[test]
+    fn a_misspelled_retired_terms_field_is_an_error() {
+        let err = parse_decisions("- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: proposed\n  summary: S.\n  rationale: R.\n  retire_terms: [Session]\n").unwrap_err();
+        assert_eq!(err.code, "decision.parse");
+        assert_eq!(err.line, Some(7));
     }
 
     #[test]

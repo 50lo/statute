@@ -12,7 +12,7 @@ error[rule.frontmatter] rule file has no frontmatter; start it with `---`, `pref
   --> statute/rules/plain.md:1
 error[term.subheading] terms have no subheadings: `#` headings group terms and each `##` heading is a term
   --> statute/terms.md:12
-error[term.schema] Approver: term block does not parse: agreed: unknown variant `retired`, expected `proposed` or `agreed`
+error[term.schema] Approver: term block does not parse: agreed: unknown variant `dropped`, expected one of `proposed`, `agreed`, `retired`
   --> statute/terms.md:23
 error[config.version] statute.yml has version 2; this statute supports version 1
   --> statute.yml

@@ -1,5 +1,5 @@
 //! HIST rules: active decisions, agreed rules and agreed terms change only through new decisions, and
-//! retired rules never change.
+//! retired rules and terms never change.
 
 mod common;
 
@@ -358,4 +358,167 @@ fn hist_004_a_rule_a_proposed_decision_retires_is_still_governed_by_hist_002() {
         &rules.replace("and stores it like any other Session.", "for 30 days."),
     );
     assert_eq!(errors(&repo), ["rule.changed_without_decision"]);
+}
+
+/// A retired term, and the active decision that retired it.
+const RETIRED_TERM: &str = "
+## Repository
+
+A git repository the collector watches.
+
+```yaml
+agreed: retired                  # proposed | agreed | retired
+code: [Repo]
+aliases: [repo]
+avoid: [project]
+```
+";
+const RETIRING_DECISION: &str = "- id: D261012-r3p0s
+  timestamp: \"2026-10-12T09:00:00Z\"
+  actor: user
+  status: active
+  ratified_by: {name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-12T09:30:00Z\"}
+  summary: \"Stop calling repositories a term.\"
+  rationale: \"R.\"
+  retires_terms: [Repository]
+";
+
+/// The valid fixture with a retired term, committed as the base.
+fn base_with_a_retired_term() -> TestRepo {
+    let repo = TestRepo::fixture("valid");
+    repo.write(TERMS, &format!("{}{RETIRED_TERM}", repo.read(TERMS)));
+    repo.write(
+        DECISIONS,
+        &format!("{}{RETIRING_DECISION}", repo.read(DECISIONS)),
+    );
+    repo.commit("Base with a retired term");
+    assert_eq!(errors(&repo), Vec::<String>::new());
+    repo
+}
+
+/// A proposed decision that lists Repository, retired, in `terms`. `decide` refuses to write it, so it
+/// is appended by hand, as a merge could bring it in.
+const DEFINES_RETIRED: &str = "- id: D261015-d3f1n
+  timestamp: \"2026-10-15T09:00:00Z\"
+  actor: agent
+  status: proposed
+  ratified_by: null
+  summary: \"Repositories include mirrors.\"
+  rationale: \"R.\"
+  terms: [Repository]
+";
+
+fn has(repo: &TestRepo, code: &str) -> bool {
+    errors(repo).contains(&code.to_string())
+}
+
+#[test]
+fn hist_005_a_retired_term_never_changes() {
+    let repo = base_with_a_retired_term();
+    let terms = repo.read(TERMS);
+    let decisions = repo.read(DECISIONS);
+
+    let reworded = terms.replace(
+        "A git repository the collector watches.",
+        "A git repository or mirror the collector watches.",
+    );
+    repo.write(TERMS, &reworded);
+    assert_eq!(errors(&repo), ["term.retired_changed"]);
+
+    // A decision that lists the term does not carry the change.
+    repo.write(DECISIONS, &format!("{decisions}{DEFINES_RETIRED}"));
+    assert!(has(&repo, "term.retired_changed"), "{:?}", errors(&repo));
+    repo.write(DECISIONS, &decisions);
+
+    repo.write(
+        TERMS,
+        &terms.replace("code: [Repo]", "code: [Repo, Mirror]"),
+    );
+    assert_eq!(errors(&repo), ["term.retired_changed"]);
+
+    repo.write(
+        TERMS,
+        &terms.replace(
+            "agreed: retired                  #",
+            "agreed: agreed                   #",
+        ),
+    );
+    assert!(has(&repo, "term.retired_changed"), "{:?}", errors(&repo));
+
+    let (without, _) = terms.split_once("\n## Repository").unwrap();
+    repo.write(TERMS, &format!("{without}\n"));
+    assert!(has(&repo, "term.retired_changed"), "{:?}", errors(&repo));
+
+    // Reusing the name for a new term is a change to the retired one.
+    repo.write(
+        TERMS,
+        &format!("{without}\n\n## Repository\n\nA hosted code project.\n"),
+    );
+    assert!(has(&repo, "term.retired_changed"), "{:?}", errors(&repo));
+}
+
+#[test]
+fn hist_005_decide_refuses_to_define_or_retire_a_retired_term() {
+    let repo = base_with_a_retired_term();
+    let terms = repo.read(TERMS);
+    let decisions = repo.read(DECISIONS);
+    for flag in ["--terms", "--retires-terms"] {
+        refused(
+            repo.run(&[
+                "decide",
+                flag,
+                "Repository",
+                "--summary",
+                "S.",
+                "--rationale",
+                "R.",
+            ]),
+            "term `Repository` is retired",
+        );
+        assert_eq!(repo.read(TERMS), terms);
+        assert_eq!(repo.read(DECISIONS), decisions);
+    }
+}
+
+#[test]
+fn hist_005_aliases_avoid_words_comments_and_whitespace_of_a_retired_term_give_no_finding() {
+    let repo = base_with_a_retired_term();
+    let terms = repo.read(TERMS);
+    repo.write(
+        TERMS,
+        &terms
+            .replace("aliases: [repo]", "aliases: [repo, repository]")
+            .replace("avoid: [project]", "avoid: [project, codebase]")
+            .replace("# proposed | agreed | retired", "# set by the CLI")
+            .replace(
+                "A git repository the collector watches.",
+                "A git repository\nthe collector   watches.",
+            ),
+    );
+    assert_eq!(errors(&repo), Vec::<String>::new());
+}
+
+#[test]
+fn hist_005_a_term_a_proposed_decision_retires_is_still_governed_by_hist_003() {
+    let repo = base();
+    ok(repo.run(&[
+        "decide",
+        "--retires-terms",
+        "Commit",
+        "--summary",
+        "Stop calling commits a term.",
+        "--rationale",
+        "R.",
+    ]));
+    assert_eq!(errors(&repo), Vec::<String>::new());
+
+    let terms = repo.read(TERMS);
+    repo.write(
+        TERMS,
+        &terms.replace(
+            "A git commit in a repository the collector watches.",
+            "A git commit in any repository.",
+        ),
+    );
+    assert_eq!(errors(&repo), ["term.changed_without_decision"]);
 }

@@ -2,7 +2,8 @@ use super::SCHEMA;
 use crate::check;
 use crate::git;
 use crate::model::{
-    Agreed, Built, DecisionStatus, Finding, Model, RatifiedBy, Rule, Severity, TermAgreed, paths,
+    Agreed, Built, Decision, DecisionStatus, Finding, Model, RatifiedBy, Rule, Severity,
+    TermAgreed, paths,
 };
 use crate::repo::Repo;
 use crate::state;
@@ -21,6 +22,7 @@ pub struct RatifyReport {
     pub agreed_rules: Vec<String>,
     pub retired_rules: Vec<String>,
     pub agreed_terms: Vec<String>,
+    pub retired_terms: Vec<String>,
     /// Rules this command set to `built: built`, because they are complete.
     pub built_rules: Vec<String>,
     /// Links removed from retired rules.
@@ -63,11 +65,14 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     let mut agreed_rules = Vec::new();
     let mut retired_rules = Vec::new();
     let mut agreed_terms = Vec::new();
+    let mut retired_terms = Vec::new();
     for d in &chosen {
         agreed_rules.extend(d.establishes.iter().chain(&d.changes).cloned());
         retired_rules.extend(d.retires.iter().cloned());
         agreed_terms.extend(d.terms.iter().cloned());
+        retired_terms.extend(d.retires_terms.iter().cloned());
     }
+    refuse_invalid_term_actions(&model, &chosen)?;
 
     let mut edits: BTreeMap<String, String> = BTreeMap::new();
     for id in &agreed_rules {
@@ -124,7 +129,11 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     }
 
     let mut terms_text = None;
-    for name in &agreed_terms {
+    let term_states = agreed_terms
+        .iter()
+        .map(|t| (t, TermAgreed::Agreed))
+        .chain(retired_terms.iter().map(|t| (t, TermAgreed::Retired)));
+    for (name, agreed) in term_states {
         let text = match terms_text.take() {
             Some(text) => text,
             None => repo.read(paths::TERMS)?.unwrap_or_default(),
@@ -133,9 +142,13 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
         let Some(term) = parsed.terms.iter().find(|t| &t.name == name) else {
             bail!("no term `{name}`; run `statute check`");
         };
-        let Some(patched) = store::terms::set_agreed(&text, term, TermAgreed::Agreed) else {
+        let Some(patched) = store::terms::set_agreed(&text, term, agreed) else {
+            let value = match agreed {
+                TermAgreed::Retired => "retired",
+                _ => "agreed",
+            };
             bail!(
-                "cannot set `agreed: agreed` on term `{name}`: write the field on one line in a block mapping, then ratify again"
+                "cannot set `agreed: {value}` on term `{name}`: write the field on one line in a block mapping, then ratify again"
             );
         };
         terms_text = Some(patched);
@@ -165,21 +178,27 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
             || f.rule
                 .as_ref()
                 .is_some_and(|r| agreed_rules.contains(r) || retired_rules.contains(r))
-            || f.term.as_ref().is_some_and(|t| agreed_terms.contains(t))
+            || f.term
+                .as_ref()
+                .is_some_and(|t| agreed_terms.contains(t) || retired_terms.contains(t))
     };
     let mut blocking: Vec<String> = findings
         .iter()
         .filter(|f| f.severity == Severity::Error && about(f))
         .map(|f| format!("  {}: {}", f.code, f.message))
         .collect();
-    // A rule becomes agreed only with agreed terms: agreed before, or approved in this batch.
+    // A rule becomes agreed only with agreed terms: agreed before, or approved in this batch. A retired
+    // term is reported above as `rule.term_retired`.
     for rule in after.rules.iter().filter(|r| agreed_rules.contains(&r.id)) {
         for name in rule.meta.iter().flat_map(|m| &m.terms) {
             let agreed = after.terms.iter().any(|t| {
                 &t.name == name
                     && t.meta.as_ref().and_then(|m| m.agreed) == Some(TermAgreed::Agreed)
             });
-            let known = after.terms.iter().any(|t| &t.name == name);
+            let known = after
+                .terms
+                .iter()
+                .any(|t| &t.name == name && !t.is_retired());
             if known && !agreed {
                 blocking.push(format!(
                     "  rule.term_not_agreed: {} uses term `{name}`, which is not agreed; ratify the decision that lists it at the same time",
@@ -208,9 +227,47 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
         agreed_rules,
         retired_rules,
         agreed_terms,
+        retired_terms,
         built_rules,
         removed_links,
     })
+}
+
+/// Checks the term actions of the chosen decisions against the terms as they are before ratifying,
+/// because afterwards the decisions are active and the terms already patched: every term they retire
+/// is agreed, no term they name is retired, and no term is both defined and retired in the batch.
+fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()> {
+    let term = |name: &str| model.terms.iter().find(|t| t.name == name);
+    for d in chosen {
+        for name in d.all_terms() {
+            if term(name).is_some_and(|t| t.is_retired()) {
+                bail!(
+                    "nothing was ratified; {} names term `{name}`, which is retired, and a retired term never changes",
+                    d.id
+                );
+            }
+        }
+        for name in &d.retires_terms {
+            if term(name).and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
+                bail!(
+                    "nothing was ratified; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",
+                    d.id
+                );
+            }
+        }
+    }
+    for d in chosen {
+        for name in &d.retires_terms {
+            if let Some(other) = chosen.iter().find(|o| o.terms.contains(name)) {
+                bail!(
+                    "nothing was ratified; {} retires term `{name}` and {} redefines it; a term cannot be redefined and retired at once",
+                    d.id,
+                    other.id
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Patches one rule in its file, applying the patch to the text earlier patches produced.

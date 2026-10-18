@@ -53,6 +53,9 @@ Rules:
   ATTR-002 Context alone creates no contribution
   ATTR-003 Sessions expire after a day
 
+Decisions:
+  D261001-a2b3c defines (active): Adopt the existing attribution rules.
+
 - id: D261001-a2b3c
   timestamp: 2026-10-01T09:00:00Z
   actor: user
