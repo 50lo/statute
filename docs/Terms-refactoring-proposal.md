@@ -1,6 +1,6 @@
 # Terms refactoring proposal
 
-Status: proposed. Start with Statute's human glossary and manual consistency review in both directions. Automated review remains the intended design and is tracked separately. Operational terms compaction and term retirement are accepted work for separate PRs. This document does not change the agreed terms, file formats, or CLI behavior.
+Status: first stage in place. Statute's human glossary is [docs/Glossary.md](Glossary.md), and the "Glossary" section of AGENTS.md makes the manual consistency review in both directions part of every PR that changes the glossary or a term (st-25bl). Automated review remains the intended design and is tracked separately. Term retirement was implemented in its own PR (st-9flm). Operational terms compaction is accepted work for separate PRs. This document does not change the agreed terms, file formats, or CLI behavior.
 
 ## Purpose
 

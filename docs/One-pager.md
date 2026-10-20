@@ -31,6 +31,8 @@ Statute answers three questions about the product:
 | **Decisions** | Why a rule is the way it is, and who decided | We chose to keep repository-less sessions because a lot of real work happens outside repositories (decided by Anton) |
 | **Links** | Where a rule lives in the code and tests | The rule above points to the collector's filter function and its test |
 
+[Statute's glossary](Glossary.md) explains these concepts and the other words Statute uses, with examples.
+
 Each rule states one observable obligation, with one case it protects and one nearby case that shows where it stops.
 
 Every rule carries two statuses, because "we agreed on it" and "the code does it" are different facts:

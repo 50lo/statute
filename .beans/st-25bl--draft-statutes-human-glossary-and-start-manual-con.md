@@ -1,16 +1,14 @@
 ---
 # st-25bl
 title: Draft Statute's human glossary and start manual consistency review
-status: todo
+status: in-progress
 type: feature
 priority: high
 tags:
     - statute
     - glossary
 created_at: 2026-10-18T12:06:59Z
-updated_at: 2026-10-18T12:09:14Z
-blocked_by:
-    - st-jycx
+updated_at: 2026-10-18T21:47:20Z
 ---
 
 ## What
@@ -40,13 +38,17 @@ People need connected explanations and examples; `statute/terms.md` holds compac
 
 ## Acceptance
 
-- [ ] `docs/Glossary.md` links every term in `statute/terms.md` at least once, every link resolves to an existing `##` heading (compare the link anchors with the term headings), and it ends with an index of each term and the section that mainly explains it.
-- [ ] AGENTS.md has the `## Glossary` section with the six instructions in the plan's Item 2, including: show a term's definition with every glossary section that links to it when asking for ratification; re-review rows changed after the recorded commit; route missed counterparts and drift to st-uzzw.
-- [ ] The PR description has a "Glossary consistency" record in the plan's format, covering every section and its terms, each with a conclusion.
-- [ ] No term's text changed except through a proposed decision.
-- [ ] One-pager and proposal status line updated.
-- [ ] `cargo test` (including `tests/layering.rs`) and `statute check --all` pass; the `change` skill reports no affected rules.
+- [x] `docs/Glossary.md` links every term in `statute/terms.md` at least once, every link resolves to an existing `##` heading (compare the link anchors with the term headings), and it ends with an index of each term and the section that mainly explains it.
+- [x] AGENTS.md has the `## Glossary` section with the six instructions in the plan's Item 2, including: show a term's definition with every glossary section that links to it when asking for ratification; re-review rows changed after the recorded commit; route missed counterparts and drift to st-uzzw.
+- [x] The PR description has a "Glossary consistency" record in the plan's format, covering every section and its terms, each with a conclusion.
+- [x] No term's text changed except through a proposed decision.
+- [x] One-pager and proposal status line updated.
+- [x] `cargo test` (including `tests/layering.rs`) and `statute check --all` pass; the `change` skill reports no affected rules.
 
 ## Dependencies
 
 Blocked by st-jycx, which settles what the approved definition is. Can run in parallel with st-9flm (term retirement) and the compaction audit review; whichever of this and a compaction migration lands second does the manual review.
+
+## Progress
+
+2026-10-19: Implemented on branch `claude/st-25bl-glossary`. The glossary keeps the plan's six sections and adds a short "Keeping this glossary correct" section. The PR description holds the first glossary consistency record. Complete this Bean after the PR merges.
