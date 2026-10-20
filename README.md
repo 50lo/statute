@@ -14,60 +14,61 @@ cargo install statute-cli --locked
 
 The package is `statute-cli`; the installed command is `statute`. Git must also be available on your `PATH`.
 
+Install the [Statute plugin for Claude Code or Codex](https://github.com/50lo/statute/blob/main/plugin/README.md). It gives your coding agent the workflows for capturing rules, reviewing changes, proposing decisions and recording your approval.
+
+The CLI must be available on the agent's `PATH`.
+
 ## Get started
 
 From an existing Git repository:
 
 ```sh
 statute init
-statute status
 ```
 
-`init` creates `statute.yml`, the `statute/` directory, `statute.lock`, and instructions in `AGENTS.md`. Commit these files with your code. Rules, terms, decisions and gaps are plain files in the repository.
+`init` creates `statute.yml`, the `statute/` directory, `statute.lock`, and adds instructions to `AGENTS.md`. Commit these files to your repository. Rules, terms, decisions and gaps are plain text files and easy to review.
 
 Start with a few rules that are expensive to get wrong: money, privacy, permissions, or what data you keep. Each rule states one observable requirement, a case it protects, and a nearby case that shows where it stops.
 
-Create an area file such as `statute/rules/orders.md` with a prefix:
+## Capture your first rules
 
-```yaml
----
-prefix: ORD
----
-```
+Ask your coding agent to use Statute's `adopt` skill. Give it a small area of the product and the documents that explain it:
 
-Then add a rule skeleton and fill in its fields:
+> Use Statute's adopt skill for order cancellation. Read our order documentation and the cancellation code and tests. Propose the important rules and terms, link them to the implementation and tests, and show me what needs approval.
 
-```sh
-statute rule new orders "A cancelled order cannot ship"
-```
+The agent drafts the rules and terms, checks their protected and boundary cases, links them to code and tests, and records proposed decisions. It identifies missing tests or behaviour that needs a manual check.
 
-Once the rule is written, link it to the code and a test that checks it. For example, if those files exist:
+Review what it proposes. Are these the rules you intend? Do the examples cover the cases that matter? Ask the agent to revise anything that is wrong or unclear.
 
-```sh
-statute link ORD-001 src/orders.rs
-statute link ORD-001 tests/orders.rs --test
-statute check --all
-```
+When you are ready, ask it to use the `ratify` skill to show the pending decisions for approval. Approve specific decision IDs; the agent records your approval through Statute. Until then, the new rules and terms remain *proposed*.
 
-Links can point to whole files or Go, Python and Rust symbols, such as `src/orders.rs#ship`. Agreement and implementation are recorded separately. New rules start as proposed; a person approves the decisions that make them agreed.
+## Make changes with your agent
 
-## Work with rules
+Continue asking your agent to build features and fix bugs as usual:
 
-```sh
-statute show src/orders.rs   # Read the rules linked to a file before changing it
-statute check               # Find problems and changed links since the base
-statute check --all          # Check every link
-statute check --md           # Show rule impact for a pull request
-statute status              # See agreement, implementation, gaps and pending decisions
-```
+> Refactor order dispatch to use a queue.
 
-After a change, review each affected rule. Record that it still holds with `statute review RULE ok`, propose a decision if it must change, or open a gap if the code broke it. Statute tracks the review; the reviewer checks the behaviour. Add `--json` for machine-readable reports.
+The repository instructions tell the agent to read the linked rules and terms before editing. After editing, its `change` skill checks affected rules against the changed code and records the result:
+
+- **The rule still holds:** the agent records its review and refreshes the links.
+- **Your request needs the rule to change:** the agent names the conflict and proposes a decision.
+- **The code broke the rule:** the agent records a gap and reports what needs fixing.
+
+The agent includes rule impact in the pull request description. You review the product consequences alongside the code.
+
+Statute detects changed links and records the review. The agent checks whether the behaviour still satisfies the rule.
+
+## Change a product rule
+
+When the intended behaviour changes, tell the agent what should happen:
+
+> Customers can currently cancel until an order ships. We now need cancellation to stop when packing starts. Use Statute to propose that change and show me the affected rules, terms and cases.
+
+The `decide` skill drafts the change and records why it is needed. The `ratify` skill presents it for your approval. Implementing the code and approving the rule are separate steps; the agent cannot approve its own proposal.
+
+## CLI reference
 
 Use `statute --help` and `statute COMMAND --help` for command details. The [specification](https://github.com/50lo/statute/blob/main/docs/Statute-spec.md) describes the file formats and workflow.
-
-## Agent plugin
-
-The [agent plugin](https://github.com/50lo/statute/tree/main/plugin) provides `adopt`, `change`, `decide` and `ratify` skills for Claude Code and Codex. Plugin installation instrucions(https://github.com/50lo/statute/blob/main/plugin/README.md.
 
 ## More
 
