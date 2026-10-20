@@ -60,7 +60,7 @@ The following report is reproduced unchanged from the original audit. Its propos
 
 Date: 18 October 2026, Australia/Sydney.
 
-Audited repository: `/Users/solo/code/statute`, commit `5a7d6fe3eaccb380ea8c9a58181f97464d1deb73` (PR #20 before its next proposal revision). The audit reads the current operational terms, every current rule and decision, the one-pager, the proposal, the specification, and the relevant parser, history, reference, retrieval, impact and name-checking code. This is an audit for later human review. It changes no repository files and approves no definitions or decisions.
+Audited repository: `~/code/statute`, commit `5a7d6fe3eaccb380ea8c9a58181f97464d1deb73` (PR #20 before its next proposal revision). The audit reads the current operational terms, every current rule and decision, the one-pager, the proposal, the specification, and the relevant parser, history, reference, retrieval, impact and name-checking code. This is an audit for later human review. It changes no repository files and approves no definitions or decisions.
 
 The user has accepted that terms compaction and term retirement need work. This report proposes the compaction scope; the feature enabling retirement is a separate implementation. Neither task is part of the PR #20 documentation proposal. The coordinating agent created high-priority retirement feature `st-9flm` and glossary automation feature `st-uzzw` during this run; their implementation is outside this audit.
 

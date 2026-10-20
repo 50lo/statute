@@ -25,7 +25,7 @@ Non-goals:
 | Layer | Form | Responsibility |
 | --- | --- | --- |
 | Core | `statute` CLI, single binary, no runtime dependencies | File formats, checks, link fingerprints, status |
-| Agent | Skills, an AGENTS.md snippet, and a Stop hook in Claude Code | Judgment: reading rules and terms before coding, checking affected rules, proposing, asking a human to approve |
+| Agent | Skills, an AGENTS.md snippet, and a Stop hook in Claude Code and Codex plugins | Judgment: reading rules and terms before coding, checking affected rules, proposing, asking a human to approve |
 | Repo | `statute.yml` + content files + `statute.lock` | The repo's own terms, rules, decisions and links |
 
 Rule of separation: anything that can be decided mechanically lives in the CLI. Anything that needs judgment lives in the plugin and always ends with a CLI command that records the result.
@@ -351,7 +351,7 @@ Speed. `check` runs in the Stop hook at the end of every agent turn, so its cost
 Packaging in the first version:
 
 - Claude Code: a plugin with the skills and the Stop hook.
-- Codex: the same skills and the AGENTS.md snippet, without the hook.
+- Codex: a plugin with the same skills and Stop hook, exposed through the repository marketplace. The hook requires a manual desktop installation and the user's trust approval. Clients without plugin hooks use the skills and AGENTS.md snippet.
 
 The CLI is a prerequisite; each skill checks for it and stops with install instructions if it is missing.
 
@@ -375,7 +375,7 @@ The CLI is a prerequisite; each skill checks for it and stops with install instr
 | `decide` | A choice passes the decision gates (kept from Footprints AGENTS.md), or a rule or term needs to change, or a term should no longer be used | Write summary and rationale; draft new or changed rule sections and terms; list a term to retire in `retires_terms`, leaving its section, and move the rules that use it to a successor or retire them; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
 | `ratify` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute ratify D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term in its `terms` that was never agreed; leave each term in its `retires_terms` agreed and unchanged; run `statute check` until no reference to the removed items remains |
 
-### 6.3 Hook (Claude Code)
+### 6.3 Hook (Claude Code and Codex desktop)
 
 One Stop/end-of-turn hook: `statute check --json`, against the merge-base with the default branch plus the working tree, so commits made during the session are covered. If links are stale or missing, it returns a message telling the agent to run the `change` skill. It never blocks the human and never reviews on its own.
 
@@ -399,7 +399,7 @@ Footprints is converted into the Statute format once, with the `adopt` skill and
 2. **Links.** Reimplement nodrift's fingerprinting in the CLI: `bytes`, and the `go-ast` and `python-ast` modes on tree-sitter; code and test links with the completeness check; `link` (including setting `built`), `review`, `show` for files and symbols, `check` with stale and missing links against the base, and `check --all`. Convert Footprints' `no-drift.lock` with the same script.
 3. **Decisions.** `decide`, `ratify`, append-only checks, `check --md`.
 4. **Gaps.** `gap open`, `gap close`; the gaps index; derived `broken` state.
-5. **Plugin.** AGENTS.md snippet and the four skills for Claude Code and Codex, including tracker reconciliation in `change`; Stop hook for Claude Code.
+5. **Plugin.** AGENTS.md snippet and the four skills for Claude Code and Codex, including tracker reconciliation in `change`; Stop hook for Claude Code and manually installed, trusted Codex desktop plugins.
 6. **Seeded violations.** Write the violation set for the pilot rules (section 9).
 7. **Second repo.** Port to a deliberately different repo (Swift) by adding a tree-sitter Swift mode; record what else had to change.
 

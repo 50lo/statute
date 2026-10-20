@@ -67,11 +67,11 @@ Use `statute --help` and `statute COMMAND --help` for command details. The [spec
 
 ## Agent plugin
 
-The [agent plugin](https://github.com/50lo/statute/tree/main/plugin) provides `adopt`, `change`, `decide` and `ratify` skills for Claude Code and Codex. Claude Code also gets a Stop hook that asks for a review when links are stale or missing. Install the plugin separately from the CLI; see its [setup instructions](https://github.com/50lo/statute/blob/main/plugin/README.md).
+The [agent plugin](https://github.com/50lo/statute/tree/main/plugin) provides `adopt`, `change`, `decide` and `ratify` skills for Claude Code and Codex. Plugin installation instrucions(https://github.com/50lo/statute/blob/main/plugin/README.md.
 
 ## More
 
-- [What Statute does and why](https://github.com/50lo/statute/blob/main/docs/One-pager.md)
+- [Why Statute exists](https://github.com/50lo/statute/blob/main/docs/One-pager.md)
 - [Behaviour and file formats](https://github.com/50lo/statute/blob/main/docs/Statute-spec.md)
 - [Architecture](https://github.com/50lo/statute/blob/main/docs/Architecture.md)
 - [Changelog](https://github.com/50lo/statute/blob/main/CHANGELOG.md)

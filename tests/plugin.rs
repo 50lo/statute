@@ -13,14 +13,42 @@ fn plugin(rel: &str) -> PathBuf {
         .join(rel)
 }
 
-/// Runs the Stop hook in `dir` with the built `statute` first on the `PATH`.
+/// Runs each host's packaged Stop command with the built CLI first on the PATH.
 fn stop_hook(dir: &Path, input: &str) -> String {
+    let claude = run_stop_hook(
+        dir,
+        input,
+        "hooks/hooks.json",
+        "CLAUDE_PLUGIN_ROOT",
+        &plugin(""),
+    );
+    let codex = run_stop_hook(dir, input, "hooks/codex.json", "PLUGIN_ROOT", &plugin(""));
+    assert_eq!(
+        claude, codex,
+        "the hosts must receive the same review request"
+    );
+    codex
+}
+
+fn hook_command(config: &str) -> String {
+    let hooks: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(plugin(config)).unwrap()).unwrap();
+    hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+fn run_stop_hook(dir: &Path, input: &str, config: &str, root_var: &str, root: &Path) -> String {
     let bin = Path::new(env!("CARGO_BIN_EXE_statute")).parent().unwrap();
     let path = format!("{}:{}", bin.display(), std::env::var("PATH").unwrap());
     let mut child = Command::new("sh")
-        .arg(plugin("hooks/stop.sh"))
+        .args(["-c", &hook_command(config)])
         .current_dir(dir)
         .env("PATH", path)
+        .env_remove("CLAUDE_PLUGIN_ROOT")
+        .env_remove("PLUGIN_ROOT")
+        .env(root_var, root)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -96,36 +124,62 @@ fn manifests_parse_and_the_hook_command_exists() {
         .as_str()
         .unwrap();
     assert!(command.contains("hooks/stop.sh"), "{command}");
+
+    let codex: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(plugin(".codex-plugin/plugin.json")).unwrap(),
+    )
+    .unwrap();
+    for key in ["name", "version", "description", "homepage"] {
+        assert_eq!(codex[key], manifest[key], "{key}");
+    }
+    let skills = plugin(codex["skills"].as_str().unwrap());
+    for skill in ["adopt", "change", "decide", "ratify"] {
+        assert!(skills.join(skill).join("SKILL.md").is_file());
+    }
+    let hooks = codex["hooks"].as_str().unwrap();
+    assert!(plugin(hooks).is_file());
+    assert!(hook_command(hooks).contains("${PLUGIN_ROOT}"));
+
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let marketplace: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root.join(".agents/plugins/marketplace.json")).unwrap(),
+    )
+    .unwrap();
+    let entry = &marketplace["plugins"][0];
+    assert_eq!(entry["name"], codex["name"]);
+    assert_eq!(entry["source"]["source"], "local");
+    assert_eq!(entry["policy"]["installation"], "AVAILABLE");
+    assert_eq!(
+        root.join(entry["source"]["path"].as_str().unwrap())
+            .canonicalize()
+            .unwrap(),
+        plugin("").canonicalize().unwrap()
+    );
 }
 
-/// Claude Code runs the hook command through a shell, so the command must work when the plugin is
+/// Both hosts run the hook command through a shell, so the command must work when the plugin is
 /// installed under a path with spaces.
 #[test]
 fn hook_command_runs_from_a_path_with_spaces() {
-    let hooks: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(plugin("hooks/hooks.json")).unwrap())
-            .unwrap();
-    let command = hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
-        .as_str()
-        .unwrap();
     let dir = tempfile::tempdir().unwrap();
-    let root = dir.path().join("plugin with spaces");
+    let root = dir.path().join("plugin with spaces and 'quotes'");
     std::fs::create_dir_all(root.join("hooks")).unwrap();
     std::fs::copy(plugin("hooks/stop.sh"), root.join("hooks/stop.sh")).unwrap();
-    let mut child = Command::new("sh")
-        .args(["-c", command])
-        .current_dir(dir.path())
-        .env("CLAUDE_PLUGIN_ROOT", &root)
-        .stdin(Stdio::piped())
-        .spawn()
-        .unwrap();
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(INPUT.as_bytes())
-        .unwrap();
-    assert!(child.wait().unwrap().success(), "{command}");
+    let repo = linked_repo();
+    repo.remove("billing/refund.go");
+    for (config, root_var) in [
+        ("hooks/hooks.json", "CLAUDE_PLUGIN_ROOT"),
+        ("hooks/codex.json", "PLUGIN_ROOT"),
+    ] {
+        let output = run_stop_hook(&repo.path("."), INPUT, config, root_var, &root);
+        let reply: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(reply["decision"], "block");
+        let again = r#"{"hook_event_name":"Stop","stop_hook_active":true}"#;
+        assert_eq!(
+            run_stop_hook(&repo.path("."), again, config, root_var, &root),
+            ""
+        );
+    }
 }
 
 /// A deleted target with no replacement: the `change` skill removes the link, and the commands it

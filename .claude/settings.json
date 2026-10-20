@@ -3,7 +3,7 @@
     "statute": {
       "source": {
         "source": "directory",
-        "path": "/Users/solo/code/statute"
+        "path": "~/code/statute"
       }
     }
   },
