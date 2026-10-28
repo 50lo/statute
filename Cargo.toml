@@ -58,8 +58,7 @@ tempfile = "3"
 inherits = "release"
 lto = "thin"
 
-# `cargo release minor --execute` (or patch, major) bumps the version, dates the
-# changelog, commits, tags vX.Y.Z and pushes; the tag starts the dist release workflow.
+# See docs/Releasing.md.
 [package.metadata.release]
 publish = false
 pre-release-commit-message = "Release v{{version}}"
