@@ -52,3 +52,19 @@ yaml_serde = "0.10.7"
 [dev-dependencies]
 insta = { version = "1", features = ["json"] }
 tempfile = "3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+# `cargo release minor --execute` (or patch, major) bumps the version, dates the
+# changelog, commits, tags vX.Y.Z and pushes; the tag starts the dist release workflow.
+[package.metadata.release]
+publish = false
+pre-release-commit-message = "Release v{{version}}"
+pre-release-replacements = [
+    { file = "CHANGELOG.md", search = "## Unreleased", replace = "## Unreleased\n\n## {{version}} - {{date}}", exactly = 1 },
+    { file = "plugin/.claude-plugin/plugin.json", search = "\"version\": \"[^\"]+\"", replace = "\"version\": \"{{version}}\"", exactly = 1 },
+    { file = "plugin/.codex-plugin/plugin.json", search = "\"version\": \"[^\"]+\"", replace = "\"version\": \"{{version}}\"", exactly = 1 },
+]
