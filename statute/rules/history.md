@@ -70,7 +70,7 @@ protects:
   - "`decide --changes ATTR-003` is refused while ATTR-003 is retired, and nothing is written."
 boundary:
   - Changing a retired rule's notes, the whitespace of its statement, or its `built` value gives no finding.
-  - A rule that a proposed decision retires is still agreed until the decision is ratified, so HIST-002 governs its changes until then.
+  - A rule that a proposed decision retires is still agreed until the decision is approved, so HIST-002 governs its changes until then.
 ```
 
 # HIST-005 A retired term never changes
@@ -89,5 +89,5 @@ protects:
   - "`decide --terms Commit` is refused while Commit is retired, and nothing is written."
 boundary:
   - Changing a retired term's `aliases` or `avoid` words, the whitespace of its definition, or a comment in its `yaml` block gives no finding.
-  - A term that a proposed decision retires is still agreed until the decision is ratified, so HIST-003 governs its changes until then, and listing it in `retires_terms` does not carry a change.
+  - A term that a proposed decision retires is still agreed until the decision is approved, so HIST-003 governs its changes until then, and listing it in `retires_terms` does not carry a change.
 ```

@@ -31,7 +31,7 @@ const CHECKS: &[Check] = &[
     decisions::references,
     decisions::overlap,
     decisions::retired_terms,
-    decisions::ratified_by,
+    decisions::approved_by,
     decisions::summary_length,
     gaps::ids,
     gaps::rules_resolve,

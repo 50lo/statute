@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `statute ratify` is now `statute approve`, the `ratify` skill is now `approve`, and the decision field `ratified_by` is now `approved_by`. Rename the field in an existing `decisions.db`.
 - Retire agreed terms with `decide --retires-terms`. A retired term keeps its section as a record of what earlier decisions meant, `show` labels it, and the name and wording checks skip it.
 
 ## 0.1.0 - 2026-10-19

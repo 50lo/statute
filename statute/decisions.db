@@ -2,7 +2,7 @@
   timestamp: 2026-10-16T11:52:05Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-16T11:55:56Z
@@ -37,7 +37,7 @@
   timestamp: 2026-10-16T13:16:07Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-17T05:51:42Z
@@ -53,7 +53,7 @@
   timestamp: 2026-10-17T00:30:57Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-17T00:39:26Z
@@ -70,7 +70,7 @@
   timestamp: 2026-10-17T05:28:33Z
   actor: agent
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-17T05:51:42Z
@@ -92,7 +92,7 @@
   timestamp: 2026-10-17T06:06:51Z
   actor: agent
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-17T21:24:06Z
@@ -114,7 +114,7 @@
   timestamp: 2026-10-18T20:20:31Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-18T20:32:24Z
@@ -129,7 +129,7 @@
   timestamp: 2026-10-18T20:29:04Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-18T20:32:24Z
@@ -145,7 +145,7 @@
   timestamp: 2026-10-18T21:01:10Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-18T21:23:20Z
@@ -164,7 +164,7 @@
   timestamp: 2026-10-18T21:01:16Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Anton Solo
     email: anton@50lo.me
     at: 2026-10-18T21:23:20Z
@@ -175,3 +175,27 @@
   changes: []
   retires: []
   terms: []
+- id: D261028-qy5et
+  timestamp: 2026-10-28T10:04:04Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-10-28T10:16:42Z
+  summary: Rename the ratify command, skill and decision field to approve and approved_by. The rules and terms that name them change wording only.
+  rationale: Approve is the word the software industry already uses for a person accepting a change, so PMs and designers need no new vocabulary. Meaning is unchanged. Keeping ratify was rejected because it is unfamiliar; a backward-compatible alias was rejected because Statute has no users yet.
+  establishes: []
+  changes:
+  - CORE-004
+  - CORE-005
+  - DEC-002
+  - DEC-003
+  - DEC-004
+  - DEC-005
+  - HIST-004
+  - HIST-005
+  retires: []
+  terms:
+  - Approval
+  - Proposed decision

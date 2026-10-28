@@ -203,7 +203,7 @@ pub struct Decision {
     pub actor: Actor,
     pub status: DecisionStatus,
     #[serde(default)]
-    pub ratified_by: Option<RatifiedBy>,
+    pub approved_by: Option<ApprovedBy>,
     pub summary: String,
     pub rationale: String,
     #[serde(default)]
@@ -272,7 +272,7 @@ pub enum DecisionStatus {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct RatifiedBy {
+pub struct ApprovedBy {
     pub name: String,
     pub email: String,
     pub at: String,

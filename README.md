@@ -40,7 +40,7 @@ The agent drafts the rules and terms, checks their protected and boundary cases,
 
 Review what it proposes. Are these the rules you intend? Do the examples cover the cases that matter? Ask the agent to revise anything that is wrong or unclear.
 
-When you are ready, ask it to use the `ratify` skill to show the pending decisions for approval. Approve specific decision IDs; the agent records your approval through Statute. Until then, the new rules and terms remain *proposed*.
+When you are ready, ask it to use the `approve` skill to show the pending decisions for approval. Approve specific decision IDs; the agent records your approval through Statute. Until then, the new rules and terms remain *proposed*.
 
 ## Make changes with your agent
 
@@ -64,7 +64,7 @@ When the intended behaviour changes, tell the agent what should happen:
 
 > Customers can currently cancel until an order ships. We now need cancellation to stop when packing starts. Use Statute to propose that change and show me the affected rules, terms and cases.
 
-The `decide` skill drafts the change and records why it is needed. The `ratify` skill presents it for your approval. Implementing the code and approving the rule are separate steps; the agent cannot approve its own proposal.
+The `decide` skill drafts the change and records why it is needed. The `approve` skill presents it for your approval. Implementing the code and approving the rule are separate steps; the agent cannot approve its own proposal.
 
 ## CLI reference
 

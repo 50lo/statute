@@ -26,4 +26,4 @@ First run `statute --version`. If the command is missing, stop and tell the user
 
 ## Ends with
 
-One proposed decision per area, `statute check` passing, and a list for the person to approve with the `ratify` skill: per area, its rules and terms in one line each.
+One proposed decision per area, `statute check` passing, and a list for the person to approve with the `approve` skill: per area, its rules and terms in one line each.

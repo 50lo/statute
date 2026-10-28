@@ -1,5 +1,5 @@
 //! Lifecycle guarantees the CLI can enforce. Human approval itself is supplied by the caller's
-//! workflow; these tests do not treat a successful `ratify` command as proof of consent.
+//! workflow; these tests do not treat a successful `approve` command as proof of consent.
 
 mod common;
 
@@ -83,7 +83,7 @@ fn existing_implementation_and_test_links_do_not_agree_an_agent_proposal() {
     let proposal = shown(&repo, &decision);
     assert_eq!(proposal["actor"], "agent");
     assert_eq!(proposal["status"], "proposed");
-    assert_eq!(proposal["ratified_by"], Value::Null);
+    assert_eq!(proposal["approved_by"], Value::Null);
     assert!(
         shown(&repo, "Log owner")["text"]
             .as_str()
@@ -91,15 +91,15 @@ fn existing_implementation_and_test_links_do_not_agree_an_agent_proposal() {
             .contains("agreed: proposed")
     );
 
-    // Invoke ratify as the caller would after obtaining human approval. The CLI cannot verify that
+    // Invoke approve as the caller would after obtaining human approval. The CLI cannot verify that
     // approval happened; it can verify the named decision's resulting rule and term state.
-    let report = ok(repo.run(&["ratify", &decision, "--json"])).json();
+    let report = ok(repo.run(&["approve", &decision, "--json"])).json();
     assert_eq!(report["agreed_rules"], json!([rule]));
     assert_eq!(report["agreed_terms"], json!(["Log owner"]));
     assert_eq!(report["built_rules"], json!([]));
-    let ratified = shown(&repo, &rule);
-    assert_eq!(ratified["agreed"], "agreed");
-    assert_eq!(ratified["built"], "built");
+    let approved = shown(&repo, &rule);
+    assert_eq!(approved["agreed"], "agreed");
+    assert_eq!(approved["built"], "built");
     assert!(
         shown(&repo, "Log owner")["text"]
             .as_str()
@@ -114,7 +114,7 @@ fn existing_implementation_and_test_links_do_not_agree_an_agent_proposal() {
 }
 
 #[test]
-fn ratify_updates_only_named_decisions_rules_and_terms() {
+fn approve_updates_only_named_decisions_rules_and_terms() {
     let repo = TestRepo::fixture("valid");
     let first_rule = new_rule(&repo, "Large refunds are logged", "Log owner");
     let first = propose(&repo, &first_rule, "Log owner");
@@ -125,7 +125,7 @@ fn ratify_updates_only_named_decisions_rules_and_terms() {
     let pending_term = shown(&repo, "Audit owner");
     let earlier_pending = shown(&repo, "D261014-x4p9t");
 
-    let report = ok(repo.run(&["ratify", &first, "--json"])).json();
+    let report = ok(repo.run(&["approve", &first, "--json"])).json();
     assert_eq!(report["decisions"], json!([first]));
     assert_eq!(report["agreed_rules"], json!([first_rule]));
     assert_eq!(report["agreed_terms"], json!(["Log owner"]));
@@ -145,7 +145,7 @@ fn ratify_updates_only_named_decisions_rules_and_terms() {
     assert_eq!(shown(&repo, "D261014-x4p9t"), earlier_pending);
 
     // The second proposal still requires its own explicit selection in a later invocation.
-    ok(repo.run(&["ratify", &second]));
+    ok(repo.run(&["approve", &second]));
     assert_eq!(shown(&repo, &second)["status"], "active");
     assert_eq!(shown(&repo, &second_rule)["agreed"], "agreed");
     assert!(ok(repo.run(&["check", "--json"])).error_codes().is_empty());
@@ -163,7 +163,7 @@ fn proposing_a_change_preserves_build_state_without_reusing_the_previous_approva
     );
     ok(repo.run(&["link", &rule, "billing/log.go#Log"]));
     ok(repo.run(&["link", &rule, "billing/log_test.go#TestLog", "--test"]));
-    ok(repo.run(&["ratify", &first]));
+    ok(repo.run(&["approve", &first]));
     let active = shown(&repo, &first);
     let links = repo.read("statute.lock");
 
@@ -193,7 +193,7 @@ fn proposing_a_change_preserves_build_state_without_reusing_the_previous_approva
     );
     let pending = shown(&repo, &change);
     assert_eq!(pending["status"], "proposed");
-    assert_eq!(pending["ratified_by"], Value::Null);
+    assert_eq!(pending["approved_by"], Value::Null);
     assert_eq!(shown(&repo, &first), active);
     assert_eq!(repo.read("statute.lock"), links);
 
@@ -215,14 +215,14 @@ fn proposing_a_change_preserves_build_state_without_reusing_the_previous_approva
     );
     assert_eq!(shown(&repo, &change), pending);
 
-    ok(repo.run(&["ratify", &change]));
+    ok(repo.run(&["approve", &change]));
     assert_eq!(shown(&repo, &rule)["agreed"], "agreed");
     assert_eq!(shown(&repo, &rule)["built"], "built");
     assert_eq!(shown(&repo, &first), active);
 }
 
 #[test]
-fn a_refused_batch_ratification_changes_no_rules_terms_decisions_or_links() {
+fn a_refused_batch_approval_changes_no_rules_terms_decisions_or_links() {
     for unknown_decision in [false, true] {
         let repo = TestRepo::fixture("valid");
         let first_rule = new_rule(&repo, "Large refunds are logged", "Log owner");
@@ -250,7 +250,7 @@ fn a_refused_batch_ratification_changes_no_rules_terms_decisions_or_links() {
         } else {
             &second
         };
-        let refused = repo.run(&["ratify", &first, selected]);
+        let refused = repo.run(&["approve", &first, selected]);
         assert_eq!(refused.code, 2, "{}{}", refused.stdout, refused.stderr);
         assert!(
             refused.stderr.contains(if unknown_decision {
@@ -264,7 +264,7 @@ fn a_refused_batch_ratification_changes_no_rules_terms_decisions_or_links() {
         assert_eq!(files.map(|file| repo.read(file)), before);
         for id in [&first, &second] {
             assert_eq!(shown(&repo, id)["status"], "proposed");
-            assert_eq!(shown(&repo, id)["ratified_by"], Value::Null);
+            assert_eq!(shown(&repo, id)["approved_by"], Value::Null);
         }
         for id in [&first_rule, &second_rule] {
             assert_eq!(shown(&repo, id)["agreed"], "proposed");
@@ -273,7 +273,7 @@ fn a_refused_batch_ratification_changes_no_rules_terms_decisions_or_links() {
 
         // Repair the invalid input and retry the intended batch; neither failure should poison it.
         repo.write(BILLING, &complete);
-        ok(repo.run(&["ratify", &first, &second]));
+        ok(repo.run(&["approve", &first, &second]));
         assert_eq!(shown(&repo, &first_rule)["agreed"], "agreed");
         assert_eq!(shown(&repo, &second_rule)["agreed"], "agreed");
         assert!(ok(repo.run(&["check", "--json"])).error_codes().is_empty());

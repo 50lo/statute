@@ -2,7 +2,7 @@ use super::SCHEMA;
 use crate::check;
 use crate::git;
 use crate::model::{
-    Agreed, Built, Decision, DecisionStatus, Finding, Model, RatifiedBy, Rule, Severity,
+    Agreed, ApprovedBy, Built, Decision, DecisionStatus, Finding, Model, Rule, Severity,
     TermAgreed, paths,
 };
 use crate::repo::Repo;
@@ -14,10 +14,10 @@ use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Serialize)]
-pub struct RatifyReport {
+pub struct ApproveReport {
     pub schema: u32,
     pub decisions: Vec<String>,
-    pub ratified_by: RatifiedBy,
+    pub approved_by: ApprovedBy,
     /// Rules that became `agreed: agreed`.
     pub agreed_rules: Vec<String>,
     pub retired_rules: Vec<String>,
@@ -31,7 +31,7 @@ pub struct RatifyReport {
 
 /// Makes the decisions active, and updates their rules and terms. Refuses when `check` would report an
 /// error about the decisions, their rules or their terms afterwards.
-pub fn run(ids: &[String]) -> Result<RatifyReport> {
+pub fn run(ids: &[String]) -> Result<ApproveReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
     let Some(decisions) = &model.decisions else {
@@ -50,10 +50,10 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     }
     let Some((name, email)) = git::user(&repo.root)? else {
         bail!(
-            "git `user.name` and `user.email` must be set; `ratify` records who approved the decisions"
+            "git `user.name` and `user.email` must be set; `approve` records who approved the decisions"
         );
     };
-    let ratified_by = RatifiedBy {
+    let approved_by = ApprovedBy {
         name,
         email,
         at: jiff::Timestamp::now()
@@ -148,7 +148,7 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
                 _ => "agreed",
             };
             bail!(
-                "cannot set `agreed: {value}` on term `{name}`: write the field on one line in a block mapping, then ratify again"
+                "cannot set `agreed: {value}` on term `{name}`: write the field on one line in a block mapping, then approve again"
             );
         };
         terms_text = Some(patched);
@@ -157,17 +157,17 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
         edits.insert(paths::TERMS.to_string(), text);
     }
 
-    let mut ratified = decisions.clone();
-    for d in ratified.iter_mut().filter(|d| ids.contains(&&d.id)) {
+    let mut approved = decisions.clone();
+    for d in approved.iter_mut().filter(|d| ids.contains(&&d.id)) {
         d.status = DecisionStatus::Active;
-        d.ratified_by = Some(ratified_by.clone());
+        d.approved_by = Some(approved_by.clone());
     }
     edits.insert(
         paths::DECISIONS.to_string(),
-        store::render_decisions(&ratified),
+        store::render_decisions(&approved),
     );
 
-    // The checks `check` runs, on the result. Only errors about what is being ratified block it.
+    // The checks `check` runs, on the result. Only errors about what is being approved block it.
     let after = repo.load_with(&edits)?;
     let mut findings = check::run(&after);
     if let Some(rev) = git::base(&repo.root)? {
@@ -201,7 +201,7 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
                 .any(|t| &t.name == name && !t.is_retired());
             if known && !agreed {
                 blocking.push(format!(
-                    "  rule.term_not_agreed: {} uses term `{name}`, which is not agreed; ratify the decision that lists it at the same time",
+                    "  rule.term_not_agreed: {} uses term `{name}`, which is not agreed; approve the decision that lists it at the same time",
                     rule.id
                 ));
             }
@@ -209,7 +209,7 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     }
     if !blocking.is_empty() {
         bail!(
-            "nothing was ratified; `check` would report these errors afterwards:\n{}",
+            "nothing was approved; `check` would report these errors afterwards:\n{}",
             blocking.join("\n")
         );
     }
@@ -220,10 +220,10 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     }
     txn.commit()?;
 
-    Ok(RatifyReport {
+    Ok(ApproveReport {
         schema: SCHEMA,
         decisions: ids.into_iter().cloned().collect(),
-        ratified_by,
+        approved_by,
         agreed_rules,
         retired_rules,
         agreed_terms,
@@ -233,7 +233,7 @@ pub fn run(ids: &[String]) -> Result<RatifyReport> {
     })
 }
 
-/// Checks the term actions of the chosen decisions against the terms as they are before ratifying,
+/// Checks the term actions of the chosen decisions against the terms as they are before approving,
 /// because afterwards the decisions are active and the terms already patched: every term they retire
 /// is agreed, no term they name is retired, and no term is both defined and retired in the batch.
 fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()> {
@@ -242,7 +242,7 @@ fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()
         for name in d.all_terms() {
             if term(name).is_some_and(|t| t.is_retired()) {
                 bail!(
-                    "nothing was ratified; {} names term `{name}`, which is retired, and a retired term never changes",
+                    "nothing was approved; {} names term `{name}`, which is retired, and a retired term never changes",
                     d.id
                 );
             }
@@ -250,12 +250,12 @@ fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()
         for name in &d.retires_terms {
             if term(name).is_some_and(|t| t.meta.is_none()) {
                 bail!(
-                    "nothing was ratified; term `{name}` has no readable `yaml` block; run `statute check`"
+                    "nothing was approved; term `{name}` has no readable `yaml` block; run `statute check`"
                 );
             }
             if term(name).and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
                 bail!(
-                    "nothing was ratified; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",
+                    "nothing was approved; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",
                     d.id
                 );
             }
@@ -265,7 +265,7 @@ fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()
         for name in &d.retires_terms {
             if let Some(other) = chosen.iter().find(|o| o.terms.contains(name)) {
                 bail!(
-                    "nothing was ratified; {} retires term `{name}` and {} redefines it; a term cannot be redefined and retired at once",
+                    "nothing was approved; {} retires term `{name}` and {} redefines it; a term cannot be redefined and retired at once",
                     d.id,
                     other.id
                 );
@@ -296,7 +296,7 @@ fn patch_rule(
     let current = parsed.rules.iter().find(|r| r.id == id);
     let Some(patched) = current.and_then(|r| patch(&text, r)) else {
         bail!(
-            "cannot set `{what}` on {id} in {}: write the field on one line in a block mapping, then ratify again",
+            "cannot set `{what}` on {id} in {}: write the field on one line in a block mapping, then approve again",
             rule.file
         );
     };

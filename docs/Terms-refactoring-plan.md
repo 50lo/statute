@@ -44,8 +44,8 @@ Chosen: everything in a term section after the heading, except the `yaml` block,
 - Spec 4.3: everything in the section after the heading except the `yaml` block is the definition, and all of it is compared.
 - Code: `store::terms::parse` collects everything in the section after the heading except the `yaml` block. `same_term` compares it with whitespace collapsed, and the rule and file views of `show` print it. Do not compare the raw section span: that would flag edits to `aliases`, `avoid`, `agreed` and YAML comments, which HIST-003's boundary case allows.
 - Agreed items: `statute decide --changes HIST-003`, adding a protected case such as "Rewording a later paragraph of an agreed term with no decision is reported as an error."
-- Plugin: in `plugin/skills/ratify/SKILL.md` step 6, rejection restores a term's whole definition. Terms no longer have notes.
-- Effect: Link's paragraph becomes compared text without being edited, and agents see it in rule context. It was approved: it was in Link's section when D261017-6x46f, which lists Link, was ratified.
+- Plugin: in `plugin/skills/approve/SKILL.md` step 6, rejection restores a term's whole definition. Terms no longer have notes.
+- Effect: Link's paragraph becomes compared text without being edited, and agents see it in rule context. It was approved: it was in Link's section when D261017-6x46f, which lists Link, was approved.
 
 Reason: decision principle 1 in AGENTS.md prefers reporting a possible meaning change over treating it as formatting. Once the glossary exists, it is the place for explanation, so `terms.md` needs no unapproved prose.
 
@@ -71,7 +71,7 @@ The complete audit is embedded in [st-uvvi](../.beans/st-uvvi--review-the-operat
 
 - `docs/Statute-spec.md`: 4.1 (rule checks), 4.3 (term format and checks), and the `decide` row of the command table in 5, which lists what `decide` refuses.
 - `src/check/history.rs` (`history`, `agreed_rule`, `same_term`) and `src/commands/decide.rs` (refusing retired rules).
-- `src/store/terms.rs` (`parse`), `src/model/mod.rs` (`Term`), `src/commands/show.rs` (rule-view term list), `plugin/skills/ratify/SKILL.md`, and any snapshot in `tests/snapshots/` whose `show` output changes.
+- `src/store/terms.rs` (`parse`), `src/model/mod.rs` (`Term`), `src/commands/show.rs` (rule-view term list), `plugin/skills/approve/SKILL.md`, and any snapshot in `tests/snapshots/` whose `show` output changes.
 - `statute/rules/history.md`.
 - Tests: `tests/history_contract.rs`, and `tests/decisions_contract.rs` for the `decide` refusal.
 
@@ -85,7 +85,7 @@ The complete audit is embedded in [st-uvvi](../.beans/st-uvvi--review-the-operat
 4. Change the code. For retired rules, use a new finding code, for example `rule.retired_changed`, with a message that says a retired rule keeps its section and text and that new behaviour needs a new rule ID. Do not reuse `rule.changed_without_decision`, whose message tells the reader to run `decide --changes`.
 5. Add tests, then link the new rule to its code and test with `statute link`. Run `statute review` for HIST-002 and HIST-003, whose linked code changed.
 6. Run `cargo test`, `statute check --all` and the `change` skill. Put `statute check --md` output in the PR.
-7. Ask a person to ratify the decisions with the `ratify` skill. Leave them proposed until a person explicitly approves.
+7. Ask a person to approve the decisions with the `approve` skill. Leave them proposed until a person explicitly approves.
 8. Complete st-jycx after merge.
 
 **Acceptance.**
@@ -140,7 +140,7 @@ The complete audit is embedded in [st-uvvi](../.beans/st-uvvi--review-the-operat
 
 1. Use `docs/Glossary.md` to explain Statute to people. Use the terms that `statute show` returns to do the work.
 2. A PR that changes `docs/Glossary.md`, or the text, `code` or `not` of a term in `statute/terms.md`, gets the review in the proposal's "Manual consistency review in both directions", and the record below in its description.
-3. When asking a person to ratify a decision that lists a term, show the term's definition together with every glossary section that links to it.
+3. When asking a person to approve a decision that lists a term, show the term's definition together with every glossary section that links to it.
 4. A glossary edit that changes a meaning needs a proposed decision. A consistency review approves nothing.
 5. If either side changes after the commit named in the record, re-review the affected rows and update the commit before merge.
 6. When a review finds a counterpart that an earlier review missed, or finds drift between the glossary and a term on the default branch, add it to st-uzzw as evidence.

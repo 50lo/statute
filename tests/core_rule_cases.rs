@@ -44,7 +44,7 @@ fn assert_agreed_case_is_required(present: &str, missing: &str) {
     let repo = TestRepo::fixture("valid");
     complete_cases(&repo);
     let decision = propose(&repo);
-    ok(repo.run(&["ratify", &decision]));
+    ok(repo.run(&["approve", &decision]));
 
     let agreed = repo.read(RULES);
     assert!(agreed.contains("agreed: agreed"));
@@ -70,7 +70,7 @@ fn an_agreed_rule_without_a_boundary_case_is_invalid_even_with_a_protected_case(
 }
 
 #[test]
-fn ratification_requires_each_kind_of_case_and_can_retry_after_the_missing_case_is_written() {
+fn approval_requires_each_kind_of_case_and_can_retry_after_the_missing_case_is_written() {
     for (present, missing) in [(PROTECTED, "protects: []"), (BOUNDARY, "boundary: []")] {
         let repo = TestRepo::fixture("valid");
         complete_cases(&repo);
@@ -84,7 +84,7 @@ fn ratification_requires_each_kind_of_case_and_can_retry_after_the_missing_case_
             repo.read(DECISIONS),
             repo.read("statute.lock"),
         );
-        let refused = repo.run(&["ratify", &decision]);
+        let refused = repo.run(&["approve", &decision]);
         assert_eq!(refused.code, 2, "{}", refused.stdout);
         assert!(
             refused.stderr.contains("rule.cases_missing"),
@@ -98,12 +98,12 @@ fn ratification_requires_each_kind_of_case_and_can_retry_after_the_missing_case_
                 repo.read("statute.lock")
             ),
             before,
-            "refused ratification must leave the rule, decision and links unchanged"
+            "refused approval must leave the rule, decision and links unchanged"
         );
 
         repo.write(RULES, &repo.read(RULES).replace(missing, present));
-        let ratified = ok(repo.run(&["ratify", &decision, "--json"])).json();
-        assert_eq!(ratified["agreed_rules"], serde_json::json!(["BILL-001"]));
+        let approved = ok(repo.run(&["approve", &decision, "--json"])).json();
+        assert_eq!(approved["agreed_rules"], serde_json::json!(["BILL-001"]));
         assert!(repo.read(RULES).contains("agreed: agreed"));
         assert!(ok(repo.run(&["check", "--json"])).codes().is_empty());
     }

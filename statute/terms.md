@@ -170,7 +170,7 @@ avoid: []
 
 ## Approval
 
-A person's explicit acceptance of a specific proposed decision. An agent can prepare the proposal and perform the checks, but cannot approve its own proposal. Once a person approves, the agent runs `statute ratify` to record the decision as active and update its rules and terms.
+A person's explicit acceptance of a specific proposed decision. An agent can prepare the proposal and perform the checks, but cannot approve its own proposal. Once a person approves, the agent runs `statute approve` to record the decision as active and update its rules and terms.
 
 ```yaml
 agreed: agreed
@@ -242,7 +242,7 @@ avoid: []
 
 ## Proposed decision
 
-A decision that a person has not approved yet. The rules it establishes or changes and the terms it introduces or redefines stay proposed until it is ratified, while a rule or term it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
+A decision that a person has not approved yet. The rules it establishes or changes and the terms it introduces or redefines stay proposed until it is approved, while a rule or term it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
 
 ```yaml
 agreed: agreed

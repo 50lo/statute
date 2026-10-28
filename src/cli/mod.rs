@@ -97,7 +97,7 @@ enum Command {
         edit: bool,
     },
     /// Make proposed decisions active after a person approved them, and update their rules and terms
-    Ratify {
+    Approve {
         #[arg(required = true, value_name = "DECISION")]
         ids: Vec<String>,
     },
@@ -241,8 +241,8 @@ pub fn run() -> ExitCode {
             };
             report.map(|r| emit(json, &r, render::decide(&r), 0))
         }
-        Command::Ratify { ids } => {
-            commands::ratify::run(ids).map(|r| emit(json, &r, render::ratify(&r), 0))
+        Command::Approve { ids } => {
+            commands::approve::run(ids).map(|r| emit(json, &r, render::approve(&r), 0))
         }
         Command::Gap {
             command:

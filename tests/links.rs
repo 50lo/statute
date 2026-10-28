@@ -32,7 +32,7 @@ fn ok(run: common::Run) -> common::Run {
 }
 
 /// From the appendix, "A PM adds a feature that needs a new rule": the second link completes the
-/// rule, so `link` sets `built: built`. (`decide` and `ratify` arrive with milestone 3.)
+/// rule, so `link` sets `built: built`. (`decide` and `approve` arrive with milestone 3.)
 #[test]
 fn the_link_that_completes_a_rule_sets_built() {
     let repo = billing_repo();

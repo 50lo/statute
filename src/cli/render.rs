@@ -1,10 +1,10 @@
 //! Text renderings of the reports.
 
+use crate::commands::approve::ApproveReport;
 use crate::commands::check::CheckReport;
 use crate::commands::decide::DecideReport;
 use crate::commands::init::{AgentsMd, InitReport};
 use crate::commands::link::LinkReport;
-use crate::commands::ratify::RatifyReport;
 use crate::commands::review::ReviewReport;
 use crate::commands::show::{DecisionRef, Item, Role, ShowReport};
 use crate::commands::status::StatusReport;
@@ -150,29 +150,29 @@ fn cell(text: &str) -> String {
 pub fn decide(r: &DecideReport) -> String {
     let mut out = r.id.clone();
     for rule in &r.proposed_rules {
-        out.push_str(&format!("\n{rule} is proposed until {} is ratified", r.id));
+        out.push_str(&format!("\n{rule} is proposed until {} is approved", r.id));
     }
     for term in &r.proposed_terms {
         out.push_str(&format!(
-            "\nterm `{term}` is proposed until {} is ratified",
+            "\nterm `{term}` is proposed until {} is approved",
             r.id
         ));
     }
     for term in &r.retiring_terms {
         out.push_str(&format!(
-            "\nterm `{term}` stays agreed until {} is ratified, and is retired then",
+            "\nterm `{term}` stays agreed until {} is approved, and is retired then",
             r.id
         ));
     }
     out
 }
 
-pub fn ratify(r: &RatifyReport) -> String {
+pub fn approve(r: &ApproveReport) -> String {
     let mut out = format!(
-        "Ratified {} by {} <{}>",
+        "Approved {} by {} <{}>",
         r.decisions.join(", "),
-        r.ratified_by.name,
-        r.ratified_by.email
+        r.approved_by.name,
+        r.approved_by.email
     );
     let mut line = |label: &str, items: &[String]| {
         if !items.is_empty() {

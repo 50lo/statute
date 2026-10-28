@@ -1,4 +1,4 @@
-//! DEC rules: one proposed decision per rule or term, `ratify` activates exactly the named decisions
+//! DEC rules: one proposed decision per rule or term, `approve` activates exactly the named decisions
 //! or nothing, and a term is retired only from agreed and is then named only by history.
 
 mod common;
@@ -74,7 +74,7 @@ fn dec_001_a_rule_or_term_is_in_at_most_one_proposed_decision() {
   timestamp: \"2026-10-15T09:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Another proposal for ATTR-002.\"
   rationale: \"R.\"
   changes: [ATTR-002]
@@ -106,7 +106,7 @@ fn dec_001_a_rule_in_an_active_decision_can_be_proposed_again() {
 }
 
 #[test]
-fn dec_002_ratify_activates_only_the_named_decisions() {
+fn dec_002_approve_activates_only_the_named_decisions() {
     let repo = base();
     let rules = repo.read(ATTRIBUTION);
     repo.write(
@@ -115,7 +115,7 @@ fn dec_002_ratify_activates_only_the_named_decisions() {
     );
     let other = new_decision(&repo, &["--changes", "ATTR-001"]);
 
-    ok(repo.run(&["ratify", PROPOSED]));
+    ok(repo.run(&["approve", PROPOSED]));
     assert_eq!(shown(&repo, PROPOSED)["status"], "active");
     assert_eq!(shown(&repo, "ATTR-002")["agreed"], "agreed");
     assert_eq!(shown(&repo, &other)["status"], "proposed");
@@ -123,7 +123,7 @@ fn dec_002_ratify_activates_only_the_named_decisions() {
 }
 
 #[test]
-fn dec_002_ratify_can_activate_several_named_decisions_at_once() {
+fn dec_002_approve_can_activate_several_named_decisions_at_once() {
     let repo = base();
     let rules = repo.read(ATTRIBUTION);
     repo.write(
@@ -132,7 +132,7 @@ fn dec_002_ratify_can_activate_several_named_decisions_at_once() {
     );
     let other = new_decision(&repo, &["--changes", "ATTR-001"]);
 
-    ok(repo.run(&["ratify", PROPOSED, &other]));
+    ok(repo.run(&["approve", PROPOSED, &other]));
     for id in [PROPOSED, other.as_str()] {
         assert_eq!(shown(&repo, id)["status"], "active");
     }
@@ -142,14 +142,14 @@ fn dec_002_ratify_can_activate_several_named_decisions_at_once() {
 }
 
 #[test]
-fn dec_003_ratify_writes_nothing_when_its_items_would_have_errors() {
+fn dec_003_approve_writes_nothing_when_its_items_would_have_errors() {
     let repo = base();
     // BILL-001 has no protected or boundary case.
     let without_cases = new_decision(&repo, &["--establishes", "BILL-001"]);
     let (decisions, billing) = (repo.read(DECISIONS), repo.read(BILLING));
     refused(
-        repo.run(&["ratify", &without_cases]),
-        "nothing was ratified",
+        repo.run(&["approve", &without_cases]),
+        "nothing was approved",
     );
     assert_eq!(repo.read(DECISIONS), decisions);
     assert_eq!(repo.read(BILLING), billing);
@@ -166,7 +166,7 @@ fn dec_003_ratify_writes_nothing_when_its_items_would_have_errors() {
     new_decision(&repo, &["--terms", "Commit"]);
     let decisions = repo.read(DECISIONS);
     refused(
-        repo.run(&["ratify", PROPOSED]),
+        repo.run(&["approve", PROPOSED]),
         "ATTR-002 uses term `Commit`, which is not agreed",
     );
     assert_eq!(repo.read(DECISIONS), decisions);
@@ -174,7 +174,7 @@ fn dec_003_ratify_writes_nothing_when_its_items_would_have_errors() {
 }
 
 #[test]
-fn dec_003_errors_about_other_items_do_not_block_ratify() {
+fn dec_003_errors_about_other_items_do_not_block_approve() {
     let repo = TestRepo::fixture("valid");
     repo.write(
         "billing/refund.go",
@@ -188,12 +188,12 @@ fn dec_003_errors_about_other_items_do_not_block_ratify() {
     );
     assert_eq!(repo.run(&["check"]).code, 1, "BILL-001's link is stale");
 
-    ok(repo.run(&["ratify", PROPOSED]));
+    ok(repo.run(&["approve", PROPOSED]));
     assert_eq!(shown(&repo, "ATTR-002")["agreed"], "agreed");
 }
 
 #[test]
-fn dec_003_stale_and_missing_links_of_the_ratified_rules_do_not_block_ratify() {
+fn dec_003_stale_and_missing_links_of_the_approved_rules_do_not_block_approve() {
     let repo = TestRepo::fixture("valid");
     repo.write(
         "attribution/collector.go",
@@ -213,13 +213,13 @@ fn dec_003_stale_and_missing_links_of_the_ratified_rules_do_not_block_ratify() {
         repo.run(&["check", "--json"]).error_codes(),
         ["link.stale", "link.missing"]
     );
-    ok(repo.run(&["ratify", PROPOSED]));
+    ok(repo.run(&["approve", PROPOSED]));
     assert_eq!(shown(&repo, "ATTR-002")["agreed"], "agreed");
 
-    // Retiring a rule whose code was deleted: its links are missing, and ratify removes them.
+    // Retiring a rule whose code was deleted: its links are missing, and approve removes them.
     repo.remove("attribution/collector.go");
     let retire = new_decision(&repo, &["--retires", "ATTR-001"]);
-    ok(repo.run(&["ratify", &retire]));
+    ok(repo.run(&["approve", &retire]));
     let retired = shown(&repo, "ATTR-001");
     assert_eq!(retired["agreed"], "retired");
     assert!(!repo.read("statute.lock").contains("\"ATTR-001\""));
@@ -240,10 +240,10 @@ fn dec_003_retiring_a_term_a_rule_still_uses_is_refused() {
     let retire = new_decision(&repo, &["--retires-terms", "Session"]);
     let before = files(&repo);
 
-    // ATTR-001 is agreed and ATTR-002 proposed; neither is in the ratified decision.
-    let run = repo.run(&["ratify", &retire]);
-    refused(run, "nothing was ratified");
-    let run = repo.run(&["ratify", &retire]);
+    // ATTR-001 is agreed and ATTR-002 proposed; neither is in the approved decision.
+    let run = repo.run(&["approve", &retire]);
+    refused(run, "nothing was approved");
+    let run = repo.run(&["approve", &retire]);
     for rule in ["ATTR-001", "ATTR-002"] {
         assert!(
             run.stderr
@@ -285,15 +285,15 @@ fn dec_003_retiring_a_term_succeeds_when_the_same_call_moves_its_rules_to_a_succ
     let retire = new_decision(&repo, &["--retires-terms", "Session"]);
     assert_eq!(errors(&repo), Vec::<String>::new());
 
-    // Without the decision that approves the successor, nothing is ratified.
+    // Without the decision that approves the successor, nothing is approved.
     let before = files(&repo);
     refused(
-        repo.run(&["ratify", &retire, PROPOSED]),
-        "nothing was ratified",
+        repo.run(&["approve", &retire, PROPOSED]),
+        "nothing was approved",
     );
     assert_eq!(files(&repo), before);
 
-    let run = ok(repo.run(&["ratify", &retire, &change, PROPOSED, "--json"]));
+    let run = ok(repo.run(&["approve", &retire, &change, PROPOSED, "--json"]));
     assert_eq!(run.json()["retired_terms"], serde_json::json!(["Session"]));
     assert_eq!(shown(&repo, "Session")["agreed"], "retired");
     assert_eq!(shown(&repo, "Coding session")["agreed"], "agreed");
@@ -359,7 +359,7 @@ const REDEFINES_COMMIT: &str = "- id: D261015-r3d3f
   timestamp: \"2026-10-15T09:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Commits in any repository count.\"
   rationale: \"R.\"
   terms: [Commit]
@@ -368,14 +368,14 @@ const RETIRES_COMMIT: &str = "- id: D261015-r3t1r
   timestamp: \"2026-10-15T10:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Stop calling commits a term.\"
   rationale: \"R.\"
   retires_terms: [Commit]
 ";
 
 #[test]
-fn dec_004_ratify_refuses_to_redefine_and_retire_a_term_in_one_call() {
+fn dec_004_approve_refuses_to_redefine_and_retire_a_term_in_one_call() {
     let repo = base();
     let decisions = repo.read(DECISIONS);
     repo.write(
@@ -389,7 +389,7 @@ fn dec_004_ratify_refuses_to_redefine_and_retire_a_term_in_one_call() {
     );
     let before = files(&repo);
     refused(
-        repo.run(&["ratify", "D261015-r3d3f", "D261015-r3t1r"]),
+        repo.run(&["approve", "D261015-r3d3f", "D261015-r3t1r"]),
         "D261015-r3t1r retires term `Commit` and D261015-r3d3f redefines it",
     );
     assert_eq!(files(&repo), before);
@@ -405,7 +405,7 @@ fn dec_004_ratify_refuses_to_redefine_and_retire_a_term_in_one_call() {
     );
     let before = files(&repo);
     refused(
-        repo.run(&["ratify", "D261015-r3t1r"]),
+        repo.run(&["approve", "D261015-r3t1r"]),
         "D261015-r3t1r retires term `Commit`, which is not agreed",
     );
     assert_eq!(files(&repo), before);
@@ -428,7 +428,7 @@ fn base_with_a_retired_term() -> TestRepo {
   timestamp: \"2026-10-12T09:00:00Z\"
   actor: user
   status: active
-  ratified_by: {{name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-12T09:30:00Z\"}}
+  approved_by: {{name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-12T09:30:00Z\"}}
   summary: \"Stop calling repositories a term.\"
   rationale: \"R.\"
   retires_terms: [Repository]
@@ -476,7 +476,7 @@ fn dec_005_only_retired_rules_and_active_decisions_name_a_retired_term() {
   timestamp: \"2026-10-15T09:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Repositories include mirrors.\"
   rationale: \"R.\"
   terms: [Repository]
@@ -486,7 +486,7 @@ fn dec_005_only_retired_rules_and_active_decisions_name_a_retired_term() {
     assert_eq!(errors(&repo), ["decision.term_retired"]);
     let before = files(&repo);
     refused(
-        repo.run(&["ratify", "D261015-d3f1n"]),
+        repo.run(&["approve", "D261015-d3f1n"]),
         "D261015-d3f1n names term `Repository`, which is retired",
     );
     assert_eq!(files(&repo), before);

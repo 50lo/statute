@@ -81,7 +81,7 @@ manual_check: >-
   Before giving approval, a person inspects the additions, the proposed decision
   and the agent's response. Confirm that the additions are proposed and that the
   agent does not call them agreed. After approving that specific decision, confirm
-  that ratification agrees only the rules and terms named by the approved decisions.
+  that approval agrees only the rules and terms named by the approved decisions.
 protects:
   - A rule or term created by an agent starts as proposed even when the implementation and tests already exist.
 boundary:
@@ -102,16 +102,16 @@ scope: ""
 terms: [Decision, Approval]
 exceptions: []
 manual_check: >-
-  Before each ratification, a person checks the conversation for explicit human
-  approval of every decision the agent intends to ratify. Match the approval to
+  Before each approval, a person checks the conversation for explicit human
+  approval of every decision the agent intends to approve. Match the approval to
   each decision's ID or unambiguous proposed contents. Passing tests, the agent's
   own assessment and approval of another decision do not count. If approval is
-  missing or unclear for any selected decision, obtain it before ratifying that decision.
+  missing or unclear for any selected decision, obtain it before approving that decision.
 protects:
   - An agent's confirmation that tests pass does not count as human approval of a decision.
   - Approval of one decision does not authorize the agent to activate another decision.
 boundary:
-  - After a person explicitly approves a specific decision, the agent may run statute ratify for that decision to record the approval.
+  - After a person explicitly approves a specific decision, the agent may run statute approve for that decision to record the approval.
 ```
 
 Partial automated coverage is in `tests/core_lifecycle.rs`. Its test link for

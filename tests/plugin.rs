@@ -133,7 +133,7 @@ fn manifests_parse_and_the_hook_command_exists() {
         assert_eq!(codex[key], manifest[key], "{key}");
     }
     let skills = plugin(codex["skills"].as_str().unwrap());
-    for skill in ["adopt", "change", "decide", "ratify"] {
+    for skill in ["adopt", "change", "decide", "approve"] {
         assert!(skills.join(skill).join("SKILL.md").is_file());
     }
     let hooks = codex["hooks"].as_str().unwrap();
@@ -233,7 +233,7 @@ fn skills_use_only_commands_the_cli_has() {
         .collect();
 
     let mut texts = Vec::new();
-    for skill in ["adopt", "change", "decide", "ratify"] {
+    for skill in ["adopt", "change", "decide", "approve"] {
         let text = std::fs::read_to_string(plugin(&format!("skills/{skill}/SKILL.md"))).unwrap();
         let front = text
             .strip_prefix("---\n")
