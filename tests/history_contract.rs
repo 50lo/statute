@@ -121,7 +121,7 @@ fn hist_002_a_decision_active_in_the_base_does_not_carry_a_new_change() {
   timestamp: \"2026-10-11T09:00:00Z\"
   actor: user
   status: active
-  ratified_by: {{name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-11T09:30:00Z\"}}
+  approved_by: {{name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-11T09:30:00Z\"}}
   summary: \"Clarify how Sessions without a repository are stored.\"
   rationale: \"R.\"
   changes: [ATTR-001]
@@ -247,7 +247,7 @@ const CHANGES_RETIRED: &str = "- id: D261015-r3v1v
   timestamp: \"2026-10-15T09:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Sessions expire after two days.\"
   rationale: \"R.\"
   changes: [ATTR-003]
@@ -377,7 +377,7 @@ const RETIRING_DECISION: &str = "- id: D261012-r3p0s
   timestamp: \"2026-10-12T09:00:00Z\"
   actor: user
   status: active
-  ratified_by: {name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-12T09:30:00Z\"}
+  approved_by: {name: \"Pat Example\", email: \"pat@example.com\", at: \"2026-10-12T09:30:00Z\"}
   summary: \"Stop calling repositories a term.\"
   rationale: \"R.\"
   retires_terms: [Repository]
@@ -402,7 +402,7 @@ const DEFINES_RETIRED: &str = "- id: D261015-d3f1n
   timestamp: \"2026-10-15T09:00:00Z\"
   actor: agent
   status: proposed
-  ratified_by: null
+  approved_by: null
   summary: \"Repositories include mirrors.\"
   rationale: \"R.\"
   terms: [Repository]

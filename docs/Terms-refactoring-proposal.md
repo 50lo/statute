@@ -89,7 +89,7 @@ There is no target term count. The glossary can reduce learning effort while the
 
 Term retirement is useful independently of the human glossary and is accepted feature work for a separate PR by another coding agent. It must preserve immutable historical decisions and the identity of previously approved terms while defining how current rule references and future proposals treat retired terms.
 
-The implementation plan is recorded in high-priority feature [st-9flm](../.beans/st-9flm--retire-operational-terms-without-breaking-historic.md) for later human review. This proposal does not implement retirement, retire any term, or ratify changes to the agreed vocabulary. Drafting the human glossary and performing the compaction audit do not depend on retirement being implemented first.
+The implementation plan is recorded in high-priority feature [st-9flm](../.beans/st-9flm--retire-operational-terms-without-breaking-historic.md) for later human review. This proposal does not implement retirement, retire any term, or approve changes to the agreed vocabulary. Drafting the human glossary and performing the compaction audit do not depend on retirement being implemented first.
 
 ## Implementation boundaries
 

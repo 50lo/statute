@@ -2,7 +2,7 @@
   timestamp: "2026-10-01T09:00:00Z"
   actor: user
   status: active
-  summary: "Active, but nobody ratified it."
+  summary: "Active, but nobody approved it."
   rationale: "R."
   establishes: [ATTR-006, ATTR-404, ATTR-007]
   terms: [Nobody]

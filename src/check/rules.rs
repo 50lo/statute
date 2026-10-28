@@ -111,7 +111,7 @@ pub fn terms_resolve(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// A rule that is not retired uses no retired term. The finding names the term too, so `ratify`
+/// A rule that is not retired uses no retired term. The finding names the term too, so `approve`
 /// refuses to retire a term that a rule outside its decisions still uses.
 pub fn retired_terms(model: &Model, out: &mut Vec<Finding>) {
     let retired: BTreeSet<&str> = model

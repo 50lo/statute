@@ -60,7 +60,7 @@ Decisions:
   timestamp: 2026-10-01T09:00:00Z
   actor: user
   status: active
-  ratified_by:
+  approved_by:
     name: Pat Example
     email: pat@example.com
     at: 2026-10-01T09:30:00Z

@@ -206,10 +206,10 @@ expression: run.json()
       "severity": "error"
     },
     {
-      "code": "decision.ratified_by_missing",
+      "code": "decision.approved_by_missing",
       "decision": "D-1",
       "file": "statute/decisions.db",
-      "message": "an active decision needs `ratified_by`",
+      "message": "an active decision needs `approved_by`",
       "severity": "error"
     },
     {

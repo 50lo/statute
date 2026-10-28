@@ -27,7 +27,7 @@ A [term](../statute/terms.md#term) defines a word or phrase used in the product.
 
 A [rule](../statute/terms.md#rule) states one thing that must be true about the product, and when it must be true. A person or a test can check whether the product follows it. For example, rule CORE-005 says: "Only a person can approve a proposed decision." Each rule has an ID and lives in a file in `statute/rules/`.
 
-A [decision](../statute/terms.md#decision) records a choice about rules or terms, and the reason for it. For example, it can establish a new rule, change a rule, or introduce a term. It starts as a proposal. After a person approves it, the agent records that approval with `statute ratify`. The decision becomes active and records who approved it. Each decision has an ID such as `D261018-m21p6`; they are kept in `statute/decisions.db`.
+A [decision](../statute/terms.md#decision) records a choice about rules or terms, and the reason for it. For example, it can establish a new rule, change a rule, or introduce a term. It starts as a proposal. After a person approves it, the agent records that approval with `statute approve`. The decision becomes active and records who approved it. Each decision has an ID such as `D261018-m21p6`; they are kept in `statute/decisions.db`.
 
 How these three fit together:
 
@@ -49,13 +49,13 @@ A [boundary case](../statute/terms.md#boundary-case) shows where the rule stops 
 For example, CORE-005 says that only a person can approve a proposed decision:
 
 - Protected case: an agent's confirmation that tests pass does not count as human approval.
-- Boundary case: after a person explicitly approves a specific decision, the agent may run `statute ratify` to record that approval.
+- Boundary case: after a person explicitly approves a specific decision, the agent may run `statute approve` to record that approval.
 
 In a rule file, these cases are the `protects` and `boundary` lists. An agreed rule needs at least one of each (CORE-001). Where automated tests can judge the behavior, the tests check both cases, and [test links](../statute/terms.md#test-link) connect them to the rule ([spec 4.1](Statute-spec.md#41-rules)).
 
 A [manual check](../statute/terms.md#manual-check) is a written procedure for a person to verify behavior that an automated test cannot judge. It replaces the test requirement. The rule still needs a [code link](../statute/terms.md#code-link).
 
-CORE-005 uses a manual check because a test cannot see whether a person really approved. Before each ratification, a person checks the conversation for explicit approval of every decision that the agent will ratify.
+CORE-005 uses a manual check because a test cannot see whether a person really approved. Before each approval, a person checks the conversation for explicit approval of every decision that the agent will approve.
 
 ## Agreement and approval
 
@@ -71,7 +71,7 @@ The [agreement status](../statute/terms.md#agreement-status) of a [rule](../stat
 - **agreed**: accepted.
 - **retired**: no longer used, but kept as a record. See [Retired rules and terms](#retired-rules-and-terms) below.
 
-New rules and terms that an agent writes start as proposed (CORE-004). The CLI sets their status; `statute ratify` makes them agreed or retired ([spec 4.1](Statute-spec.md#41-rules)). If a person rejects a proposal, the agent follows the [ratify skill](../plugin/skills/ratify/SKILL.md) to restore the earlier agreed text and status of the rules and terms it changed.
+New rules and terms that an agent writes start as proposed (CORE-004). The CLI sets their status; `statute approve` makes them agreed or retired ([spec 4.1](Statute-spec.md#41-rules)). If a person rejects a proposal, the agent follows the [approve skill](../plugin/skills/approve/SKILL.md) to restore the earlier agreed text and status of the rules and terms it changed.
 
 ### From draft to agreed
 
@@ -80,9 +80,9 @@ Here is how a new rule becomes agreed:
 1. An agent writes a new rule. No [decision](../statute/terms.md#decision) establishes it yet, so it is a [draft rule](../statute/terms.md#draft-rule).
 2. The agent records a [proposed decision](../statute/terms.md#proposed-decision) that establishes the rule. The rule is no longer a draft, but it is still proposed.
 3. A person reads the decision and approves it. This is [approval](../statute/terms.md#approval).
-4. The agent runs `statute ratify` with the decision's ID. The decision becomes active, and the rule becomes agreed.
+4. The agent runs `statute approve` with the decision's ID. The decision becomes active, and the rule becomes agreed.
 
-A change to an agreed rule or term follows steps 2 to 4. The decision names what it changes, and the changed rule or term is proposed again until ratification. A proposal to retire it works differently: it stays agreed and in force until ratification.
+A change to an agreed rule or term follows steps 2 to 4. The decision names what it changes, and the changed rule or term is proposed again until approval. A proposal to retire it works differently: it stays agreed and in force until approval.
 
 `statute status` lists draft rules as pending work. `statute check` lets you keep a draft without reporting a problem.
 
@@ -91,7 +91,7 @@ A change to an agreed rule or term follows steps 2 to 4. The decision names what
 A proposed decision is a decision that a person has not approved yet. It is also called a pending decision. While it waits for approval:
 
 - The rules it establishes or changes stay proposed. The terms it introduces or redefines also stay proposed.
-- A rule or term that it retires stays agreed, and stays in force, until the decision is ratified.
+- A rule or term that it retires stays agreed, and stays in force, until the decision is approved.
 - The decision can still be edited or deleted.
 - It never blocks a merge. A branch with proposed decisions can be merged. `statute status` and the "Rule impact" section of the PR show what still waits for approval.
 
@@ -103,13 +103,13 @@ Approval is a person's explicit acceptance of a specific proposed decision. The 
 
 - An agent can prepare the proposal and run the checks. Only a person can approve it (CORE-005).
 - Approval of one decision does not cover another one (CORE-005).
-- After the person approves, the agent runs `statute ratify`. This records the decision as active and updates its rules and terms.
+- After the person approves, the agent runs `statute approve`. This records the decision as active and updates its rules and terms.
 
-The [ratify skill](../plugin/skills/ratify/SKILL.md) describes how the agent presents each decision for approval.
+The [approve skill](../plugin/skills/approve/SKILL.md) describes how the agent presents each decision for approval.
 
 ### Retired rules and terms
 
-A decision can retire a rule or term that people should stop using. After ratification, its status is retired. It stays in the file so people can still understand the active decisions that name it.
+A decision can retire a rule or term that people should stop using. After approval, its status is retired. It stays in the file so people can still understand the active decisions that name it.
 
 Retirement is final ([spec 4.1](Statute-spec.md#41-rules) and [4.3](Statute-spec.md#43-terms)):
 
@@ -169,7 +169,7 @@ The [agreement status](../statute/terms.md#agreement-status) says whether people
 
 Statute reports a built rule as **broken** while it has an open gap, unless the rule is retired (GAPS-001). It computes this status from the gap; "broken" is never stored in the rule itself.
 
-Nobody edits the build state by hand. `statute link` and `statute ratify` mark a rule built when it has everything that a built rule needs ([spec 4.1](Statute-spec.md#41-rules)).
+Nobody edits the build state by hand. `statute link` and `statute approve` mark a rule built when it has everything that a built rule needs ([spec 4.1](Statute-spec.md#41-rules)).
 
 Example from this repository: rule CORE-005 is agreed, but it is still planned. It has a manual check, but no code link yet.
 

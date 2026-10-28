@@ -47,9 +47,9 @@ When a change needs an import these rules forbid, change the rules here first, w
 
 New fingerprint modes, link sources and impact reasons are new enum variants (docs/Architecture.md, section 8). Do not add traits, registries or plugin mechanisms for them.
 
-Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms, decision IDs, files and symbols, `check [--all]`, whole-file and Go/Python/Rust symbol `link`, `review`, `check --md`, `decide`, `ratify`, `gap open`, `gap close`, and `status`. The agent plugin, with the `adopt`, `change`, `decide` and `ratify` skills, is in `plugin/`. Check `statute --help` for the installed build.
+Implementation is still in progress. This branch supports `init`, `rule new`, `show` for rule IDs, terms, decision IDs, files and symbols, `check [--all]`, whole-file and Go/Python/Rust symbol `link`, `review`, `check --md`, `decide`, `approve`, `gap open`, `gap close`, and `status`. The agent plugin, with the `adopt`, `change`, `decide` and `approve` skills, is in `plugin/`. Check `statute --help` for the installed build.
 
-Use `statute show` to inspect linked rules and terms, `statute decide` to record proposed decisions, and `statute ratify` to record a person's explicit approval of specific decisions. Report workflow steps that the current build cannot perform. Agreement and build states are set by the CLI.
+Use `statute show` to inspect linked rules and terms, `statute decide` to record proposed decisions, and `statute approve` to record a person's explicit approval of specific decisions. Report workflow steps that the current build cannot perform. Agreement and build states are set by the CLI.
 
 ## Decision-making principles
 
@@ -63,7 +63,7 @@ Apply these when a design choice trades one risk against another.
 
 1. Use `docs/Glossary.md` to explain Statute to people. Use the terms that `statute show` returns to do the work.
 2. A PR that changes `docs/Glossary.md`, or the text, `code` or `not` of a term in `statute/terms.md`, gets a consistency review, and the record below in its description. The author lists every term that each changed glossary section explains (its "Main terms" and "Also mentions" lines and other uses), and every glossary section that links to or uses each changed term. The reviewer compares each pair and either confirms that they agree or updates them together. [docs/Terms-refactoring-proposal.md](docs/Terms-refactoring-proposal.md), "Manual consistency review in both directions", has the full method.
-3. When asking a person to ratify a decision that lists a term, show the term's definition together with every glossary section that links to it.
+3. When asking a person to approve a decision that lists a term, show the term's definition together with every glossary section that links to it.
 4. A glossary edit that changes a meaning needs a proposed decision (`statute decide --terms`) that changes the term's definition, and the glossary says that the change awaits approval. A consistency review approves nothing.
 5. If the glossary or a compared term changes after the commit named in the record, re-review the affected rows and update the commit before merge.
 6. When a review finds a counterpart that an earlier review missed, or finds drift between the glossary and a term on the default branch, add it to Bean st-uzzw (automated consistency review) as evidence.
@@ -91,8 +91,8 @@ The conclusion is one of: consistent; updated together (name the edits); decisio
 - Change a rule or an agreed term only together with a proposed decision that lists it (`statute decide`), never to match the code. Never edit `agreed` or `built`; the CLI sets them.
 - When a user instruction conflicts with an agreed rule, name the rule and propose a decision before changing the code.
 - After changing code, run the `change` skill before declaring the task done.
-- Anything you create is `proposed`. Run `statute ratify` only after a human in this session explicitly approves those specific decisions.
-- Before asking a human to ratify a rule, check it: what valid case would it reject? What invalid case would it allow? Does its meaning change with actor or permission, missing data, lifecycle stage, time, retries, concurrency or partial failure? Add to the rule only the answers that change it.
+- Anything you create is `proposed`. Run `statute approve` only after a human in this session explicitly approves those specific decisions.
+- Before asking a human to approve a rule, check it: what valid case would it reject? What invalid case would it allow? Does its meaning change with actor or permission, missing data, lifecycle stage, time, retries, concurrency or partial failure? Add to the rule only the answers that change it.
 - Gaps go to the issue tracker named in this file; if none is named, use `statute gap open --note`.
-- When instructions conflict: explicit user instruction > current task > project principles > agreed rules, terms and ratified decisions > repo conventions > proposed decisions > agent judgment.
+- When instructions conflict: explicit user instruction > current task > project principles > agreed rules, terms and approved decisions > repo conventions > proposed decisions > agent judgment.
 <!-- statute:end -->

@@ -54,7 +54,7 @@ error[decision.term_unknown] D-1: term `Nobody` is not defined in terms.md
   --> statute/decisions.db
 error[decision.overlap] D261002-aaaaa: rule ATTR-001 is also in proposed decision D261002-aaaaa; a rule is in at most one
   --> statute/decisions.db
-error[decision.ratified_by_missing] D-1: an active decision needs `ratified_by`
+error[decision.approved_by_missing] D-1: an active decision needs `approved_by`
   --> statute/decisions.db
 error[decision.summary_too_long] D261002-aaaaa: summary has 67 characters; the cap is 40 (summary_max in statute.yml)
   --> statute/decisions.db

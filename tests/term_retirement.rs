@@ -1,4 +1,4 @@
-//! Retiring a term end to end: proposing, reporting, ratifying and reading a retired term (spec 4.2,
+//! Retiring a term end to end: proposing, reporting, approving and reading a retired term (spec 4.2,
 //! 4.3 and 5).
 
 mod common;
@@ -130,8 +130,8 @@ fn retiring_an_unused_term() {
     );
     assert!(md.contains("(retires term Repository)"), "{md}");
 
-    // Ratified: retired, labelled, out of the current checks, and the other proposal is untouched.
-    let run = ok(repo.run(&["ratify", &id, "--json"]));
+    // Approved: retired, labelled, out of the current checks, and the other proposal is untouched.
+    let run = ok(repo.run(&["approve", &id, "--json"]));
     assert_eq!(
         run.json()["retired_terms"],
         serde_json::json!(["Repository"])
@@ -155,7 +155,7 @@ fn retiring_an_unused_term() {
     );
 
     // Retries: the decision is already active, and the term cannot be named again.
-    refused(repo.run(&["ratify", &id]), "is already active");
+    refused(repo.run(&["approve", &id]), "is already active");
     refused(
         repo.run(&[
             "decide",
@@ -185,7 +185,7 @@ fn rejecting_a_retirement_deletes_only_the_decision() {
 }
 
 #[test]
-fn a_retirement_proposed_on_the_default_branch_is_ratified_later() {
+fn a_retirement_proposed_on_the_default_branch_is_approved_later() {
     let origin = origin();
     let id = retire_repository(&origin);
     origin.commit("Propose retiring Repository");
@@ -201,7 +201,7 @@ fn a_retirement_proposed_on_the_default_branch_is_ratified_later() {
         "{status}"
     );
 
-    ok(repo.run(&["ratify", &id]));
+    ok(repo.run(&["approve", &id]));
     assert_eq!(term(&repo, "Repository")["agreed"], "retired");
     assert_eq!(errors(&repo), Vec::<String>::new());
 }
@@ -220,7 +220,7 @@ fn a_rule_that_keeps_a_retired_term_shows_it_as_retired() {
     );
     repo.commit("Base");
     let id = retire_repository(&repo);
-    ok(repo.run(&["ratify", &id]));
+    ok(repo.run(&["approve", &id]));
 
     let rule = term(&repo, "ATTR-003");
     assert_eq!(rule["terms"][1]["name"], "Repository");
@@ -305,7 +305,7 @@ fn one_call_can_retire_a_term_together_with_the_rules_that_use_it() {
     );
     let retire_term = new_decision(&repo, &["--retires-terms", "Session"]);
 
-    ok(repo.run(&["ratify", &retire_rule, &retire_term, PROPOSED]));
+    ok(repo.run(&["approve", &retire_rule, &retire_term, PROPOSED]));
     assert_eq!(term(&repo, "ATTR-001")["agreed"], "retired");
     assert_eq!(term(&repo, "ATTR-002")["agreed"], "agreed");
     assert_eq!(term(&repo, "Session")["agreed"], "retired");
@@ -329,7 +329,7 @@ fn a_term_whose_block_does_not_parse_is_not_retired() {
     assert_ne!(broken, terms);
     repo.write(TERMS, &broken);
     refused(
-        repo.run(&["ratify", &id]),
+        repo.run(&["approve", &id]),
         "term `Old approver` has no readable `yaml` block",
     );
     assert_eq!(
@@ -347,7 +347,7 @@ fn a_term_whose_block_does_not_parse_is_not_retired() {
     // Repaired, the term retires; its name has a space.
     repo.write(TERMS, &terms);
     repo.write(DECISIONS, &proposed);
-    ok(repo.run(&["ratify", &id]));
+    ok(repo.run(&["approve", &id]));
     assert_eq!(term(&repo, "Old approver")["agreed"], "retired");
     assert_eq!(errors(&repo), Vec::<String>::new());
 }

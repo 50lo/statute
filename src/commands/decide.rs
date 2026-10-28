@@ -19,12 +19,12 @@ pub struct DecideReport {
     pub proposed_rules: Vec<String>,
     /// Terms this command set to `agreed: proposed`.
     pub proposed_terms: Vec<String>,
-    /// Terms the decision retires. They stay agreed until it is ratified.
+    /// Terms the decision retires. They stay agreed until it is approved.
     pub retiring_terms: Vec<String>,
 }
 
 /// Appends a proposed decision, and sets `agreed: proposed` on the rules it changes and the terms it
-/// introduces or redefines. The terms it retires stay agreed until it is ratified.
+/// introduces or redefines. The terms it retires stay agreed until it is approved.
 pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
     if draft.summary.trim().is_empty() || draft.rationale.trim().is_empty() {
         bail!("a decision needs a summary and a rationale");
@@ -122,7 +122,7 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         timestamp: now.strftime("%Y-%m-%dT%H:%M:%SZ").to_string(),
         actor: draft.actor,
         status: DecisionStatus::Proposed,
-        ratified_by: None,
+        approved_by: None,
         summary: draft.summary,
         rationale: draft.rationale,
         establishes: draft.establishes,

@@ -30,7 +30,7 @@ src/
   txn.rs             plan edits, re-parse them in memory, write files; the only module that writes files
 plugin/
   .claude-plugin/    Claude Code plugin manifest
-  skills/            adopt, change, decide, ratify (SKILL.md each)
+  skills/            adopt, change, decide, approve (SKILL.md each)
   hooks/             Stop hook: runs `statute check --json`
   agents-snippet.md  the AGENTS.md snippet; compiled into the binary for `init`
 tests/
@@ -51,7 +51,7 @@ The plugin lives in the same repository so a CLI change and the skill that relie
 - decisions and gaps as parsed entries;
 - links from `statute.lock`, indexed by target file.
 
-`BaseModel` is the same structure built from the base versions of the Statute files, which `repo` reads through one `git cat-file --batch` process. It is loaded only by commands that compare with the base (`check`, `status`, `ratify`).
+`BaseModel` is the same structure built from the base versions of the Statute files, which `repo` reads through one `git cat-file --batch` process. It is loaded only by commands that compare with the base (`check`, `status`, `approve`).
 
 ### 3.2 `check`
 
@@ -73,7 +73,7 @@ Repo::open
 
 ### 3.3 Mutating commands
 
-Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `ratify`, `gap open|close`) follows the same steps:
+Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `approve`, `gap open|close`) follows the same steps:
 
 1. Load the model.
 2. Check the command's own preconditions: the refusals the spec lists for it. For example, `link` refuses an unknown rule, an existing link and a target that matches more than one symbol; `review` refuses a rule with a missing link; `decide` refuses an unknown rule or term, one that is already in a proposed decision, a retired rule in `changes` or `retires`, a retired term in `terms` or `retires_terms`, and a term in `retires_terms` that is not agreed or is also in `terms`.
@@ -81,9 +81,9 @@ Every command that writes (`init`, `rule new`, `link`, `review`, `decide`, `rati
 4. Apply the edits in memory and re-parse the touched files. A file that no longer parses is a bug in the command, which fails without writing.
 5. Write every touched file to a temp file next to it, then rename each into place.
 
-Commands other than `ratify` do not run `check` on their result, because the spec's workflows pass through states that `check` reports: `link --remove` before relinking a moved target leaves the rule incomplete until the new link is added. `check` reports whatever remains at the end.
+Commands other than `approve` do not run `check` on their result, because the spec's workflows pass through states that `check` reports: `link --remove` before relinking a moved target leaves the rule incomplete until the new link is added. `check` reports whatever remains at the end.
 
-`ratify` runs the structural and history checks on its result, using the same check list as `check`, and refuses when any error is about the decisions it ratifies, their rules or their terms. Errors about other items and link freshness do not block it: approving one decision does not wait on unrelated work. A rule that still uses a term being retired is such an error: its finding names the term as well as the rule. Term actions are also checked against the model before ratifying, because afterwards the decisions are active and the terms already patched: a retired term must have been agreed, no ratified decision may name a retired term, and no term may be both defined and retired in one call.
+`approve` runs the structural and history checks on its result, using the same check list as `check`, and refuses when any error is about the decisions it approves, their rules or their terms. Errors about other items and link freshness do not block it: approving one decision does not wait on unrelated work. A rule that still uses a term being retired is such an error: its finding names the term as well as the rule. Term actions are also checked against the model before approving, because afterwards the decisions are active and the terms already patched: a retired term must have been agreed, no approved decision may name a retired term, and no term may be both defined and retired in one call.
 
 Each rename is atomic; a command that writes several files is not. All temp files are written before any rename, so most failures (disk full, permissions) happen before a file is replaced. If a rename fails, the command fails and names the files it already replaced; git shows the partial write.
 
@@ -109,7 +109,7 @@ A full rewrite means the CLI parses the whole file, changes the data, and writes
 - `base()`: merge-base of `HEAD` and `origin/HEAD`. With no remote, the base is `HEAD`, so only working-tree changes count.
 - `changed_files(base)`: `git diff -z --name-status base` plus `git ls-files --others --exclude-standard -z`, with renames reported as delete plus add.
 - `read_at(base, paths)`: one `git cat-file --batch` process for all base files.
-- `user()`: `user.name` and `user.email`, for `ratified_by`.
+- `user()`: `user.name` and `user.email`, for `approved_by`.
 
 The `ChangeSet` type exposes the changed paths. It is the place to add diff hunks later (see 8.2) without changing callers.
 
@@ -208,7 +208,7 @@ The crates in spec section 5.1, plus:
 - End-to-end tests build a temporary git repo from a fixture, make a commit, apply an edit, run the binary and snapshot the `--json` report. Each spec scenario in the appendix becomes one test. Beyond the scenarios:
   - intermediate states: `rule new` and `link` before `decide`; `link --remove` then `link` for a moved target;
   - a rule reviewed with `review RULE ok` appears in `check --md` as holding;
-  - `ratify` after the proposal has already reached the default branch;
+  - `approve` after the proposal has already reached the default branch;
   - an agreed rule or term edited without a decision is an error.
 - From milestone 2, a `hyperfine` run of `check` on Footprints against the 100 ms budget.
 
@@ -218,7 +218,7 @@ The crates in spec section 5.1, plus:
 | --- | --- |
 | 1. Model and checks | `repo`, `model`, `store` (all but lock), `check` (structural), `txn`, `commands` and `cli` for `init`, `rule new`, `show`, `check`, `status` |
 | 2. Links | `git`, `fingerprint`, lock in `store`, `state` (stale, missing, incomplete), `commands::link`, `commands::review`, `check --all` |
-| 3. Decisions | `commands::decide`, `commands::ratify`, `check::history`, `impact`, `--md` renderer |
+| 3. Decisions | `commands::decide`, `commands::approve`, `check::history`, `impact`, `--md` renderer |
 | 4. Gaps | `commands::gap`, `state` (broken) |
 | 5. Plugin | `plugin/` |
 

@@ -31,7 +31,7 @@ pub struct PendingDecision {
     pub rules: Vec<String>,
     /// Terms the decision introduces or redefines.
     pub terms: Vec<String>,
-    /// Terms the decision retires; they stay agreed until it is ratified.
+    /// Terms the decision retires; they stay agreed until it is approved.
     pub retires_terms: Vec<String>,
 }
 
@@ -62,7 +62,7 @@ pub enum Reason {
         decision: String,
     },
     /// A proposed decision that retires the term was added or changed. The term stays agreed until
-    /// the decision is ratified.
+    /// the decision is approved.
     RetirementProposed {
         decision: String,
     },

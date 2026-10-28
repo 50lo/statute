@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn parses_a_decision() {
-        let text = "- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: proposed\n  ratified_by: null\n  summary: \"S.\"\n  rationale: \"R.\"\n  establishes: [ATTR-001]\n";
+        let text = "- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: proposed\n  approved_by: null\n  summary: \"S.\"\n  rationale: \"R.\"\n  establishes: [ATTR-001]\n";
         let decisions = parse_decisions(text).unwrap();
         assert_eq!(decisions[0].status, DecisionStatus::Proposed);
         assert_eq!(decisions[0].establishes, ["ATTR-001"]);
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn rendered_decisions_parse_back() {
-        let text = "- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: active\n  ratified_by: {name: \"Pat: Example\", email: p@example.com, at: \"2026-10-15T09:00:00Z\"}\n  summary: \"yes\"\n  rationale: \"Line one.\\nLine two: with # and 'quotes'.\"\n  establishes: [ATTR-001, \"true\"]\n  terms: [Active customer]\n";
+        let text = "- id: D261014-k7m2q\n  timestamp: \"2026-10-14T10:26:12Z\"\n  actor: agent\n  status: active\n  approved_by: {name: \"Pat: Example\", email: p@example.com, at: \"2026-10-15T09:00:00Z\"}\n  summary: \"yes\"\n  rationale: \"Line one.\\nLine two: with # and 'quotes'.\"\n  establishes: [ATTR-001, \"true\"]\n  terms: [Active customer]\n";
         let decisions = parse_decisions(text).unwrap();
         let rendered = render_decisions(&decisions);
         assert_eq!(parse_decisions(&rendered).unwrap(), decisions);
@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn entries_without_retired_terms_render_as_before() {
-        let text = "- id: D261014-k7m2q\n  timestamp: 2026-10-14T10:26:12Z\n  actor: agent\n  status: proposed\n  ratified_by: null\n  summary: S.\n  rationale: R.\n  establishes: []\n  changes: []\n  retires: []\n  terms:\n  - Session\n";
+        let text = "- id: D261014-k7m2q\n  timestamp: 2026-10-14T10:26:12Z\n  actor: agent\n  status: proposed\n  approved_by: null\n  summary: S.\n  rationale: R.\n  establishes: []\n  changes: []\n  retires: []\n  terms:\n  - Session\n";
         let decisions = parse_decisions(text).unwrap();
         assert!(decisions[0].retires_terms.is_empty());
         assert_eq!(render_decisions(&decisions), text);

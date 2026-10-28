@@ -36,7 +36,7 @@ fn init_writes_the_layout_and_check_passes() {
     assert!(repo.path("statute/rules").is_dir());
     assert!(
         repo.read("AGENTS.md")
-            .contains("Run `statute ratify` only after a human")
+            .contains("Run `statute approve` only after a human")
     );
 
     let check = repo.run(&["check", "--json"]);

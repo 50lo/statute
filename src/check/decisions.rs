@@ -125,14 +125,14 @@ pub fn retired_terms(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// An active decision has `ratified_by`.
-pub fn ratified_by(model: &Model, out: &mut Vec<Finding>) {
+/// An active decision has `approved_by`.
+pub fn approved_by(model: &Model, out: &mut Vec<Finding>) {
     for d in model.decisions.iter().flatten() {
-        if d.status == DecisionStatus::Active && d.ratified_by.is_none() {
+        if d.status == DecisionStatus::Active && d.approved_by.is_none() {
             out.push(at(
                 Finding::error(
-                    "decision.ratified_by_missing",
-                    "an active decision needs `ratified_by`",
+                    "decision.approved_by_missing",
+                    "an active decision needs `approved_by`",
                 ),
                 d,
             ));
