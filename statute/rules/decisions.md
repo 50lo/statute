@@ -24,7 +24,7 @@ boundary:
 `statute approve` must make active only the decisions named on its command line, and change the agreement status only of the rules and terms those decisions list. Other proposed decisions and their rules and terms stay proposed.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Decision, Proposed decision, Agreement status, Approval]
@@ -40,7 +40,7 @@ boundary:
 `statute approve` must refuse and write nothing when `check` would report an error about the decisions it approves or their rules and terms afterwards, including a rule that would become agreed while using a term that is not agreed, and any rule that is not retired and still uses a term the decisions retire. Stale and missing links never block it, because agreement is recorded separately from whether the code still matches.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Decision, Rule, Term, Approval]
@@ -60,7 +60,7 @@ boundary:
 `decide` and `approve` must refuse, and write nothing, when a term listed in `retires_terms` is not agreed, or is also listed in `terms` by the same decision or, for `approve`, by another decision in the same call.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Decisions drafted with `decide`, and decisions named to `approve`.
 terms: [Decision, Term, Agreement status, Proposed decision]
@@ -78,7 +78,7 @@ boundary:
 `check` must report an error when a rule that is not retired lists a retired term in `terms`, or a proposed decision lists a retired term in `terms` or `retires_terms`, and `approve` must refuse a decision that names a retired term.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Decision, Proposed decision, Agreement status]

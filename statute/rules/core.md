@@ -70,7 +70,7 @@ boundary:
 New rules and terms written by an agent must start as proposed. The agent must not present its own additions as already agreed.
 
 ```yaml
-agreed: proposed        # proposed | agreed | retired
+agreed: agreed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule, Term, Agreement status]
@@ -96,7 +96,7 @@ this rule is deferred until Beans bug `st-8j2x` is fixed.
 Only a person can approve a proposed decision. An agent may record that approval through the tool only after the person explicitly approves that specific decision.
 
 ```yaml
-agreed: proposed        # proposed | agreed | retired
+agreed: agreed          # proposed | agreed | retired
 built: planned            # planned | built
 scope: ""
 terms: [Decision, Approval]
