@@ -7,12 +7,13 @@ use crate::model::{Finding, paths};
 use crate::repo::Repo;
 use crate::store;
 use anyhow::{Context, Result, bail};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 pub struct Txn<'a> {
     repo: &'a Repo,
     dirs: Vec<String>,
-    writes: Vec<(String, String)>,
+    writes: BTreeMap<String, String>,
 }
 
 impl<'a> Txn<'a> {
@@ -20,7 +21,7 @@ impl<'a> Txn<'a> {
         Txn {
             repo,
             dirs: Vec::new(),
-            writes: Vec::new(),
+            writes: BTreeMap::new(),
         }
     }
 
@@ -28,9 +29,23 @@ impl<'a> Txn<'a> {
         self.dirs.push(rel.to_string());
     }
 
-    /// Replaces the whole file, or creates it.
+    /// Replaces the whole file, or creates it. A later write to the same file replaces an earlier one.
     pub fn write(&mut self, rel: &str, contents: String) {
-        self.writes.push((rel.to_string(), contents));
+        self.writes.insert(rel.to_string(), contents);
+    }
+
+    /// A file's text as this transaction would leave it: the last write, else the file on disk, else
+    /// empty.
+    pub fn text(&self, rel: &str) -> Result<String> {
+        match self.writes.get(rel) {
+            Some(text) => Ok(text.clone()),
+            None => Ok(self.repo.read(rel)?.unwrap_or_default()),
+        }
+    }
+
+    /// The files this transaction writes, with their new text, for `Repo::load_with`.
+    pub fn writes(&self) -> &BTreeMap<String, String> {
+        &self.writes
     }
 
     pub fn commit(self) -> Result<()> {

@@ -196,7 +196,7 @@ fn rule_item<'a>(
         title: rule.title.clone(),
         file: rule.file.clone(),
         line: rule.line,
-        agreed: rule.meta.as_ref().map(|m| m.agreed),
+        agreed: rule.agreed(),
         built: rule.meta.as_ref().map(|m| m.built),
         text: section(repo, texts, &rule.file, &rule.span)?,
         terms: rule

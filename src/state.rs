@@ -19,10 +19,7 @@ pub fn establishers(model: &Model) -> BTreeMap<&str, Vec<&str>> {
 /// Nothing is a draft while `decisions.db` does not parse, because establishment is unknown.
 pub fn is_draft(rule: &Rule, model: &Model, establishers: &BTreeMap<&str, Vec<&str>>) -> bool {
     model.decisions.is_some()
-        && rule
-            .meta
-            .as_ref()
-            .is_some_and(|m| m.agreed == Agreed::Proposed)
+        && rule.agreed() == Some(Agreed::Proposed)
         && !establishers.contains_key(rule.id.as_str())
 }
 

@@ -1,5 +1,4 @@
-use super::SCHEMA;
-use crate::fingerprint;
+use super::{SCHEMA, fingerprints};
 use crate::impact;
 use crate::model::{Agreed, Built, GapStatus, Impact, Link};
 use crate::repo::Repo;
@@ -58,9 +57,7 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
     }
     let establishers = state::establishers(&model);
     let links: Vec<&Link> = model.links.iter().flatten().collect();
-    let files = repo.read_files(links.iter().map(|l| l.file()))?;
-    let targets: Vec<_> = links.iter().map(|l| (l.mode, l.target.as_str())).collect();
-    let health = state::health(&links, &fingerprint::sign(&files, &targets));
+    let health = state::health(&links, &fingerprints(&repo, &links)?);
     let unhealthy = |rule: &str, wanted: fn(&Health) -> bool| -> Vec<String> {
         links
             .iter()
@@ -84,7 +81,7 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
                 .map(|rule| RuleStatus {
                     id: rule.id.clone(),
                     title: rule.title.clone(),
-                    agreed: rule.meta.as_ref().map(|m| m.agreed),
+                    agreed: rule.agreed(),
                     built: rule.meta.as_ref().map(|m| m.built),
                     draft: state::is_draft(rule, &model, &establishers),
                     incomplete: state::is_incomplete(rule, &model),
