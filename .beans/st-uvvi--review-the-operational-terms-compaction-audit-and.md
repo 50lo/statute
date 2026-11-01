@@ -19,6 +19,8 @@ Input: the complete compaction audit is embedded below under "Recorded compactio
 
 Plan: "Item 3" in docs/Terms-refactoring-plan.md. Criteria: "Reviewing operational terms for compaction" in docs/Terms-refactoring-proposal.md. There is no target term count, and `terms.md` is judged as operational vocabulary, not learning material.
 
+The terms refactoring plan and proposal were removed from `docs/` before the public release. Read them with `git show ba873fd:docs/Terms-refactoring-plan.md` and `git show ba873fd:docs/Terms-refactoring-proposal.md`.
+
 ## Why
 
 Separating the human glossary (st-25bl) from the operational terms does not mean every current entry is well chosen. Entries whose separate identities add no operational precision cost agents context and people review effort; entries that combine meanings needing independent approval or retrieval should be split.

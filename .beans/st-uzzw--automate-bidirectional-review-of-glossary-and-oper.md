@@ -19,6 +19,8 @@ Implement automated consistency review between human glossary sections and compa
 
 Proposal: docs/Terms-refactoring-proposal.md. PR: https://github.com/50lo/statute/pull/20.
 
+The terms refactoring plan and proposal were removed from `docs/` before the public release. Read them with `git show ba873fd:docs/Terms-refactoring-plan.md` and `git show ba873fd:docs/Terms-refactoring-proposal.md`.
+
 ## Required behavior
 
 - Operational terms reference the human glossary sections that explain them. Several terms can reference one section, and one term may reference several sections. Support a chosen existing glossary path rather than requiring every adopting repository to create a particular new file.
