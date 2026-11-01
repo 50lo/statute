@@ -1,6 +1,6 @@
 # Statute: v1 architecture
 
-Status: proposal for review. It implements [the spec](Statute-spec.md) and adds no behaviour; where the spec leaves a choice open, the open choices are listed under "Decisions to confirm".
+This architecture implements [the spec](Statute-spec.md) and adds no behaviour.
 
 ## 1. Principles
 
@@ -126,7 +126,7 @@ enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1, RustAstSha256V1 }
 - Each tree-sitter mode turns one parsed file into a map from symbol to hash, in one pass, so all links into a file cost one parse. Missing covers: no such symbol, more than one match, or a parse with errors.
 - One tree-sitter parser per rayon thread, created lazily per language.
 
-Swift and TypeScript (milestone 7) are new variants with the same shape.
+A new language, such as Swift or TypeScript, is a new variant with the same shape.
 
 ### 6.1 Hash input
 
@@ -211,19 +211,4 @@ The crates in spec section 5.1, plus:
   - a rule reviewed with `review RULE ok` appears in `check --md` as holding;
   - `approve` after the proposal has already reached the default branch;
   - an agreed rule or term edited without a decision is an error.
-- From milestone 2, a `hyperfine` run of `check` on Footprints against the 100 ms budget.
-
-## 11. Milestones to modules
-
-| Milestone | Modules |
-| --- | --- |
-| 1. Model and checks | `repo`, `model`, `store` (all but lock), `check` (structural), `txn`, `commands` and `cli` for `init`, `rule new`, `show`, `check`, `status` |
-| 2. Links | `git`, `fingerprint`, lock in `store`, `state` (stale, missing, incomplete), `commands::link`, `commands::review`, `check --all` |
-| 3. Decisions | `commands::decide`, `commands::approve`, `check::history`, `impact`, `--md` renderer |
-| 4. Gaps | `commands::gap`, `state` (broken) |
-| 5. Plugin | `plugin/` |
-
-## 12. Decisions to confirm
-
-1. **No remote means base = `HEAD`.** The spec assumes `origin/HEAD`; this covers a fresh local repo.
-2. **Plugin in the same repository** under `plugin/`. Recommended.
+- A `hyperfine` run of `check` against the 100 ms budget.
