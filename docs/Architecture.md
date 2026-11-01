@@ -15,9 +15,9 @@ Status: proposal for review. It implements [the spec](Statute-spec.md) and adds 
 ```text
 Cargo.toml
 src/
-  main.rs            parse args, call the command, render, set the exit code
+  main.rs            calls `cli::run` and returns its exit code
   lib.rs
-  cli/               clap argument definitions; renderers (text, json, md)
+  cli/               clap argument definitions; runs the command, renders text, JSON and Markdown, sets the exit code
   repo.rs            find the root, read statute.yml and the Statute files, load models; the only module that reads files
   model/             Rule, Term, Decision, Gap, Link, Mode, IDs, enums for agreed/built/status
   store/             parse each file kind from text and render edits back to text (below); no I/O
@@ -30,11 +30,12 @@ src/
   txn.rs             plan edits, re-parse them in memory, write files; the only module that writes files
 plugin/
   .claude-plugin/    Claude Code plugin manifest
+  .codex-plugin/     Codex plugin manifest
   skills/            adopt, change, decide, approve (SKILL.md each)
   hooks/             Stop hook: runs `statute check --json`
   agents-snippet.md  the AGENTS.md snippet; compiled into the binary for `init`
 tests/
-  fixtures/          small fixture repos (Go and Python files, Statute files)
+  fixtures/          small fixture repos and fingerprint golden files (Go, Python, Rust)
   *.rs               end-to-end tests: build a temp git repo, run the binary, compare JSON
 docs/
 ```
