@@ -1,6 +1,6 @@
 use super::SCHEMA;
 use crate::model::{
-    Agreed, Decision, DecisionDraft, DecisionStatus, Model, TermAgreed, ids, paths,
+    Agreed, Decision, DecisionDraft, DecisionStatus, Model, Term, TermAgreed, ids, paths,
 };
 use crate::repo::Repo;
 use crate::store;
@@ -231,7 +231,7 @@ fn refuse_unagreed_retirement(model: &Model, draft: &DecisionDraft) -> Result<()
         if term.is_some_and(|t| t.meta.is_none()) {
             bail!("term `{name}` has no readable `yaml` block; run `statute check`");
         }
-        if term.and_then(|t| t.agreed()) != Some(TermAgreed::Agreed) {
+        if term.and_then(Term::agreed) != Some(TermAgreed::Agreed) {
             bail!("term `{name}` is not agreed; only an agreed term can be retired");
         }
     }

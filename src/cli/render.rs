@@ -150,19 +150,21 @@ fn cell(text: &str) -> String {
 pub fn decide(r: &DecideReport) -> String {
     let mut out = r.id.clone();
     for rule in &r.proposed_rules {
-        out.push_str(&format!("\n{rule} is proposed until {} is approved", r.id));
+        let _ = write!(out, "\n{rule} is proposed until {} is approved", r.id);
     }
     for term in &r.proposed_terms {
-        out.push_str(&format!(
+        let _ = write!(
+            out,
             "\nterm `{term}` is proposed until {} is approved",
             r.id
-        ));
+        );
     }
     for term in &r.retiring_terms {
-        out.push_str(&format!(
+        let _ = write!(
+            out,
             "\nterm `{term}` stays agreed until {} is approved, and is retired then",
             r.id
-        ));
+        );
     }
     out
 }
@@ -176,7 +178,7 @@ pub fn approve(r: &ApproveReport) -> String {
     );
     let mut line = |label: &str, items: &[String]| {
         if !items.is_empty() {
-            out.push_str(&format!("\n{label}: {}", items.join(", ")));
+            let _ = write!(out, "\n{label}: {}", items.join(", "));
         }
     };
     line("Agreed rules", &r.agreed_rules);
@@ -185,10 +187,7 @@ pub fn approve(r: &ApproveReport) -> String {
     line("Retired terms", &r.retired_terms);
     line("Built rules", &r.built_rules);
     if r.removed_links > 0 {
-        out.push_str(&format!(
-            "\nRemoved {} links of retired rules",
-            r.removed_links
-        ));
+        let _ = write!(out, "\nRemoved {} links of retired rules", r.removed_links);
     }
     out
 }

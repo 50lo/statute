@@ -153,7 +153,7 @@ fn same_rule(a: &Rule, b: &Rule) -> bool {
     let (Some(x), Some(y)) = (&a.meta, &b.meta) else {
         return false;
     };
-    collapse(&a.statement) == collapse(&b.statement)
+    collapse(a.statement.as_deref()) == collapse(b.statement.as_deref())
         && x.scope == y.scope
         && x.terms == y.terms
         && x.exceptions == y.exceptions
@@ -168,11 +168,12 @@ fn same_term(a: &Term, b: &Term) -> bool {
     let (Some(x), Some(y)) = (&a.meta, &b.meta) else {
         return false;
     };
-    collapse(&a.definition) == collapse(&b.definition) && x.code == y.code && x.not == y.not
+    collapse(a.definition.as_deref()) == collapse(b.definition.as_deref())
+        && x.code == y.code
+        && x.not == y.not
 }
 
-fn collapse(text: &Option<String>) -> Vec<&str> {
-    text.as_deref()
-        .map(|t| t.split_whitespace().collect())
+fn collapse(text: Option<&str>) -> Vec<&str> {
+    text.map(|t| t.split_whitespace().collect())
         .unwrap_or_default()
 }
