@@ -90,6 +90,17 @@ pub struct Rule {
     pub span: Span,
 }
 
+impl Rule {
+    /// The `agreed` field; `None` when the block is missing or does not match the schema.
+    pub fn agreed(&self) -> Option<Agreed> {
+        self.meta.as_ref().map(|m| m.agreed)
+    }
+
+    pub fn is_retired(&self) -> bool {
+        self.agreed() == Some(Agreed::Retired)
+    }
+}
+
 /// Byte ranges of a section, for patches.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Span {

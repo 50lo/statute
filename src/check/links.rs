@@ -1,4 +1,4 @@
-use crate::model::{Agreed, Finding, Link, Model, paths};
+use crate::model::{Finding, Link, Model, paths};
 use crate::state::{self, Health};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -39,7 +39,7 @@ pub fn retired(model: &Model, out: &mut Vec<Finding>) {
     let retired: BTreeMap<&str, _> = model
         .rules
         .iter()
-        .filter(|r| r.meta.as_ref().is_some_and(|m| m.agreed == Agreed::Retired))
+        .filter(|r| r.is_retired())
         .map(|r| (r.id.as_str(), r))
         .collect();
     for link in model.links.iter().flatten() {

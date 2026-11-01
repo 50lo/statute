@@ -1,6 +1,5 @@
-use super::SCHEMA;
+use super::{SCHEMA, fingerprints};
 use crate::check;
-use crate::fingerprint;
 use crate::git;
 use crate::impact;
 use crate::model::{Finding, Impact, Link, Severity};
@@ -50,12 +49,7 @@ pub fn run(all: bool, md: bool) -> Result<CheckReport> {
                 .filter(|l| changed.contains(l.file()))
                 .collect()
         };
-        let files = repo.read_files(selected.iter().map(|l| l.file()))?;
-        let targets: Vec<_> = selected
-            .iter()
-            .map(|l| (l.mode, l.target.as_str()))
-            .collect();
-        let health = state::health(&selected, &fingerprint::sign(&files, &targets));
+        let health = state::health(&selected, &fingerprints(&repo, &selected)?);
         findings.extend(check::freshness(&selected, &health));
         link_health = selected
             .iter()

@@ -124,32 +124,31 @@ boundary: []
     )
 }
 
-/// The rule file with `built:` set on one of its rules, or `None` when the block cannot be patched
-/// without changing anything else the block says.
+/// The rule file with `built:` set on the rule with `rule`'s ID, or `None` when the block cannot be
+/// patched without changing anything else the block says. The rule is found in `text` by its ID, so
+/// earlier patches to the same file do not matter.
 pub fn set_built(text: &str, rule: &Rule, built: Built) -> Option<String> {
     let value = match built {
         Built::Planned => "planned",
         Built::Built => "built",
     };
-    let expected = RuleMeta {
+    patch_meta(text, rule, "built", value, |meta| RuleMeta {
         built,
-        ..rule.meta.clone()?
-    };
-    patch_meta(text, rule, "built", value, &expected)
+        ..meta
+    })
 }
 
-/// The rule file with `agreed:` set on one of its rules, or `None` as for `set_built`.
+/// The rule file with `agreed:` set on the rule with `rule`'s ID, or `None` as for `set_built`.
 pub fn set_agreed(text: &str, rule: &Rule, agreed: Agreed) -> Option<String> {
     let value = match agreed {
         Agreed::Proposed => "proposed",
         Agreed::Agreed => "agreed",
         Agreed::Retired => "retired",
     };
-    let expected = RuleMeta {
+    patch_meta(text, rule, "agreed", value, |meta| RuleMeta {
         agreed,
-        ..rule.meta.clone()?
-    };
-    patch_meta(text, rule, "agreed", value, &expected)
+        ..meta
+    })
 }
 
 fn patch_meta(
@@ -157,15 +156,18 @@ fn patch_meta(
     rule: &Rule,
     key: &str,
     value: &str,
-    expected: &RuleMeta,
+    expected: impl FnOnce(RuleMeta) -> RuleMeta,
 ) -> Option<String> {
-    let patched = super::set_field(text, rule.span.block.clone()?, key, value)?;
+    let parsed = parse(&rule.file, &rule.area, text);
+    let current = parsed.rules.iter().find(|r| r.id == rule.id)?;
+    let expected = expected(current.meta.clone()?);
+    let patched = super::set_field(text, current.span.block.clone()?, key, value)?;
     let reparsed = parse(&rule.file, &rule.area, &patched);
     let same = reparsed
         .rules
         .iter()
-        .find(|r| r.span.heading == rule.span.heading)
-        .is_some_and(|r| r.meta.as_ref() == Some(expected) && r.statement == rule.statement);
+        .find(|r| r.span.heading == current.span.heading)
+        .is_some_and(|r| r.meta.as_ref() == Some(&expected) && r.statement == current.statement);
     same.then_some(patched)
 }
 
@@ -260,6 +262,26 @@ mod tests {
             out,
             text.replace("agreed: proposed          #", "agreed: agreed            #")
         );
+    }
+
+    #[test]
+    fn set_agreed_finds_the_rule_after_earlier_patches_moved_it() {
+        let text = format!(
+            "---\nprefix: BILL\n---\n\n{}\n{}",
+            skeleton("BILL-001", "T"),
+            skeleton("BILL-002", "U")
+        );
+        let parsed = parse(FILE, "billing", &text);
+        let [first, second] = &parsed.rules[..] else {
+            panic!();
+        };
+        // Shortening the first rule's block moves the second rule's offsets.
+        let once = set_agreed(&text, first, Agreed::Retired).unwrap();
+        let twice = set_built(&once, second, Built::Built).unwrap();
+        let rules = parse(FILE, "billing", &twice).rules;
+        assert_eq!(rules[0].agreed(), Some(Agreed::Retired));
+        assert_eq!(rules[1].meta.as_ref().map(|m| m.built), Some(Built::Built));
+        assert_eq!(rules[1].agreed(), Some(Agreed::Proposed));
     }
 
     #[test]

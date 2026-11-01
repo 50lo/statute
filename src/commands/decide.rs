@@ -8,7 +8,6 @@ use crate::txn::{self, Txn};
 use anyhow::{Result, anyhow, bail};
 use rand::RngExt;
 use serde::Serialize;
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize)]
@@ -41,7 +40,6 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
 
     let mut txn = Txn::new(&repo);
     let mut proposed_rules = Vec::new();
-    let mut rule_files: BTreeMap<&str, String> = BTreeMap::new();
     for id in &draft.changes {
         let Some(rule) = model.rules.iter().find(|r| &r.id == id) else {
             continue;
@@ -55,28 +53,18 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         if meta.agreed == Agreed::Proposed {
             continue;
         }
-        let text = match rule_files.remove(rule.file.as_str()) {
-            Some(text) => text,
-            None => repo.read(&rule.file)?.unwrap_or_default(),
-        };
-        // Earlier patches in the same file move this rule's byte offsets.
-        let parsed = store::rules::parse(&rule.file, &rule.area, &text);
-        let current = parsed.rules.iter().find(|r| &r.id == id).unwrap_or(rule);
-        let Some(patched) = store::rules::set_agreed(&text, current, Agreed::Proposed) else {
+        let text = txn.text(&rule.file)?;
+        let Some(patched) = store::rules::set_agreed(&text, rule, Agreed::Proposed) else {
             bail!(
                 "cannot set `agreed: proposed` on {id} in {}: write its `agreed:` field on one line, then decide again",
                 rule.file
             );
         };
-        rule_files.insert(&rule.file, patched);
+        txn.write(&rule.file, patched);
         proposed_rules.push(id.clone());
-    }
-    for (file, text) in rule_files {
-        txn.write(file, text);
     }
 
     let mut proposed_terms = Vec::new();
-    let mut terms_text = None;
     for name in &draft.terms {
         let Some(term) = model.terms.iter().find(|t| &t.name == name) else {
             continue;
@@ -87,39 +75,27 @@ pub fn run(draft: DecisionDraft) -> Result<DecideReport> {
         if meta.agreed == Some(TermAgreed::Proposed) {
             continue;
         }
-        let text = match terms_text.take() {
-            Some(text) => text,
-            None => repo.read(paths::TERMS)?.unwrap_or_default(),
-        };
-        let parsed = store::terms::parse(&text);
-        let current = parsed
-            .terms
-            .iter()
-            .find(|t| &t.name == name)
-            .unwrap_or(term);
-        let Some(patched) = store::terms::set_agreed(&text, current, TermAgreed::Proposed) else {
+        let text = txn.text(paths::TERMS)?;
+        let Some(patched) = store::terms::set_agreed(&text, term, TermAgreed::Proposed) else {
             bail!(
                 "cannot set `agreed: proposed` on term `{name}`: write its `agreed:` field on one line, then decide again"
             );
         };
-        terms_text = Some(patched);
+        txn.write(paths::TERMS, patched);
         proposed_terms.push(name.clone());
-    }
-    if let Some(text) = terms_text {
-        txn.write(paths::TERMS, text);
     }
 
     let now = jiff::Timestamp::now();
     let mut rng = rand::rng();
     let id = ids::new_dated_id(
         'D',
-        &now.strftime("%y%m%d").to_string(),
+        now,
         |id| decisions.iter().any(|d| d.id == id),
         |n| rng.random_range(0..n),
     );
     decisions.push(Decision {
         id: id.clone(),
-        timestamp: now.strftime("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        timestamp: ids::timestamp(now),
         actor: draft.actor,
         status: DecisionStatus::Proposed,
         approved_by: None,
@@ -218,11 +194,7 @@ fn refuse_unknown_or_pending(model: &Model, draft: &DecisionDraft) -> Result<()>
 /// No rule in `changes` or `retires` is retired: retirement is final.
 fn refuse_retired(model: &Model, draft: &DecisionDraft) -> Result<()> {
     for id in draft.changes.iter().chain(&draft.retires) {
-        let retired = model
-            .rules
-            .iter()
-            .any(|r| &r.id == id && r.meta.as_ref().is_some_and(|m| m.agreed == Agreed::Retired));
-        if retired {
+        if model.rules.iter().any(|r| &r.id == id && r.is_retired()) {
             bail!(
                 "{id} is retired, and a retired rule never changes; give new behaviour a new rule with `statute rule new`"
             );

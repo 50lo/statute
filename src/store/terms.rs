@@ -76,14 +76,17 @@ fn trim_blank_lines(text: &str) -> &str {
     &text[line_start..]
 }
 
-/// `terms.md` with `agreed:` set on one term, adding the field, or a `yaml` block after the term's
-/// text, when the term has none. `None` when the result would change anything else the term says.
+/// `terms.md` with `agreed:` set on the term with `term`'s name, adding the field, or a `yaml` block
+/// after the term's text, when the term has none. `None` when the result would change anything else
+/// the term says. The term is found in `text` by its name, so earlier patches do not matter.
 pub fn set_agreed(text: &str, term: &Term, agreed: TermAgreed) -> Option<String> {
     let value = match agreed {
         TermAgreed::Proposed => "proposed",
         TermAgreed::Agreed => "agreed",
         TermAgreed::Retired => "retired",
     };
+    let before = parse(text);
+    let term = before.terms.iter().find(|t| t.name == term.name)?;
     let expected = TermMeta {
         agreed: Some(agreed),
         ..term.meta.clone()?
@@ -110,7 +113,7 @@ pub fn set_agreed(text: &str, term: &Term, agreed: TermAgreed) -> Option<String>
         .iter()
         .find(|t| t.span.heading == term.span.heading)
         .is_some_and(|t| t.meta.as_ref() == Some(&expected) && t.definition == term.definition)
-        && reparsed.problems.len() <= parse(text).problems.len();
+        && reparsed.problems.len() <= before.problems.len();
     same.then_some(patched)
 }
 

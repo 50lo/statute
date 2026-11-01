@@ -43,7 +43,7 @@ pub fn open(rule: &str, reference: Option<&str>, note: Option<&str>) -> Result<G
             let mut rng = rand::rng();
             let id = ids::new_dated_id(
                 'G',
-                &now.strftime("%y%m%d").to_string(),
+                now,
                 |id| gaps.iter().any(|g| g.id == id),
                 |n| rng.random_range(0..n),
             );
@@ -55,7 +55,7 @@ pub fn open(rule: &str, reference: Option<&str>, note: Option<&str>) -> Result<G
         id: id.clone(),
         rule: rule.to_string(),
         status: GapStatus::Open,
-        opened_at: now.strftime("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        opened_at: ids::timestamp(now),
         note,
     });
     let mut txn = Txn::new(&repo);

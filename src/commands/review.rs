@@ -1,5 +1,4 @@
-use super::SCHEMA;
-use crate::fingerprint;
+use super::{SCHEMA, fingerprints};
 use crate::model::{GapStatus, Link, paths};
 use crate::repo::Repo;
 use crate::state::{self, Health};
@@ -71,9 +70,7 @@ pub fn run(rule_id: &str, verdict: Verdict) -> Result<ReviewReport> {
     }
 
     let own: Vec<&Link> = links.iter().filter(|l| l.rule() == rule_id).collect();
-    let files = repo.read_files(own.iter().map(|l| l.file()))?;
-    let targets: Vec<_> = own.iter().map(|l| (l.mode, l.target.as_str())).collect();
-    let current = fingerprint::sign(&files, &targets);
+    let current = fingerprints(&repo, &own)?;
     let health = state::health(&own, &current);
     if let Some((link, Health::Missing(why))) = own
         .iter()

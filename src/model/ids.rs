@@ -1,4 +1,4 @@
-//! ID formats, shared by `check` and the commands that create IDs.
+//! ID and timestamp formats, shared by `check` and the commands that create IDs.
 
 /// A rule file prefix: `^[A-Z][A-Z0-9]*$`.
 pub fn is_prefix(s: &str) -> bool {
@@ -13,6 +13,11 @@ pub fn parse_rule_id(s: &str) -> Option<(&str, u16)> {
     let well_formed =
         is_prefix(prefix) && number.len() == 3 && number.bytes().all(|b| b.is_ascii_digit());
     well_formed.then(|| (prefix, number.parse().unwrap_or(0)))
+}
+
+/// A UTC timestamp as Statute files record it: `2026-10-15T09:30:00Z`.
+pub fn timestamp(now: jiff::Timestamp) -> String {
+    now.strftime("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
 /// The characters of the random part of decision and gap IDs.
@@ -30,14 +35,15 @@ pub fn is_dated_id(s: &str, marker: char) -> bool {
         && random.bytes().all(|b| RANDOM_ALPHABET.contains(&b))
 }
 
-/// A new decision or gap ID for the UTC date `yymmdd` that `taken` does not hold. `pick(n)` returns a
-/// random index below `n`; the caller supplies the randomness.
+/// A new decision or gap ID for the UTC date of `now` that `taken` does not hold. `pick(n)` returns a
+/// random index below `n`; the caller supplies the time and the randomness.
 pub fn new_dated_id(
     marker: char,
-    yymmdd: &str,
+    now: jiff::Timestamp,
     taken: impl Fn(&str) -> bool,
     mut pick: impl FnMut(usize) -> usize,
 ) -> String {
+    let yymmdd = now.strftime("%y%m%d");
     loop {
         let random: String = (0..5)
             .map(|_| RANDOM_ALPHABET[pick(RANDOM_ALPHABET.len())] as char)

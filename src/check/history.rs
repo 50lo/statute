@@ -95,12 +95,12 @@ pub fn history(model: &Model, base: &Model, out: &mut Vec<Finding>) {
 /// A rule retired in the base keeps its section, its compared fields and `agreed: retired`. No decision
 /// exempts it, so the finding names a new rule ID as the way forward rather than `decide`.
 fn retired_rules(model: &Model, base: &Model, out: &mut Vec<Finding>) {
-    for old in base.rules.iter().filter(|r| retired_rule(r)) {
+    for old in base.rules.iter().filter(|r| r.is_retired()) {
         let now = model.rules.iter().find(|r| r.id == old.id);
         if now.is_some_and(|r| r.meta.is_none()) {
             continue; // A parse problem, reported on its own.
         }
-        if now.is_some_and(|r| retired_rule(r) && same_rule(r, old)) {
+        if now.is_some_and(|r| r.is_retired() && same_rule(r, old)) {
             continue;
         }
         let what = if now.is_some() { "changed" } else { "removed" };
@@ -139,22 +139,12 @@ fn retired_terms(model: &Model, base: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-fn retired_rule(rule: &Rule) -> bool {
-    rule.meta
-        .as_ref()
-        .is_some_and(|m| m.agreed == Agreed::Retired)
-}
-
 fn agreed_rule(rule: &Rule) -> bool {
-    rule.meta
-        .as_ref()
-        .is_some_and(|m| m.agreed == Agreed::Agreed)
+    rule.agreed() == Some(Agreed::Agreed)
 }
 
 fn agreed_term(term: &Term) -> bool {
-    term.meta
-        .as_ref()
-        .is_some_and(|m| m.agreed == Some(TermAgreed::Agreed))
+    term.agreed() == Some(TermAgreed::Agreed)
 }
 
 /// The compared fields: the statement with whitespace collapsed, `scope`, `terms`, `exceptions`,
