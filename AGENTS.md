@@ -6,6 +6,7 @@ Statute is a Rust CLI and agent plugin that keeps a product's rules written down
 - Behaviour, file formats, commands: [docs/Statute-spec.md](docs/Statute-spec.md) (source of truth)
 - Code structure: [docs/Architecture.md](docs/Architecture.md)
 - Statute's terms explained for people: [docs/Glossary.md](docs/Glossary.md)
+- Cutting a release: [docs/Releasing.md](docs/Releasing.md)
 
 ## Issue tracker
 
