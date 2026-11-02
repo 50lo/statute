@@ -1,14 +1,14 @@
 ---
 # st-25bl
 title: Draft Statute's human glossary and start manual consistency review
-status: in-progress
+status: completed
 type: feature
 priority: high
 tags:
     - statute
     - glossary
 created_at: 2026-10-18T12:06:59Z
-updated_at: 2026-10-18T21:47:20Z
+updated_at: 2026-11-01T12:20:00Z
 ---
 
 ## What

@@ -1,6 +1,6 @@
 # Statute: CLI and agent plugin spec
 
-Status: draft for implementation. Concepts, vocabulary and the change loop are defined in the one-pager, [Statute: keeping product rules true](One-pager.md). This spec turns them into file formats, commands and agent behaviour, and does not repeat the rationale.
+Concepts, vocabulary and the change loop are defined in the one-pager, [Statute: keeping product rules true](One-pager.md). This spec turns them into file formats, commands and agent behaviour, and does not repeat the rationale.
 
 ## 1. Scope
 
@@ -235,7 +235,7 @@ Fingerprint modes:
 | --- | --- | --- |
 | `bytes-sha256-v1` | any file | Fallback for every language |
 | `go-ast-sha256-v1` | `file.go#Func`, `#Type`, `#Type.Method` | Ignores comments and formatting, except `//go:` directives, including the file's `//go:build` line |
-| `python-ast-sha256-v1` | `file.py#func`, `#Class`, `#Class.method` | Ignores comments, docstrings and formatting. Ported from nodrift |
+| `python-ast-sha256-v1` | `file.py#func`, `#Class`, `#Class.method` | Ignores comments, docstrings and formatting |
 | `rust-ast-sha256-v1` | `file.rs#func`, `#Type`, `#Type.method`, `#module.func` | Ignores comments, doc comments, trailing commas and formatting; attributes count |
 
 The symbol modes are built on tree-sitter (5.1). Each mode's hash input is fixed by golden fixtures; a change that alters a fingerprint is a new mode version. Later modes (Swift, TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
@@ -344,7 +344,7 @@ Speed. `check` runs in the Stop hook at the end of every agent turn, so its cost
 - Parse each changed code file once, in parallel, with one tree-sitter parser per thread, and compute every fingerprint that file needs in that pass.
 - Statute's own files are small: parse all of them, and the base versions of `decisions.db`, `gaps.yml` and `statute.lock`, on every run.
 - `check --all` is the only full-repository pass. It walks files in parallel, re-fingerprints every link, and searches for term names with one automaton.
-- Budget: `check` finishes in under 100 ms on Footprints, measured with `hyperfine` from milestone 2 onward.
+- Budget: `check` finishes in under 100 ms, measured with `hyperfine`.
 
 ## 6. Agent plugin
 
@@ -372,66 +372,20 @@ The CLI is a prerequisite; each skill checks for it and stops with install instr
 | --- | --- | --- | --- |
 | `adopt` | Setting Statute up in a repo | Read existing docs, contracts, ADRs and decision logs and convert them into the Statute format; draft terms with `code` and `not` entries; draft rules per area with `rule new` (statement, terms, protected and boundary cases), each with a code link and a test link | One decision per area that establishes its rules and lists its terms, `statute check` passing, a list for human approval |
 | `change` | After any code change in the repo | `statute check`; relink missing targets at their new location; for each rule with stale or missing links: read the rule and code, try the protected and boundary cases, decide holds / changing on purpose / broken; for each open tracker gap whose issue is closed, check the rule against the current code and close the gap only if it holds | `statute review RULE …` per rule, `decide` or a gap as needed, `statute check --md` in the PR, written so a PM or designer can follow it |
-| `decide` | A choice passes the decision gates (kept from Footprints AGENTS.md), or a rule or term needs to change, or a term should no longer be used | Write summary and rationale; draft new or changed rule sections and terms; list a term to retire in `retires_terms`, leaving its section, and move the rules that use it to a successor or retire them; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
+| `decide` | A choice passes the decision gates (the decision policy in AGENTS.md, if it has one), or a rule or term needs to change, or a term should no longer be used | Write summary and rationale; draft new or changed rule sections and terms; list a term to retire in `retires_terms`, leaving its section, and move the rules that use it to a successor or retire them; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
 | `approve` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute approve D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term in its `terms` that was never agreed; leave each term in its `retires_terms` agreed and unchanged; run `statute check` until no reference to the removed items remains |
 
 ### 6.3 Hook (Claude Code and Codex desktop)
 
 One Stop/end-of-turn hook: `statute check --json`, against the merge-base with the default branch plus the working tree, so commits made during the session are covered. If links are stale or missing, it returns a message telling the agent to run the `change` skill. It never blocks the human and never reviews on its own.
 
-## 7. Footprints migration
+## 7. Ideas for v2
 
-Footprints is converted into the Statute format once, with the `adopt` skill and a disposable conversion script that is not part of the CLI. Afterwards it keeps no files in the old formats.
-
-| Today | Statute |
-| --- | --- |
-| `docs/UBIQUITOUS_LANGUAGE.md` | Converted to `statute/terms.md`; add `code` and `not` entries, starting with "Session" vs the `sessions` table. The terms are approved through the area adopt decisions |
-| `agent_rules.yml` | Rewritten as a short "Project principles" section in AGENTS.md, in plain language; the file is removed. These are the "project principles" in the AGENTS.md precedence |
-| `decisions_log.yml` | Converted to `statute/decisions.db`; add `establishes`, `changes` and `retires`; convert IDs to the D format and update references to them. Each converted decision is active, with `approved_by` set to Anton and its original date |
-| Contract docs | Converted to `statute/rules/<area>.md` with a `prefix` in the frontmatter; split prose into ID'd rule sections, starting with `session_commit_attribution_contract.md`. Rules that no converted decision establishes are established by the area's adopt decision |
-| `no-drift.lock` | Converted to `statute.lock` by the conversion script: run `nodrift check` first and require it to be clean, then recompute every fingerprint with Statute. Bindings to guides are not converted, and the SQL ownership doc stays an ordinary doc |
-| Decision Policy section in AGENTS.md | Kept as the `decide` skill's gates; AGENTS.md gets the snippet from 6.1 |
-| Beans | Named in AGENTS.md as the issue tracker for gaps |
-
-## 8. Milestones
-
-1. **Model and checks.** Rust CLI skeleton; parsers for terms, rules (with frontmatter prefixes), decisions and the gaps file; `init`, `rule new`, `show` for rules, terms and decisions, `check` for files, `status`. In this milestone `status` reports agreed and built states only; stale, incomplete and broken arrive with milestones 2 to 4. Convert Footprints terms, rules and decisions with a disposable script.
-2. **Links.** Reimplement nodrift's fingerprinting in the CLI: `bytes`, and the `go-ast` and `python-ast` modes on tree-sitter; code and test links with the completeness check; `link` (including setting `built`), `review`, `show` for files and symbols, `check` with stale and missing links against the base, and `check --all`. Convert Footprints' `no-drift.lock` with the same script.
-3. **Decisions.** `decide`, `approve`, append-only checks, `check --md`.
-4. **Gaps.** `gap open`, `gap close`; the gaps index; derived `broken` state.
-5. **Plugin.** AGENTS.md snippet and the four skills for Claude Code and Codex, including tracker reconciliation in `change`; Stop hook for Claude Code and manually installed, trusted Codex desktop plugins.
-6. **Seeded violations.** Write the violation set for the pilot rules (section 9).
-7. **Second repo.** Port to a deliberately different repo (Swift) by adding a tree-sitter Swift mode; record what else had to change.
-
-Milestones 1–6 are enough to run the 3–4 week pilot on the Footprints attribution contract.
-
-## 9. Pilot measures
-
-Recorded from decisions, gaps and the PR "Rule impact" sections, so measurement costs nothing extra:
-
-- Real problems caught: gaps and rule-changing decisions that a human confirms were real.
-- False alarms, per trigger: stale code links and stale test links whose rule held with no relevant change. A high rate means links are too coarse.
-- Cost: minutes per PR spent on review and decisions (self-reported in the PR).
-- Understanding: can someone who did not write the rules explain the attribution workflow from the rule file alone?
-- Contributors: how many changes came from PMs or designers, and whether the loop worked for them without engineer help.
-
-Seeded violations measure detection directly, because real rule breaks may be rare during the pilot:
-
-- For each pilot rule, write several plausible rule-breaking changes of different kinds: an edit inside linked code, new code elsewhere (a new filter, a new caller), a changed default or config, a weakened or deleted test.
-- Apply each on a branch, run the loop and the project's CI, and record whether it was caught and by what: code link, test link, failing test in CI, or nothing.
-- Report what each trigger caught and its false alarms. This shows which mechanisms earn their place.
-
-## 10. Ideas for v2
-
-Ideas worth keeping that v1 leaves out to stay simple. Each goes in only when the pilot shows a need.
+Ideas worth keeping that v1 leaves out to stay simple. Each goes in only when use shows a need.
 
 - **Guide links.** Link descriptive docs, such as code maps and ownership docs, to code, so a change to the code flags the doc for an update.
 - **Term matching.** When a change touches a term's code names, the rules that use the term come up for review.
 - **Markdown section fingerprints.** For rules whose code lives in Markdown, such as agent prompt files.
-
-## 11. Open questions
-
-- Implementation language: Rust (5.1), unless the milestone 1 skeleton shows a problem.
 
 ## Appendix. Usage scenarios
 

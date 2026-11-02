@@ -1,14 +1,14 @@
 ---
 # st-9flm
 title: Retire operational terms without breaking historical references
-status: in-progress
+status: completed
 type: feature
 priority: high
 tags:
     - statute
     - planning
 created_at: 2026-10-18T09:53:27Z
-updated_at: 2026-10-18T21:13:01Z
+updated_at: 2026-11-01T12:20:00Z
 ---
 
 # Term retirement with preserved historical references
