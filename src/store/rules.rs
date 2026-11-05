@@ -184,58 +184,9 @@ pub fn append_section(text: &str, section: &str) -> String {
     out
 }
 
-/// Adds the rule-file prefix to frontmatter, or creates frontmatter when the file has none.
-/// Existing content and frontmatter keys are preserved byte for byte.
-pub fn add_prefix(text: &str, prefix: &str) -> Option<String> {
-    let doc = markdown::scan(text, HeadingLevel::H1);
-    if doc.frontmatter.is_none() {
-        // A leading delimiter without a matching close is malformed frontmatter, not a file
-        // without frontmatter. Do not prepend a second block that could reinterpret its contents.
-        if text
-            .lines()
-            .next()
-            .is_some_and(|line| line.trim_end() == "---")
-        {
-            return None;
-        }
-        return Some(format!("---\nprefix: {prefix}\n---\n\n{text}"));
-    }
-
-    let mut offset = 0;
-    let mut delimiter_count = 0;
-    let mut close = None;
-    for line in text.split_inclusive('\n') {
-        let content = line.trim_end_matches(['\r', '\n']);
-        if content == "---" {
-            delimiter_count += 1;
-            if delimiter_count == 2 {
-                close = Some(offset);
-                break;
-            }
-        }
-        offset += line.len();
-    }
-    let close = close?;
-    let newline = if text.contains("\r\n") { "\r\n" } else { "\n" };
-    let mut out = String::with_capacity(text.len() + prefix.len() + 10);
-    out.push_str(&text[..close]);
-    out.push_str("prefix: ");
-    out.push_str(prefix);
-    out.push_str(newline);
-    out.push_str(&text[close..]);
-    Some(out)
-}
-
-/// Whether the parsed frontmatter already contains a `prefix` key, including an invalid value.
-pub fn has_prefix_key(text: &str) -> bool {
-    let doc = markdown::scan(text, HeadingLevel::H1);
-    let Some(frontmatter) = doc.frontmatter else {
-        return false;
-    };
-    frontmatter.text.lines().any(|line| {
-        line.split_once(':')
-            .is_some_and(|(key, _)| key.trim().trim_matches(['\'', '"']) == "prefix")
-    })
+/// The text of a new rule file: frontmatter that declares `prefix`, and no rules yet.
+pub fn new_file(prefix: &str) -> String {
+    format!("---\nprefix: {prefix}\n---\n")
 }
 
 #[cfg(test)]

@@ -163,7 +163,7 @@ enum ActorArg {
 enum RuleCommand {
     /// Append a rule skeleton to statute/rules/<AREA>.md with the next free ID, and print the ID
     New {
-        /// Initialize the rule file with this prefix if it has none
+        /// Create the rule file with this prefix; refused if the file already exists
         #[arg(long, value_name = "PREFIX")]
         prefix: Option<String>,
         area: String,

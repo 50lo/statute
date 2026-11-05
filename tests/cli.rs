@@ -148,7 +148,7 @@ fn rule_new_needs_a_rule_file_with_a_prefix() {
 }
 
 #[test]
-fn rule_new_prefix_initializes_new_and_existing_rule_files() {
+fn rule_new_prefix_creates_a_new_rule_file() {
     let repo = TestRepo::fixture("valid");
 
     let created = repo.run(&[
@@ -164,44 +164,69 @@ fn rule_new_prefix_initializes_new_and_existing_rule_files() {
     assert_eq!(created.json()["id"], "SHIP-001");
     assert_eq!(created.json()["file"], "statute/rules/shipping.md");
     let created_file = repo.read("statute/rules/shipping.md");
-    assert!(created_file.starts_with("---\nprefix: SHIP\n---\n\n"));
-    assert!(created_file.contains("# SHIP-001 Shipments have a tracking number"));
-
-    let path = "statute/rules/returns.md";
-    let existing = "---\n# Preserve this frontmatter comment\n---\nExisting prose.\n";
-    repo.write(path, existing);
-    let added = repo.run(&[
-        "rule",
-        "new",
-        "returns",
-        "Refunds are recorded",
-        "--prefix",
-        "RET",
-    ]);
-    assert_eq!((added.code, added.stdout.as_str()), (0, "RET-001\n"));
-    let after = repo.read(path);
-    assert!(after.starts_with(
-        "---\n# Preserve this frontmatter comment\nprefix: RET\n---\nExisting prose.\n\n# RET-001 Refunds are recorded"
-    ));
+    assert!(
+        created_file
+            .starts_with("---\nprefix: SHIP\n---\n\n# SHIP-001 Shipments have a tracking number")
+    );
     assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
 
-    let no_frontmatter = "Existing notes stay in place.\n";
-    repo.write("statute/rules/claims.md", no_frontmatter);
-    let initialized = repo.run(&[
-        "rule",
-        "new",
-        "claims",
-        "Claims have a reference",
-        "--prefix",
-        "CLM",
-    ]);
-    assert_eq!(initialized.code, 0, "{}", initialized.stderr);
-    let after = repo.read("statute/rules/claims.md");
-    assert!(after.starts_with("---\nprefix: CLM\n---\n\nExisting notes stay in place.\n\n"));
+    let next = repo.run(&["rule", "new", "shipping", "Shipments have a carrier"]);
+    assert_eq!((next.code, next.stdout.as_str()), (0, "SHIP-002\n"));
 }
 
 #[test]
-fn rule_new_reports_invalid_prefix_and_rejects_invalid_initialization_without_writes() {
+fn rule_new_prefix_refuses_every_existing_file_without_writes() {
+    let repo = TestRepo::fixture("valid");
+
+    for (area, text) in [
+        ("same", "---\nprefix: SAME\n---\n\nExisting content.\n"),
+        ("other", "---\nprefix: OTHER\n---\n"),
+        ("invalid", "---\nprefix: links\n---\n"),
+        ("comment", "---\n# No prefix yet\n---\nExisting prose.\n"),
+        ("key", "---\nowner: me\n---\n"),
+        ("dots", "---\n# c\n...\n\nNotes\n\n```\n---\n```\n"),
+        ("prose", "Existing notes stay in place.\n"),
+        ("empty", ""),
+    ] {
+        let path = format!("statute/rules/{area}.md");
+        repo.write(&path, text);
+        for json in [false, true] {
+            let mut args = vec!["rule", "new", area, "Refunds", "--prefix", "SAME"];
+            if json {
+                args.push("--json");
+            }
+            let run = repo.run(&args);
+            assert_eq!(run.code, 2, "{area}");
+            let message = if json {
+                run.json()["error"].as_str().unwrap().to_string()
+            } else {
+                run.stderr
+            };
+            assert!(
+                message.contains(&format!("{path} already exists")),
+                "{message}"
+            );
+            assert!(
+                message.contains("only creates a new rule file"),
+                "{message}"
+            );
+            assert_eq!(repo.read(&path), text, "{area}");
+        }
+    }
+}
+
+#[test]
+fn rule_new_without_prefix_does_not_check_for_duplicate_prefixes() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("statute/rules/first.md", "---\nprefix: DUP\n---\n");
+    repo.write("statute/rules/second.md", "---\nprefix: DUP\n---\n");
+
+    let added = repo.run(&["rule", "new", "first", "Refunds"]);
+    assert_eq!((added.code, added.stdout.as_str()), (0, "DUP-001\n"));
+}
+
+#[test]
+fn rule_new_reports_invalid_prefix_and_refuses_bad_prefix_options_without_writes() {
     let repo = TestRepo::fixture("valid");
     let path = "statute/rules/billing.md";
     let invalid = "---\nprefix: links\n---\n\nExisting rule file.\n";
@@ -248,14 +273,6 @@ fn rule_new_reports_invalid_prefix_and_rejects_invalid_initialization_without_wr
         assert!(message.contains("prefix"), "{message}");
         assert!(!repo.path(&format!("statute/rules/{area}.md")).exists());
     }
-
-    let already_set_path = "statute/rules/already.md";
-    let already_set_text = "---\nprefix: BILL\n---\n\nExisting content.\n";
-    repo.write(already_set_path, already_set_text);
-    let already_set = repo.run(&["rule", "new", "already", "Refunds", "--prefix", "BILL"]);
-    assert_eq!(already_set.code, 2);
-    assert!(already_set.stderr.contains("already declares a `prefix:`"));
-    assert_eq!(repo.read(already_set_path), already_set_text);
 }
 
 #[test]
