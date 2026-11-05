@@ -13,8 +13,8 @@ pub struct RuleNewReport {
     pub file: String,
 }
 
-/// Appends a rule skeleton to `statute/rules/<area>.md` with the next free ID for the file's prefix.
-pub fn run(area: &str, title: &str) -> Result<RuleNewReport> {
+/// Appends a rule skeleton to `statute/rules/<area>.md`, optionally initializing its prefix.
+pub fn run(area: &str, title: &str, requested_prefix: Option<&str>) -> Result<RuleNewReport> {
     let valid_area = !area.is_empty()
         && area
             .chars()
@@ -26,22 +26,59 @@ pub fn run(area: &str, title: &str) -> Result<RuleNewReport> {
     if title.is_empty() || title.contains('\n') {
         bail!("the title must be one non-empty line");
     }
+    if let Some(prefix) = requested_prefix
+        && !ids::is_prefix(prefix)
+    {
+        bail!("prefix `{prefix}` must be {}", ids::PREFIX_FORMAT);
+    }
 
     let repo = Repo::discover()?;
     let file = paths::rule_file(area);
-    let Some(text) = repo.read(&file)? else {
-        bail!("{file} does not exist; create it with `prefix: <PREFIX>` in its frontmatter first");
-    };
+    let existing_text = repo.read(&file)?;
+    if existing_text.is_none() && requested_prefix.is_none() {
+        bail!(
+            "{file} does not exist; create it with `prefix: <PREFIX>` in its frontmatter first, or use `statute rule new {area} \"{title}\" --prefix <PREFIX>`"
+        );
+    }
     let model = repo.load()?;
-    let prefix = model
+    let existing_prefix = model
         .rule_files
         .iter()
         .find(|f| f.area == area)
-        .and_then(|f| f.prefix.as_deref())
-        .filter(|p| ids::is_prefix(p));
+        .and_then(|f| f.prefix.as_deref());
+    let text = match (existing_text.as_deref(), requested_prefix) {
+        (Some(text), Some(_)) if store::rules::has_prefix_key(text) => {
+            bail!(
+                "{file} already declares a `prefix:`; `--prefix` only initializes a missing prefix"
+            )
+        }
+        (Some(text), Some(prefix)) => store::rules::add_prefix(text, prefix).ok_or_else(|| {
+            anyhow::anyhow!("cannot add `prefix:` to malformed frontmatter in {file}")
+        })?,
+        (None, Some(prefix)) => {
+            store::rules::add_prefix("", prefix).expect("empty text has no frontmatter")
+        }
+        (Some(text), None) => text.to_string(),
+        (None, None) => unreachable!("missing file without --prefix was rejected above"),
+    };
+    let prefix = requested_prefix.or_else(|| existing_prefix.filter(|p| ids::is_prefix(p)));
     let Some(prefix) = prefix else {
+        if let Some(invalid) = existing_prefix {
+            bail!("{file}: prefix `{invalid}` must be {}", ids::PREFIX_FORMAT);
+        }
         bail!("{file} needs a valid `prefix:` in its frontmatter, such as `prefix: BILL`");
     };
+
+    if let Some(other) = model
+        .rule_files
+        .iter()
+        .find(|other| other.area != area && other.prefix.as_deref() == Some(prefix))
+    {
+        bail!(
+            "prefix `{prefix}` is already declared by {}; choose a unique prefix",
+            other.path
+        );
+    }
 
     let last = model
         .rules
