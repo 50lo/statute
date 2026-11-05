@@ -304,7 +304,7 @@ The base for `check` is the merge-base of `HEAD` with the default branch (`origi
 | Command | Does |
 | --- | --- |
 | `init` | Writes `statute.yml`, the default layout and the AGENTS.md snippet (6.1) |
-| `rule new AREA "TITLE"` | Appends a rule skeleton (statement, `scope`, `exceptions`, `protects`, `boundary`) to `rules/<area>.md` with the next free ID for the file's `prefix`, `agreed: proposed` and `built: planned`; prints the ID |
+| `rule new [--prefix PREFIX] AREA "TITLE"` | Appends a rule skeleton (statement, `scope`, `exceptions`, `protects`, `boundary`) to `rules/<area>.md` with the next free ID for the file's `prefix`, `agreed: proposed` and `built: planned`; prints the ID. `--prefix` creates the rule file with that prefix. The prefix must match the prefix format and be unique, and the option refuses a file that already exists. Without `--prefix`, the file must already exist and declare a valid prefix. |
 | `show X...` | Takes one or more files, symbols, rule IDs, terms or decision IDs, and prints each rule once. A file or symbol shows the rules linked to it, with their text and terms. A rule shows its text, links, terms, the decisions that established and changed it, and its gaps. A term shows its definition, the rules that use it, and the decisions that define or retire it. A retired term is labelled retired, also in a rule's term list. A decision shows its entry |
 | `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for the `code` and `not` names of current terms across the repo. `--md` prints the PR "Rule impact" section |
 | `link RULE TARGET [--test] [--remove]` | Adds a link with the current fingerprint, or removes one. Refuses an unknown rule and an existing link. Sets `built: built` when the rule becomes complete |
@@ -391,7 +391,7 @@ Ideas worth keeping that v1 leaves out to stay simple. Each goes in only when us
 
 Informational. These scenarios show how the commands and skills fit together in everyday work; they add no requirements.
 
-**Starting Statute in a new repo.** A person runs `statute init`, which writes the layout and the AGENTS.md snippet. They create `statute/rules/billing.md` with `prefix: BILL` in its frontmatter. There is nothing to adopt, so rules arrive one feature at a time, as in "A PM adds a feature that needs a new rule".
+**Starting Statute in a new repo.** A person runs `statute init`, which writes the layout and the AGENTS.md snippet. They run `statute rule new billing "Large refunds" --prefix BILL`, which creates `statute/rules/billing.md` with `prefix: BILL` and appends the first proposed rule. There is nothing to adopt, so rules arrive one feature at a time, as in "A PM adds a feature that needs a new rule".
 
 **Adopting an area in an existing repo.** The `adopt` skill reads the area's docs and contracts, drafts terms, and drafts rules with `rule new`. It links each rule's code and test with `link`, which sets `built: built` as each rule becomes complete. It then runs `decide --establishes ATTR-001,… --terms Session,… --summary "Adopt existing rules" --rationale …`. After a person approves, the agent runs `approve D…`, and the rules and terms become agreed.
 

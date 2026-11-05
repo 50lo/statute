@@ -25,9 +25,7 @@ pub fn init(r: &InitReport) -> String {
     if matches!(r.agents_md, AgentsMd::Updated) {
         out.push_str("  added the Statute snippet to AGENTS.md\n");
     }
-    out.push_str(
-        "Next: create statute/rules/<area>.md with `prefix: <PREFIX>` in its frontmatter.\n",
-    );
+    out.push_str("Next: run `statute rule new <area> \"<title>\" --prefix <PREFIX>` to create a rule file and its first rule.\n");
     out
 }
 

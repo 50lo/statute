@@ -13,8 +13,8 @@ pub struct RuleNewReport {
     pub file: String,
 }
 
-/// Appends a rule skeleton to `statute/rules/<area>.md` with the next free ID for the file's prefix.
-pub fn run(area: &str, title: &str) -> Result<RuleNewReport> {
+/// Appends a rule skeleton to `statute/rules/<area>.md`. With `requested_prefix`, creates the file.
+pub fn run(area: &str, title: &str, requested_prefix: Option<&str>) -> Result<RuleNewReport> {
     let valid_area = !area.is_empty()
         && area
             .chars()
@@ -26,21 +26,50 @@ pub fn run(area: &str, title: &str) -> Result<RuleNewReport> {
     if title.is_empty() || title.contains('\n') {
         bail!("the title must be one non-empty line");
     }
+    if let Some(prefix) = requested_prefix
+        && !ids::is_prefix(prefix)
+    {
+        bail!("prefix `{prefix}` must be {}", ids::PREFIX_FORMAT);
+    }
 
     let repo = Repo::discover()?;
     let file = paths::rule_file(area);
-    let Some(text) = repo.read(&file)? else {
-        bail!("{file} does not exist; create it with `prefix: <PREFIX>` in its frontmatter first");
+    let text = match (repo.read(&file)?, requested_prefix) {
+        (Some(_), Some(_)) => bail!(
+            "{file} already exists; `--prefix` only creates a new rule file, so run the command without it"
+        ),
+        (None, None) => bail!(
+            "{file} does not exist; create it with `prefix: <PREFIX>` in its frontmatter first, or use `statute rule new {area} \"{title}\" --prefix <PREFIX>`"
+        ),
+        (Some(text), None) => text,
+        (None, Some(prefix)) => store::rules::new_file(prefix),
     };
     let model = repo.load()?;
-    let prefix = model
-        .rule_files
-        .iter()
-        .find(|f| f.area == area)
-        .and_then(|f| f.prefix.as_deref())
-        .filter(|p| ids::is_prefix(p));
-    let Some(prefix) = prefix else {
-        bail!("{file} needs a valid `prefix:` in its frontmatter, such as `prefix: BILL`");
+    let prefix = if let Some(prefix) = requested_prefix {
+        if let Some(other) = model
+            .rule_files
+            .iter()
+            .find(|other| other.prefix.as_deref() == Some(prefix))
+        {
+            bail!(
+                "prefix `{prefix}` is already declared by {}; choose a unique prefix",
+                other.path
+            );
+        }
+        prefix
+    } else {
+        let declared = model
+            .rule_files
+            .iter()
+            .find(|f| f.area == area)
+            .and_then(|f| f.prefix.as_deref());
+        match declared {
+            Some(prefix) if ids::is_prefix(prefix) => prefix,
+            Some(invalid) => bail!("{file}: prefix `{invalid}` must be {}", ids::PREFIX_FORMAT),
+            None => {
+                bail!("{file} needs a valid `prefix:` in its frontmatter, such as `prefix: BILL`")
+            }
+        }
     };
 
     let last = model

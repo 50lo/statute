@@ -1,4 +1,4 @@
-use crate::model::ids::{is_prefix, parse_rule_id};
+use crate::model::ids::{PREFIX_FORMAT, is_prefix, parse_rule_id};
 use crate::model::{Agreed, Finding, Model, Rule};
 use crate::state;
 use std::collections::{BTreeMap, BTreeSet};
@@ -18,7 +18,7 @@ pub fn prefixes(model: &Model, out: &mut Vec<Finding>) {
             out.push(
                 Finding::error(
                     "rule.prefix_invalid",
-                    format!("prefix `{prefix}` must be uppercase letters and digits, starting with a letter"),
+                    format!("prefix `{prefix}` must be {PREFIX_FORMAT}"),
                 )
                 .at(&file.path, None),
             );

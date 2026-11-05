@@ -148,6 +148,151 @@ fn rule_new_needs_a_rule_file_with_a_prefix() {
 }
 
 #[test]
+fn rule_new_prefix_creates_a_new_rule_file() {
+    let repo = TestRepo::fixture("valid");
+
+    let created = repo.run(&[
+        "rule",
+        "new",
+        "--prefix",
+        "SHIP",
+        "shipping",
+        "Shipments have a tracking number",
+        "--json",
+    ]);
+    assert_eq!(created.code, 0, "{}", created.stderr);
+    assert_eq!(created.json()["id"], "SHIP-001");
+    assert_eq!(created.json()["file"], "statute/rules/shipping.md");
+    let created_file = repo.read("statute/rules/shipping.md");
+    assert!(
+        created_file
+            .starts_with("---\nprefix: SHIP\n---\n\n# SHIP-001 Shipments have a tracking number")
+    );
+    assert_eq!(repo.run(&["check", "--json"]).codes(), Vec::<String>::new());
+
+    let next = repo.run(&["rule", "new", "shipping", "Shipments have a carrier"]);
+    assert_eq!((next.code, next.stdout.as_str()), (0, "SHIP-002\n"));
+}
+
+#[test]
+fn rule_new_prefix_refuses_every_existing_file_without_writes() {
+    let repo = TestRepo::fixture("valid");
+
+    for (area, text) in [
+        ("same", "---\nprefix: SAME\n---\n\nExisting content.\n"),
+        ("other", "---\nprefix: OTHER\n---\n"),
+        ("invalid", "---\nprefix: links\n---\n"),
+        ("comment", "---\n# No prefix yet\n---\nExisting prose.\n"),
+        ("key", "---\nowner: me\n---\n"),
+        ("dots", "---\n# c\n...\n\nNotes\n\n```\n---\n```\n"),
+        ("prose", "Existing notes stay in place.\n"),
+        ("empty", ""),
+    ] {
+        let path = format!("statute/rules/{area}.md");
+        repo.write(&path, text);
+        for json in [false, true] {
+            let mut args = vec!["rule", "new", area, "Refunds", "--prefix", "SAME"];
+            if json {
+                args.push("--json");
+            }
+            let run = repo.run(&args);
+            assert_eq!(run.code, 2, "{area}");
+            let message = if json {
+                run.json()["error"].as_str().unwrap().to_string()
+            } else {
+                run.stderr
+            };
+            assert!(
+                message.contains(&format!("{path} already exists")),
+                "{message}"
+            );
+            assert!(
+                message.contains("only creates a new rule file"),
+                "{message}"
+            );
+            assert_eq!(repo.read(&path), text, "{area}");
+        }
+    }
+}
+
+#[test]
+fn rule_new_without_prefix_does_not_check_for_duplicate_prefixes() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("statute/rules/first.md", "---\nprefix: DUP\n---\n");
+    repo.write("statute/rules/second.md", "---\nprefix: DUP\n---\n");
+
+    let added = repo.run(&["rule", "new", "first", "Refunds"]);
+    assert_eq!((added.code, added.stdout.as_str()), (0, "DUP-001\n"));
+}
+
+#[test]
+fn rule_new_reports_invalid_prefix_and_refuses_bad_prefix_options_without_writes() {
+    let repo = TestRepo::fixture("valid");
+    let path = "statute/rules/billing.md";
+    let invalid = "---\nprefix: links\n---\n\nExisting rule file.\n";
+    repo.write(path, invalid);
+
+    for args in [
+        vec!["rule", "new", "billing", "Refunds"],
+        vec!["rule", "new", "billing", "Refunds", "--json"],
+    ] {
+        let run = repo.run(&args);
+        assert_eq!(run.code, 2);
+        let message = if args.contains(&"--json") {
+            run.json()["error"].as_str().unwrap().to_string()
+        } else {
+            run.stderr
+        };
+        assert!(message.contains("statute/rules/billing.md"), "{message}");
+        assert!(
+            message.contains(
+                "prefix `links` must be uppercase letters and digits, starting with a letter"
+            ),
+            "{message}"
+        );
+        assert_eq!(repo.read(path), invalid);
+    }
+
+    for (area, prefix, json) in [
+        ("invalid", "links", false),
+        ("invalid-json", "links", true),
+        ("duplicate", "ATTR", false),
+        ("duplicate-json", "ATTR", true),
+    ] {
+        let mut args = vec!["rule", "new", "--prefix", prefix, area, "Refunds"];
+        if json {
+            args.push("--json");
+        }
+        let run = repo.run(&args);
+        assert_eq!(run.code, 2);
+        let message = if json {
+            run.json()["error"].as_str().unwrap().to_string()
+        } else {
+            run.stderr
+        };
+        assert!(message.contains("prefix"), "{message}");
+        assert!(!repo.path(&format!("statute/rules/{area}.md")).exists());
+    }
+}
+
+#[test]
+fn rule_new_missing_file_error_and_help_point_to_prefix_option() {
+    let repo = TestRepo::empty();
+    repo.run(&["init"]);
+    let missing = repo.run(&["rule", "new", "shipping", "Tracked"]);
+    assert_eq!(missing.code, 2);
+    assert!(
+        missing.stderr.contains("--prefix <PREFIX>"),
+        "{}",
+        missing.stderr
+    );
+
+    let help = repo.run(&["rule", "new", "--help"]);
+    assert_eq!(help.code, 0);
+    assert!(help.stdout.contains("--prefix <PREFIX>"), "{}", help.stdout);
+}
+
+#[test]
 fn rule_new_refuses_to_append_inside_an_unclosed_code_block() {
     let repo = TestRepo::fixture("valid");
     let path = "statute/rules/billing.md";

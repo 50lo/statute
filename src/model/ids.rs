@@ -1,5 +1,8 @@
 //! ID and timestamp formats, shared by `check` and the commands that create IDs.
 
+/// The description shown when a rule-file prefix does not match [`is_prefix`].
+pub const PREFIX_FORMAT: &str = "uppercase letters and digits, starting with a letter";
+
 /// A rule file prefix: `^[A-Z][A-Z0-9]*$`.
 pub fn is_prefix(s: &str) -> bool {
     let mut chars = s.chars();

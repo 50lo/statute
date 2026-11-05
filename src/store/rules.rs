@@ -184,6 +184,11 @@ pub fn append_section(text: &str, section: &str) -> String {
     out
 }
 
+/// The text of a new rule file: frontmatter that declares `prefix`, and no rules yet.
+pub fn new_file(prefix: &str) -> String {
+    format!("---\nprefix: {prefix}\n---\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

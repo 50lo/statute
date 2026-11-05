@@ -162,7 +162,13 @@ enum ActorArg {
 #[derive(Subcommand)]
 enum RuleCommand {
     /// Append a rule skeleton to statute/rules/<AREA>.md with the next free ID, and print the ID
-    New { area: String, title: String },
+    New {
+        /// Create the rule file with this prefix; refused if the file already exists
+        #[arg(long, value_name = "PREFIX")]
+        prefix: Option<String>,
+        area: String,
+        title: String,
+    },
 }
 
 /// Exit codes: 0 clean, 1 findings, 2 usage or file error.
@@ -172,8 +178,14 @@ pub fn run() -> ExitCode {
     let result = match &cli.command {
         Command::Init => commands::init::run().map(|r| emit(json, &r, render::init(&r), 0)),
         Command::Rule {
-            command: RuleCommand::New { area, title },
-        } => commands::rule_new::run(area, title).map(|r| emit(json, &r, r.id.clone(), 0)),
+            command:
+                RuleCommand::New {
+                    area,
+                    title,
+                    prefix,
+                },
+        } => commands::rule_new::run(area, title, prefix.as_deref())
+            .map(|r| emit(json, &r, r.id.clone(), 0)),
         Command::Show { names } => {
             commands::show::run(names).map(|r| emit(json, &r, render::show(&r), 0))
         }
