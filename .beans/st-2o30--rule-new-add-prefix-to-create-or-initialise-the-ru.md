@@ -1,11 +1,11 @@
 ---
 # st-2o30
 title: 'rule new: add --prefix to create the rule file'
-status: todo
+status: completed
 type: feature
 priority: low
 created_at: 2026-10-16T10:03:51Z
-updated_at: 2026-11-05T04:09:01Z
+updated_at: 2026-11-06T10:08:57Z
 ---
 
 ## What
@@ -54,8 +54,14 @@ Without `--prefix`, behaviour stays as it is: the file must already exist and de
 
 ## Acceptance criteria
 
-- [ ] Each row of the behaviour table and both reject cases are covered by tests in `tests/cli.rs`, including that rejected runs exit with code 2 and leave the file unchanged, in text and `--json` output.
-- [ ] Created files pass `statute check` with no new findings.
-- [ ] `statute rule new --help` documents `--prefix`.
-- [ ] The spec describes the option.
-- [ ] `cargo test` passes, including `tests/layering.rs`.
+- [x] Each row of the behaviour table and both reject cases are covered by tests in `tests/cli.rs`, including that rejected runs exit with code 2 and leave the file unchanged, in text and `--json` output.
+- [x] Created files pass `statute check` with no new findings.
+- [x] `statute rule new --help` documents `--prefix`.
+- [x] The spec describes the option.
+- [x] `cargo test` passes, including `tests/layering.rs`.
+
+## Summary of Changes
+
+Implemented in [PR #32](https://github.com/50lo/statute/pull/32), merged as `492476c`. `rule new --prefix` creates a new rule file and its first proposed rule, refuses every existing-file form and invalid or duplicate prefixes without writes, and leaves the existing no-option behavior intact. Help, onboarding hints and the specification describe the option.
+
+Verified on 6 November 2026: `cargo test --locked` passes, including creation, refusal, clean-check, help and layering coverage.
