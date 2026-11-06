@@ -37,6 +37,134 @@ fn base() -> TestRepo {
 }
 
 #[test]
+fn unreadable_base_files_are_errors_even_after_the_working_copy_is_repaired() {
+    for (file, broken) in [
+        ("statute.yml", "version: [\n"),
+        (DECISIONS, "- invalid_field: true\n"),
+        (TERMS, "## Session\n\n```yaml\nagreed: invalid\n```\n"),
+        (
+            ATTRIBUTION,
+            "---\nprefix: ATTR\n---\n# ATTR-001 Rule\n\n```yaml\nagreed: invalid\n```\n",
+        ),
+        ("statute/gaps.yml", "- invalid_field: true\n"),
+        ("statute.lock", "not a lock file\n"),
+    ] {
+        let repo = TestRepo::fixture("valid");
+        let original = repo.read(file);
+        repo.write(file, broken);
+        repo.commit("Unreadable base");
+        let revision = repo.git(&["rev-parse", "HEAD"]);
+        repo.write(file, &original);
+
+        for flags in [vec![], vec!["--all"], vec!["--md"]] {
+            let mut args = vec!["check", "--json"];
+            args.extend(&flags);
+            let run = repo.run(&args);
+            assert_eq!(run.code, 1, "{file}: {}{}", run.stdout, run.stderr);
+            let report = run.json();
+            let finding = report["findings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|f| f["code"] == "base.unreadable")
+                .unwrap_or_else(|| panic!("{file}: {}", run.stdout));
+            assert_eq!(finding["severity"], "error");
+            assert_eq!(finding["file"], file);
+            assert!(
+                finding["message"]
+                    .as_str()
+                    .unwrap()
+                    .contains(revision.trim())
+            );
+            assert!(finding["line"].is_number(), "{finding}");
+
+            let mut args = vec!["check"];
+            args.extend(&flags);
+            let text = repo.run(&args);
+            assert_eq!(text.code, 1);
+            assert!(
+                text.stdout.contains("error[base.unreadable]"),
+                "{}",
+                text.stdout
+            );
+            assert!(text.stdout.contains(file), "{}", text.stdout);
+            assert!(text.stdout.contains(revision.trim()), "{}", text.stdout);
+        }
+    }
+}
+
+#[test]
+fn unreadable_merge_base_decisions_cannot_silently_skip_history_checks() {
+    let source = TestRepo::fixture("valid");
+    let decisions = source.read(DECISIONS);
+    source.write(
+        DECISIONS,
+        &decisions.replace("approved_by:", "ratified_by:"),
+    );
+    source.commit("Old decision schema");
+    let revision = source.git(&["rev-parse", "HEAD"]);
+    let repo = source.clone_repo();
+    repo.write(
+        DECISIONS,
+        &decisions.replace("Sessions no longer expire.", "Sessions never expire."),
+    );
+    let rules = repo.read(ATTRIBUTION);
+    repo.write(
+        ATTRIBUTION,
+        &rules.replace("stores it like any other Session", "discards it"),
+    );
+    let terms = repo.read(TERMS);
+    repo.write(
+        TERMS,
+        &terms.replace("One conversation", "Several conversations"),
+    );
+    repo.commit("New schema and unrecorded history edits");
+
+    let run = repo.run(&["check", "--json"]);
+    assert_eq!(run.code, 1, "{}{}", run.stdout, run.stderr);
+    let report = run.json();
+    let finding = &report["findings"][0];
+    assert_eq!(finding["code"], "base.unreadable");
+    assert_eq!(finding["file"], DECISIONS);
+    let message = finding["message"].as_str().unwrap();
+    assert!(message.contains(revision.trim()), "{message}");
+    assert!(message.contains("[decision.parse]"), "{message}");
+    assert!(message.contains("ratified_by"), "{message}");
+    assert!(!message.contains(repo.git(&["rev-parse", "HEAD"]).trim()));
+}
+
+#[test]
+fn unreadable_base_does_not_hide_current_errors_or_readable_history() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("statute/gaps.yml", "- invalid_field: true\n");
+    repo.commit("Unreadable gaps in base");
+    let decisions = repo.read(DECISIONS);
+    repo.write(
+        DECISIONS,
+        &decisions.replace("Sessions no longer expire.", "Sessions never expire."),
+    );
+    let run = repo.run(&["check", "--json"]);
+    assert_eq!(run.code, 1);
+    let codes = run.error_codes();
+    assert!(codes.contains(&"base.unreadable".to_string()));
+    assert!(codes.contains(&"decision.history_edited".to_string()));
+    assert!(codes.contains(&"gap.parse".to_string()), "{codes:?}");
+}
+
+#[test]
+fn a_base_before_statute_and_a_repository_without_commits_are_readable() {
+    let repo = TestRepo::empty();
+    ok(repo.run(&["init"]));
+    assert!(errors(&repo).is_empty());
+
+    let repo = TestRepo::empty();
+    repo.write("README.md", "Before Statute\n");
+    repo.commit("Before Statute");
+    ok(repo.run(&["init"]));
+    assert!(errors(&repo).is_empty());
+}
+
+#[test]
 fn hist_001_an_active_decision_is_never_edited_or_deleted() {
     let repo = base();
     let decisions = repo.read(DECISIONS);

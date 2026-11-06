@@ -34,7 +34,16 @@ pub fn run(all: bool, md: bool) -> Result<CheckReport> {
     let model = repo.load()?;
     let mut findings = check::run(&model);
     let (rev, base) = repo.load_base()?;
-    if rev.is_some() {
+    if let Some(revision) = &rev {
+        findings.extend(base.problems.iter().map(|problem| Finding {
+            code: "base.unreadable",
+            severity: Severity::Error,
+            message: format!(
+                "base {revision} could not be fully read; comparisons may be incomplete: [{}] {}",
+                problem.code, problem.message
+            ),
+            ..problem.clone()
+        }));
         check::history(&model, &base, &mut findings);
     }
     let mut link_health = Vec::new();
