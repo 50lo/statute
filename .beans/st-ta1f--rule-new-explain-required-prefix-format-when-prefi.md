@@ -1,11 +1,11 @@
 ---
 # st-ta1f
 title: 'rule new: explain required prefix format when prefix is invalid'
-status: todo
+status: completed
 type: bug
 priority: low
 created_at: 2026-10-16T09:32:12Z
-updated_at: 2026-10-16T09:32:12Z
+updated_at: 2026-11-06T10:08:57Z
 ---
 
 ## What
@@ -62,9 +62,15 @@ prefix: links
 
 ## Acceptance criteria
 
-- [ ] `rule new` on a file whose `prefix:` is present but fails `is_prefix` prints an error that includes the offending value and the required format (uppercase letters and digits, starting with a letter).
-- [ ] `rule new` on a file with no `prefix:` still prints a "needs a valid `prefix:`" message.
-- [ ] Both cases exit with code 2 and leave the file unchanged, in both text and `--json` output.
-- [ ] The format wording is defined once and shared with the `rule.prefix_invalid` finding, or the two messages match exactly.
-- [ ] `tests/cli.rs` gains a case for the invalid-prefix path (e.g. `prefix: links`) asserting the new message; the existing missing-prefix assertion still passes.
-- [ ] `cargo test` passes, including `tests/layering.rs`.
+- [x] `rule new` on a file whose `prefix:` is present but fails `is_prefix` prints an error that includes the offending value and the required format (uppercase letters and digits, starting with a letter).
+- [x] `rule new` on a file with no `prefix:` still prints a "needs a valid `prefix:`" message.
+- [x] Both cases exit with code 2 and leave the file unchanged, in both text and `--json` output.
+- [x] The format wording is defined once and shared with the `rule.prefix_invalid` finding, or the two messages match exactly.
+- [x] `tests/cli.rs` gains a case for the invalid-prefix path (e.g. `prefix: links`) asserting the new message; the existing missing-prefix assertion still passes.
+- [x] `cargo test` passes, including `tests/layering.rs`.
+
+## Summary of Changes
+
+Implemented in [PR #32](https://github.com/50lo/statute/pull/32), merged as `492476c`. Malformed prefixes now report the offending value and the shared `PREFIX_FORMAT` description; missing prefixes retain the existing guidance. Regression tests cover malformed-prefix refusals in text and JSON output without writes.
+
+Verified on 6 November 2026: `cargo test --locked` passes, including layering checks. Disposable-repository checks also confirm missing-prefix refusals in text and JSON output return exit 2 and preserve files with absent frontmatter or absent prefix metadata.
