@@ -301,6 +301,8 @@ Every command supports `--json`. Exit codes: 0 = clean, 1 = findings (stale or m
 
 The base for `check` is the merge-base of `HEAD` with the default branch (`origin/HEAD`), plus uncommitted changes in the working tree, including untracked files.
 
+If a Statute file in the base cannot be parsed, `check` reports a `base.unreadable` error (exit 1) with the base revision, file, available line number and original diagnostic. Current-file checks and comparisons using readable base data still run, but comparisons with the base may be incomplete, including the `--md` impact report. Files absent from the base are treated as empty so a base that predates Statute remains valid; a repository without commits has no base to check.
+
 | Command | Does |
 | --- | --- |
 | `init` | Writes `statute.yml`, the default layout and the AGENTS.md snippet (6.1) |

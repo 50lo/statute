@@ -191,7 +191,14 @@ pub fn run() -> ExitCode {
         }
         Command::Check { all, md } => commands::check::run(*all, *md).map(|r| {
             let text = match &r.impact {
-                Some(impact) => render::impact(impact),
+                Some(impact) => {
+                    let impact = render::impact(impact);
+                    if r.findings.iter().any(|f| f.code == "base.unreadable") {
+                        format!("```text\n{}```\n\n{impact}", render::check(&r))
+                    } else {
+                        impact
+                    }
+                }
                 None => render::check(&r),
             };
             emit(json, &r, text, u8::from(r.failed()))
