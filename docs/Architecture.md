@@ -31,6 +31,7 @@ src/
 plugin/
   .claude-plugin/    Claude Code plugin manifest
   .codex-plugin/     Codex plugin manifest
+  .cursor-plugin/    Cursor plugin manifest
   skills/            adopt, change, decide, approve (SKILL.md each)
   hooks/             Stop hook: runs `statute check --json`
   agents-snippet.md  the AGENTS.md snippet; compiled into the binary for `init`

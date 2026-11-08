@@ -8,6 +8,8 @@ input=$(cat)
 case "$input" in
   *'"stop_hook_active":true'* | *'"stop_hook_active": true'*) exit 0 ;;
 esac
+# Cursor stop: loop_count > 0 means this hook already sent a follow-up.
+printf '%s' "$input" | grep -Eq '"loop_count"[[:space:]]*:[[:space:]]*[1-9]' && exit 0
 
 command -v statute >/dev/null 2>&1 || exit 0
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0

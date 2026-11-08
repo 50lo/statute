@@ -354,6 +354,8 @@ Packaging in the first version:
 
 - Claude Code: a plugin with the skills and the Stop hook.
 - Codex: a plugin with the same skills and Stop hook, exposed through the repository marketplace. The hook requires a manual desktop installation and the user's trust approval. Clients without plugin hooks use the skills and AGENTS.md snippet.
+- Cursor: a plugin with the same skills and stop hook, exposed through `.cursor-plugin/marketplace.json`. The hook uses Cursor's native `stop` event and asks once per turn.
+- Pi: a package with the same skills and a lifecycle extension that reminds the agent before the run settles.
 
 The CLI is a prerequisite; each skill checks for it and stops with install instructions if it is missing.
 
@@ -377,7 +379,7 @@ The CLI is a prerequisite; each skill checks for it and stops with install instr
 | `decide` | A choice passes the decision gates (the decision policy in AGENTS.md, if it has one), or a rule or term needs to change, or a term should no longer be used | Write summary and rationale; draft new or changed rule sections and terms; list a term to retire in `retires_terms`, leaving its section, and move the rules that use it to a successor or retire them; ask the review questions from 6.1 and generate cases (retries, concurrency, partial failure, missing data, valid cases the rule would reject); turn them into proposed `protects` and `boundary` cases and proposed tests linked to the rule | Decision with `status: proposed` listing its rules and terms, which stay `proposed` |
 | `approve` | Pending decisions exist, or a human asks to approve | Summarise each pending decision in two lines with its rules, terms and risk; show each changed rule and term as a diff against its agreed text, taken from git: its version in the most recent commit where it read `agreed: agreed`, which may predate the base when the proposal is already on the default branch; show a rule or term that was never agreed as an addition; ask the human to approve, reject or skip each (a skipped decision stays proposed and can be reworked) | `statute approve D...` for the approved decisions. For each rejected decision: delete its entry; for each rule in its `changes` and each term in its `terms` that was agreed before, restore the compared fields (4.1, 4.3) to the agreed text and set `agreed: agreed`, leaving `built`, notes and links as they are; remove each rule in its `establishes` together with its links (`link --remove`), and each term in its `terms` that was never agreed; leave each term in its `retires_terms` agreed and unchanged; run `statute check` until no reference to the removed items remains |
 
-### 6.3 Hook (Claude Code and Codex desktop)
+### 6.3 Hook (Claude Code, Codex desktop and Cursor)
 
 One Stop/end-of-turn hook: `statute check --json`, against the merge-base with the default branch plus the working tree, so commits made during the session are covered. If links are stale or missing, it returns a message telling the agent to run the `change` skill. It never blocks the human and never reviews on its own.
 

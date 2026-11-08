@@ -23,8 +23,19 @@ fn stop_hook(dir: &Path, input: &str) -> String {
         &plugin(""),
     );
     let codex = run_stop_hook(dir, input, "hooks/codex.json", "PLUGIN_ROOT", &plugin(""));
+    let cursor = run_stop_hook(
+        dir,
+        input,
+        "hooks/cursor.json",
+        "CURSOR_PLUGIN_ROOT",
+        &plugin(""),
+    );
     assert_eq!(
         claude, codex,
+        "the hosts must receive the same review request"
+    );
+    assert_eq!(
+        codex, cursor,
         "the hosts must receive the same review request"
     );
     codex
@@ -33,6 +44,9 @@ fn stop_hook(dir: &Path, input: &str) -> String {
 fn hook_command(config: &str) -> String {
     let hooks: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(plugin(config)).unwrap()).unwrap();
+    if let Some(command) = hooks["hooks"]["stop"][0]["command"].as_str() {
+        return command.to_owned();
+    }
     hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
         .as_str()
         .unwrap()
@@ -48,6 +62,7 @@ fn run_stop_hook(dir: &Path, input: &str, config: &str, root_var: &str, root: &P
         .env("PATH", path)
         .env_remove("CLAUDE_PLUGIN_ROOT")
         .env_remove("PLUGIN_ROOT")
+        .env_remove("CURSOR_PLUGIN_ROOT")
         .env(root_var, root)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -96,6 +111,8 @@ fn stop_hook_asks_for_the_change_skill_once_when_links_are_stale() {
     // The agent is already continuing because of the hook: it may stop.
     let again = r#"{"hook_event_name": "Stop", "stop_hook_active": true}"#;
     assert_eq!(stop_hook(&repo.path("."), again), "");
+    let again_cursor = r#"{"hook_event_name":"stop","status":"completed","loop_count":1}"#;
+    assert_eq!(stop_hook(&repo.path("."), again_cursor), "");
 
     let run = repo.run(&["review", "BILL-001", "ok"]);
     assert_eq!(run.code, 0, "{}", run.stderr);
@@ -140,6 +157,21 @@ fn manifests_parse_and_the_hook_command_exists() {
     assert!(plugin(hooks).is_file());
     assert!(hook_command(hooks).contains("${PLUGIN_ROOT}"));
 
+    let cursor: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(plugin(".cursor-plugin/plugin.json")).unwrap(),
+    )
+    .unwrap();
+    for key in ["name", "version", "description", "homepage"] {
+        assert_eq!(cursor[key], manifest[key], "{key}");
+    }
+    let cursor_skills = plugin(cursor["skills"].as_str().unwrap());
+    for skill in ["adopt", "change", "decide", "approve"] {
+        assert!(cursor_skills.join(skill).join("SKILL.md").is_file());
+    }
+    let cursor_hooks = cursor["hooks"].as_str().unwrap();
+    assert!(plugin(cursor_hooks).is_file());
+    assert!(hook_command(cursor_hooks).contains("${CURSOR_PLUGIN_ROOT}"));
+
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let pi_package: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(root.join("package.json")).unwrap()).unwrap();
@@ -175,6 +207,19 @@ fn manifests_parse_and_the_hook_command_exists() {
             .unwrap(),
         plugin("").canonicalize().unwrap()
     );
+
+    let cursor_marketplace: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root.join(".cursor-plugin/marketplace.json")).unwrap(),
+    )
+    .unwrap();
+    let cursor_entry = &cursor_marketplace["plugins"][0];
+    assert_eq!(cursor_entry["name"], cursor["name"]);
+    assert_eq!(
+        root.join(cursor_entry["source"].as_str().unwrap())
+            .canonicalize()
+            .unwrap(),
+        plugin("").canonicalize().unwrap()
+    );
 }
 
 /// Both hosts run the hook command through a shell, so the command must work when the plugin is
@@ -190,6 +235,7 @@ fn hook_command_runs_from_a_path_with_spaces() {
     for (config, root_var) in [
         ("hooks/hooks.json", "CLAUDE_PLUGIN_ROOT"),
         ("hooks/codex.json", "PLUGIN_ROOT"),
+        ("hooks/cursor.json", "CURSOR_PLUGIN_ROOT"),
     ] {
         let output = run_stop_hook(&repo.path("."), INPUT, config, root_var, &root);
         let reply: serde_json::Value = serde_json::from_str(&output).unwrap();

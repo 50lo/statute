@@ -14,7 +14,7 @@ cargo install statute-cli --locked
 
 The package is `statute-cli`; the installed command is `statute`. Git must also be available on your `PATH`.
 
-Install the [Statute integrations for Claude Code, Codex or Pi](https://github.com/50lo/statute/blob/main/plugin/README.md). They give your coding agent the workflows for capturing rules, reviewing changes, proposing decisions and recording your approval.
+Install the [Statute integrations for Claude Code, Codex, Cursor or Pi](https://github.com/50lo/statute/blob/main/plugin/README.md). They give your coding agent the workflows for capturing rules, reviewing changes, proposing decisions and recording your approval.
 
 The CLI must be available on the agent's `PATH`.
 

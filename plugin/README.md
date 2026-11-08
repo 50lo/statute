@@ -12,7 +12,7 @@ cargo install statute-cli --locked
 | `skills/change` | After a code change: reviews the rules whose linked code changed |
 | `skills/decide` | Proposes a decision when a rule or term needs to change |
 | `skills/approve` | Shows pending decisions to a person and records the approval |
-| `hooks/stop.sh` | Claude Code and Codex Stop hook: asks the agent to run `change` when links are stale or missing |
+| `hooks/stop.sh` | Claude Code, Codex and Cursor stop hook: asks the agent to run `change` when links are stale or missing |
 | `../package.json` and `pi/statute.ts` | Pi package: the same skills plus a Pi lifecycle extension for stale or missing links |
 | `agents-snippet.md` | The AGENTS.md section that `statute init` writes |
 
@@ -49,6 +49,20 @@ The hook runs `statute check --json` at the end of a turn. When links are stale 
 Plugin lifecycle hooks currently require a manual installation in Codex desktop. For a client without plugin hooks, copy or symlink the four directories under `skills/` into `.agents/skills/` in the target repository; the AGENTS.md instructions provide the after-change workflow there.
 
 Registering the marketplace makes it available from other projects too. After editing the package, refresh the installed plugin and restart the app to load the updated files.
+
+## Cursor
+
+This directory is also a Cursor plugin: `.cursor-plugin/plugin.json` packages the same four skills and stop hook. The repository's `.cursor-plugin/marketplace.json` exposes it as **statute**.
+
+1. In Cursor, open **Settings → Agents → Plugins** and add this checkout as a marketplace using `.cursor-plugin/marketplace.json`, or install from the Cursor plugin directory once the package is published.
+2. Install the **statute** plugin and enable its stop hook when prompted.
+3. Start a new agent chat and use the Statute `adopt`, `change`, `decide` or `approve` skills. The `statute` CLI must be on your `PATH`.
+
+The stop hook runs `statute check --json` at the end of each agent turn. When links are stale or missing it asks Cursor once to run `change`, via `loop_limit` and by treating `loop_count` greater than zero as a completed reminder. It stays quiet outside a Statute repository and when the CLI is unavailable. The AGENTS.md section from `statute init` also tells the agent to run `change` after code changes. Only a person's explicit approval allows the `approve` skill to activate a decision.
+
+With **Include Third-Party Plugins, Skills, and Other Configs** enabled, the Claude Code marketplace install also loads these skills; for the stop hook, prefer this native Cursor package so `loop_limit` and `${CURSOR_PLUGIN_ROOT}` apply.
+
+Hook behaviour is documented in the [Cursor hooks reference](https://cursor.com/docs/hooks) and [plugins reference](https://cursor.com/docs/reference/plugins).
 
 ## Pi
 

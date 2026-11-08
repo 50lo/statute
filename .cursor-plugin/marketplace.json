@@ -1,0 +1,13 @@
+{
+  "name": "statute",
+  "owner": {
+    "name": "Anton Solo"
+  },
+  "plugins": [
+    {
+      "name": "statute",
+      "source": "./plugin",
+      "description": "Keeps a product's rules written down, linked to code, and checked on every change. Needs the statute CLI."
+    }
+  ]
+}
