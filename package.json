@@ -1,6 +1,6 @@
 {
   "name": "statute-pi",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Pi package for Statute skills and end-of-run link checks",
   "homepage": "https://github.com/50lo/statute",
   "keywords": ["pi-package"],
