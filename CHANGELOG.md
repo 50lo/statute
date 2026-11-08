@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix release builds for Apple Silicon macOS.
+
 ## 0.3.1 - 2026-11-08
 
 - Fix plugins versioning.
