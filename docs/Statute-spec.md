@@ -229,7 +229,7 @@ A link connects a rule to a code or test target, with a fingerprint. `statute.lo
 - Test links target a specific test (`file_test.go#TestName`), so a change to that test is detected precisely.
 - `link` records the current fingerprint and refuses to replace an existing link. A stale link is refreshed only through `review`.
 - A link is missing when its target is not found (renamed, moved or deleted), matches more than one symbol, or sits in a file that does not parse cleanly. A partial parse never counts as unchanged. `link` refuses a target that matches more than one symbol, and `review` refuses a rule with a missing link.
-- A parse error is fixed in the file. For a target that moved, the agent checks the rule as for a stale link, then removes the link with `link --remove` and links the new location. Relinking is the agent's statement that the rule still holds, like `review RULE ok`, and the PR "Rule impact" section lists the rule as relinked.
+- A parse error is fixed in the file. For a Swift symbol link whose file the Swift parser cannot read cleanly, the agent can instead check the rule, remove the symbol link with `link --remove`, and link the same symbol again; that falls back to a whole-file link. `check` and `review` explain this option for a Swift parse error. For a target that moved, the agent checks the rule as for a stale link, then removes the link with `link --remove` and links the new location. Relinking is the agent's statement that the rule still holds, like `review RULE ok`, and the PR "Rule impact" section lists the rule as relinked.
 
 Fingerprint modes:
 
@@ -239,8 +239,15 @@ Fingerprint modes:
 | `go-ast-sha256-v1` | `file.go#Func`, `#Type`, `#Type.Method` | Ignores comments and formatting, except `//go:` directives, including the file's `//go:build` line |
 | `python-ast-sha256-v1` | `file.py#func`, `#Class`, `#Class.method` | Ignores comments, docstrings and formatting |
 | `rust-ast-sha256-v1` | `file.rs#func`, `#Type`, `#Type.method`, `#module.func` | Ignores comments, doc comments, trailing commas and formatting; attributes count |
+| `swift-ast-sha256-v1` | `file.swift#func`, `#Type`, `#Type.member`, `#Outer.Inner.member` | Ignores comments, doc comments, formatting and trailing commas except in macro arguments and attributes; attributes and modifiers count |
 
-The symbol modes are built on tree-sitter (5.1). Each mode's hash input is fixed by golden fixtures; a change that alters a fingerprint is a new mode version. Later modes (Swift, TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
+The symbol modes are built on tree-sitter (5.1). Each mode's hash input is fixed by golden fixtures; a change that alters a fingerprint is a new mode version. Later modes (such as TypeScript) use tree-sitter behind the same interface. A symbol fingerprint does not cover its dependencies; link those separately when they matter, and rely on test links for new code.
+
+Swift symbols include top-level functions and types (class, struct, enum, actor, protocol and typealias), nested types, and functions, initializers, deinitializers, subscripts, and stored and computed `var` and `let` members of types and extensions. Top-level variables and constants are not symbols. A type target covers its primary declaration and its members, but not extensions. Extension members use the extended type name, including any nested path, without generic arguments or a `where` clause. Protocol requirements are covered by the protocol target but are not separate symbols; a default implementation in an extension is a separate symbol.
+
+A function, initializer or subscript can be named by its base name when that matches exactly one declaration, or by its Swift argument labels, such as `Invoice.init(name:)`, `move(to:)`, `f(_:)` or `Type.subscript(_:)`. Quote targets containing parentheses in a shell. Matching multiple declarations is ambiguous, including declarations in different `#if` branches.
+
+When a requested Swift symbol's file does not parse cleanly, `link` records the whole file with `bytes-sha256-v1` instead. It reports the fallback in human output; JSON reports the recorded `target` and `mode`, the original target in `requested`, and `"fallback": "parse-error"`. If that rule already links the whole file, it succeeds and reports the existing link without changing it, even if the requested role differs; JSON reports the existing role. An existing link to the requested symbol is refused before parsing, even if that rule also links the whole file. A missing or ambiguous symbol in a clean Swift file is still refused, as are parse errors in Go, Python and Rust symbol targets. The fallback does not retain the requested symbol in the lock. Existing symbol links whose files stop parsing remain missing; `check` does not change the lock, and `review` still refuses them.
 
 Targets are files or symbols, never directories. `check` re-fingerprints only links whose target file changed since the merge-base with the default branch or in the working tree, so its cost grows with the size of the change, not the size of the repo. `check --all` re-fingerprints every link, which catches links made stale by changes that reached the default branch without Statute.
 
@@ -333,7 +340,7 @@ The CLI is written in Rust and ships as one static binary per platform. Every de
 | YAML: metadata blocks, frontmatter, decisions, gaps, `statute.yml` | `yaml_serde` | The YAML organization's maintained fork of `serde_yaml` |
 | JSON: `statute.lock` (JSON Lines), `--json` | `serde_json` | |
 | Markdown: rule and term sections, frontmatter | `pulldown-cmark` | Byte offsets for headings and fenced blocks |
-| Symbol fingerprints | `tree-sitter` with `tree-sitter-go`, `tree-sitter-python`, `tree-sitter-rust`; later Swift and TypeScript | Grammars are C, compiled into the binary |
+| Symbol fingerprints | `tree-sitter` with `tree-sitter-go`, `tree-sitter-python`, `tree-sitter-rust`, `tree-sitter-swift`; later TypeScript | Grammars are C, compiled into the binary |
 | Hashing | `sha2` | |
 | Changed files, base versions of Statute files, approver name | the `git` command | `git diff -z`, plus `git ls-files --others --exclude-standard -z` for untracked files; base files through one `git cat-file --batch` process |
 | Repository walk for `check --all` | `ignore` | ripgrep's parallel walker; respects `.gitignore` |

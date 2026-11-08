@@ -35,10 +35,14 @@ fn syntax_error_outside_the_symbol(file: &str, clean: &str, broken: &str, mode: 
     assert_eq!(findings.len(), 2, "{findings:?}");
     let symbol_finding = findings.iter().find(|f| f["target"] == target).unwrap();
     assert_eq!(symbol_finding["code"], "link.missing");
-    assert_eq!(
-        symbol_finding["message"],
-        format!("{target} is missing: the file does not parse cleanly")
-    );
+    let message = symbol_finding["message"].as_str().unwrap();
+    let expected = format!("{target} is missing: the file does not parse cleanly");
+    if mode == "swift-ast-sha256-v1" {
+        assert!(message.starts_with(&expected));
+        assert!(message.contains("parser may not support it yet"));
+    } else {
+        assert_eq!(message, expected);
+    }
     let bytes_finding = findings.iter().find(|f| f["target"] == file).unwrap();
     assert_eq!(bytes_finding["code"], "link.stale");
 
@@ -93,5 +97,15 @@ fn rust_symbol_is_missing_for_a_syntax_error_elsewhere_but_bytes_still_work() {
         "fn keep() -> u8 {\n    1\n}\n",
         "fn keep() -> u8 {\n    1\n}\n\nfn broken( {\n}\n",
         "rust-ast-sha256-v1",
+    );
+}
+
+#[test]
+fn swift_symbol_is_missing_for_a_syntax_error_elsewhere_but_bytes_still_work() {
+    syntax_error_outside_the_symbol(
+        "src/example.swift",
+        "func keep() -> Int { 1 }\n",
+        "func keep() -> Int { 1 }\n\nfunc broken( {\n}\n",
+        "swift-ast-sha256-v1",
     );
 }

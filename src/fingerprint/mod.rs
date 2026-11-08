@@ -3,6 +3,7 @@
 mod go;
 mod python;
 mod rust;
+mod swift;
 mod syntax;
 
 use crate::model::Mode;
@@ -67,6 +68,7 @@ pub fn sign(
             Mode::GoAstSha256V1 => go::sign(bytes, &names),
             Mode::PythonAstSha256V1 => python::sign(bytes, &names),
             Mode::RustAstSha256V1 => rust::sign(bytes, &names),
+            Mode::SwiftAstSha256V1 => swift::sign(bytes, &names),
         };
         for ((i, _), hash) in wanted.iter().zip(hashes) {
             results[*i] = hash;
@@ -85,6 +87,7 @@ pub fn mode_for(file: &str, symbol: Option<&str>) -> Option<Mode> {
         Some("go") => Some(Mode::GoAstSha256V1),
         Some("py") => Some(Mode::PythonAstSha256V1),
         Some("rs") => Some(Mode::RustAstSha256V1),
+        Some("swift") => Some(Mode::SwiftAstSha256V1),
         _ => None,
     }
 }

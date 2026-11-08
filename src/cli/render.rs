@@ -194,7 +194,19 @@ pub fn link(r: &LinkReport) -> String {
     if r.removed {
         return format!("Removed the link from {} to {}\n", r.rule, r.target);
     }
-    let mut out = format!("Linked {} to {} ({})\n", r.rule, r.target, role(r.role));
+    let mut out = if let Some(requested) = &r.requested {
+        let action = if r.already_linked {
+            "Already linked"
+        } else {
+            "Linked"
+        };
+        format!(
+            "{action} {} to {} (whole file): {} could not be linked because the Swift parser cannot read the file cleanly\n",
+            r.rule, r.target, requested
+        )
+    } else {
+        format!("Linked {} to {} ({})\n", r.rule, r.target, role(r.role))
+    };
     if r.built {
         let _ = writeln!(out, "{} is complete and now `built: built`", r.rule);
     }

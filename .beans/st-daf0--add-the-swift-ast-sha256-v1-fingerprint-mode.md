@@ -1,10 +1,11 @@
 ---
 # st-daf0
 title: Add the swift-ast-sha256-v1 fingerprint mode
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:23:13Z
 parent: st-97ld
 blocked_by:
     - st-hqdq

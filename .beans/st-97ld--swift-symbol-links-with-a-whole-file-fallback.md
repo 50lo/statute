@@ -1,10 +1,11 @@
 ---
 # st-97ld
 title: Swift symbol links with a whole-file fallback
-status: todo
+status: in-progress
 type: epic
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:23:00Z
 ---
 
 ## What

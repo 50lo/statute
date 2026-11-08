@@ -1,10 +1,11 @@
 ---
 # st-4dc0
 title: Fall back to a whole-file link when a Swift file does not parse cleanly
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:23:13Z
 parent: st-97ld
 blocked_by:
     - st-hqdq

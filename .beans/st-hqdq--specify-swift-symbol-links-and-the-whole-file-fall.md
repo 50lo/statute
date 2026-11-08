@@ -1,10 +1,11 @@
 ---
 # st-hqdq
 title: Specify Swift symbol links and the whole-file fallback, and propose a decision
-status: todo
+status: in-progress
 type: task
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:23:00Z
 parent: st-97ld
 ---
 
