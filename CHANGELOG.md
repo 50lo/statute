@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix plugins versioning.
+
 ## 0.3.0 - 2026-11-08
 
 - Add Swift symbol links.
