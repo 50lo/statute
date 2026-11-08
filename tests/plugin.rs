@@ -134,6 +134,7 @@ fn manifests_parse_and_the_hook_command_exists() {
     )
     .unwrap();
     assert_eq!(manifest["name"], "statute");
+    assert_eq!(manifest["version"], env!("CARGO_PKG_VERSION"));
     let hooks: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(plugin("hooks/hooks.json")).unwrap())
             .unwrap();
@@ -175,6 +176,7 @@ fn manifests_parse_and_the_hook_command_exists() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let pi_package: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(root.join("package.json")).unwrap()).unwrap();
+    assert_eq!(pi_package["version"], env!("CARGO_PKG_VERSION"));
     let pi_manifest = &pi_package["pi"];
     let extensions = pi_manifest["extensions"].as_array().unwrap();
     assert!(!extensions.is_empty(), "Pi package has no extensions");

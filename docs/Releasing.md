@@ -19,7 +19,7 @@ cargo release minor --execute
 
 This:
 
-1. Bumps the version in `Cargo.toml`, `Cargo.lock`, `plugin/.claude-plugin/plugin.json` and `plugin/.codex-plugin/plugin.json`.
+1. Bumps the version in `Cargo.toml`, `Cargo.lock`, the Claude, Codex and Cursor plugin manifests, and the Pi `package.json`.
 2. Renames `## Unreleased` in `CHANGELOG.md` to `## X.Y.Z - YYYY-MM-DD` and adds an empty `## Unreleased` above it.
 3. Commits `Release vX.Y.Z`, tags `vX.Y.Z` and pushes both to `main`.
 
