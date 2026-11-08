@@ -4,7 +4,7 @@ A word or phrase used in the product, with a definition and the names used for i
 
 ```yaml
 agreed: agreed
-code: []
+code: [Term, TermMeta]
 not: []
 aliases: []
 avoid: []
@@ -16,7 +16,7 @@ A statement of one thing that must be true about the product, and when. A person
 
 ```yaml
 agreed: agreed
-code: []
+code: [Rule, RuleMeta]
 not: []
 aliases: []
 avoid: []
@@ -28,7 +28,7 @@ A recorded choice about rules or terms, with the reason for it. It starts as a p
 
 ```yaml
 agreed: agreed
-code: []
+code: [Decision, DecisionDraft]
 not: []
 aliases: []
 avoid: []
@@ -40,7 +40,7 @@ A connection from a rule to a code or test target, with a fingerprint used to de
 
 ```yaml
 agreed: agreed                   # proposed | agreed | retired
-code: [LinkLine]
+code: [Link, LinkLine]
 not: []
 aliases: []
 avoid: []
@@ -78,7 +78,7 @@ A stated procedure for a person to verify a rule whose behavior an automated tes
 
 ```yaml
 agreed: agreed
-code: []
+code: [manual_check]
 not: []
 aliases: []
 avoid: []
@@ -114,7 +114,7 @@ A known mismatch between a rule and the implementation, tracked as an issue unti
 
 ```yaml
 agreed: agreed
-code: []
+code: [Gap, GapStatus]
 not: []
 aliases: []
 avoid: []
@@ -150,7 +150,7 @@ A rule that a change brings up for review. Being affected means the rule needs a
 
 ```yaml
 agreed: agreed
-code: []
+code: [RuleImpact]
 not: []
 aliases: []
 avoid: []
@@ -162,7 +162,7 @@ An assessment by the agent of whether an affected rule still holds after a chang
 
 ```yaml
 agreed: agreed
-code: []
+code: ["review::Verdict", ReviewReport]
 not: []
 aliases: []
 avoid: []
@@ -174,7 +174,7 @@ A person's explicit acceptance of a specific proposed decision. An agent can pre
 
 ```yaml
 agreed: agreed
-code: []
+code: [ApprovedBy, approved_by]
 not: []
 aliases: []
 avoid: []
