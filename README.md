@@ -1,10 +1,12 @@
-# Statute
+![Statute Logo](docs/images/statute-logo-dark.svg)
 
-Statute keeps a product's important rules written down, linked to code, and checked every time the code changes.
+# Statute 
+
+Statute keeps a product's important **rules** written down, **linked to code**, and checked every time the code changes.
 
 A rule says what must be true, why it matters, and where the code and tests make it true. When linked code changes, Statute flags the rule for review. If the code and a rule disagree, the disagreement stays visible until someone fixes the code or a person approves a decision to change the rule.
 
-## Install
+## Install CLI and Skills
 
 Install a [Rust toolchain](https://www.rust-lang.org/tools/install), then run:
 
