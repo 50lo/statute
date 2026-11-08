@@ -74,7 +74,7 @@ boundary:
 When `link` is asked to link a Swift symbol that the rule does not already link and the file does not parse cleanly, it records a whole-file link instead and reports the fallback. If the rule already links that whole file, it leaves the existing link unchanged and reports that it is already linked, regardless of the requested role.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Creating a Swift symbol link.
 terms: [Link]

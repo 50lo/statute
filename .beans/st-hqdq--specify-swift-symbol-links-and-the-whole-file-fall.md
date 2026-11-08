@@ -1,11 +1,11 @@
 ---
 # st-hqdq
 title: Specify Swift symbol links and the whole-file fallback, and propose a decision
-status: in-progress
+status: completed
 type: task
 priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T11:23:00Z
+updated_at: 2026-11-08T11:48:13Z
 parent: st-97ld
 ---
 
@@ -80,11 +80,11 @@ Each question has a recommendation. You may choose differently, but give the rea
 
 ## Acceptance criteria
 
-- [ ] Each question in step 2 has an answer in the spec or architecture doc.
-- [ ] The line-break question has a written conclusion: "no case found", with the cases tried, or "separator added", with the case.
-- [ ] Spec 4.4 and 5.1 and Architecture 6 and 6.1 describe the Swift mode and the fallback.
-- [ ] A proposed decision lists the new fallback rule and any changed rule. `statute check` passes.
-- [ ] A person has approved the decision, and `statute approve` has recorded it. Approval may come after st-daf0 starts, but before st-daf0 and st-4dc0 are merged.
+- [x] Each question in step 2 has an answer in the spec or architecture doc.
+- [x] The line-break question has a written conclusion: "no case found", with the cases tried, or "separator added", with the case.
+- [x] Spec 4.4 and 5.1 and Architecture 6 and 6.1 describe the Swift mode and the fallback.
+- [x] A proposed decision lists the new fallback rule and any changed rule. `statute check` passes.
+- [x] A person has approved the decision, and `statute approve` has recorded it. Approval may come after st-daf0 starts, but before st-daf0 and st-4dc0 are merged.
 
 ## Constraints
 
