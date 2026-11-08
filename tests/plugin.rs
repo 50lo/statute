@@ -141,6 +141,26 @@ fn manifests_parse_and_the_hook_command_exists() {
     assert!(hook_command(hooks).contains("${PLUGIN_ROOT}"));
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let pi_package: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(root.join("package.json")).unwrap()).unwrap();
+    let pi_manifest = &pi_package["pi"];
+    let extensions = pi_manifest["extensions"].as_array().unwrap();
+    assert!(!extensions.is_empty(), "Pi package has no extensions");
+    for extension in extensions {
+        assert!(
+            root.join(extension.as_str().unwrap()).is_file(),
+            "missing Pi extension: {extension}"
+        );
+    }
+    let skill_paths = pi_manifest["skills"].as_array().unwrap();
+    assert!(!skill_paths.is_empty(), "Pi package has no skills");
+    for skills in skill_paths {
+        let skills = root.join(skills.as_str().unwrap());
+        for skill in ["adopt", "change", "decide", "approve"] {
+            assert!(skills.join(skill).join("SKILL.md").is_file());
+        }
+    }
+
     let marketplace: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(root.join(".agents/plugins/marketplace.json")).unwrap(),
     )
