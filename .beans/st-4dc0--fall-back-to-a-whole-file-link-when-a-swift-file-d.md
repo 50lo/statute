@@ -62,16 +62,20 @@ The second case: an existing link `Invoice.swift#Invoice.approve` goes missing a
 
 ## Acceptance criteria
 
-- [ ] `link` on a Swift symbol in a file with a parse error records a `bytes-sha256-v1` link to the whole file, exits 0, and prints the reason. `--json` includes `requested` and `fallback`.
-- [ ] `link` on a missing Swift symbol (`NoSymbol`) or an ambiguous one in a clean file is still refused with exit 2, and `statute.lock` is unchanged.
-- [ ] `link` on a Go, Python or Rust symbol in a file with a parse error is still refused. The existing `tests/symbol_parse_contract.rs` cases pass unchanged.
-- [ ] End-to-end test of the full path: link `File.swift#keep` while the file parses → commit → add a construct the grammar cannot parse → `check` reports `link.missing` with the hint → `review RULE ok` is refused with the hint → `link --remove` and `link` again → the lock has a whole-file `bytes-sha256-v1` link → `review` and `check` pass.
-- [ ] A test for the case where the rule already links the whole file.
-- [ ] The rule added by the st-hqdq decision has a code link to `src/commands/link.rs#add` (and to any helper that decides the fallback) and a test link to the new end-to-end test.
-- [ ] The `change` skill has run, with verdicts for LINKS-001, LINKS-004, CORE-002, CORE-003, LINKS-003 and the new rule.
+- [x] `link` on a Swift symbol in a file with a parse error records a `bytes-sha256-v1` link to the whole file, exits 0, and prints the reason. `--json` includes `requested` and `fallback`.
+- [x] `link` on a missing Swift symbol (`NoSymbol`) or an ambiguous one in a clean file is still refused with exit 2, and `statute.lock` is unchanged.
+- [x] `link` on a Go, Python or Rust symbol in a file with a parse error is still refused. The existing `tests/symbol_parse_contract.rs` cases pass unchanged.
+- [x] End-to-end test of the full path: link `File.swift#keep` while the file parses → commit → add a construct the grammar cannot parse → `check` reports `link.missing` with the hint → `review RULE ok` is refused with the hint → `link --remove` and `link` again → the lock has a whole-file `bytes-sha256-v1` link → `review` and `check` pass.
+- [x] A test for the case where the rule already links the whole file.
+- [x] The rule added by the st-hqdq decision has a code link to `src/commands/link.rs#add` (and to any helper that decides the fallback) and a test link to the new end-to-end test.
+- [x] The `change` skill has run, with verdicts for LINKS-001, LINKS-004, CORE-002, CORE-003, LINKS-003 and the new rule.
 
 ## Dependencies
 
 - Blocked by st-hqdq: the fallback rule and the exact behaviour must be in the spec and the decision.
 - Blocked by st-daf0: the Swift mode must exist.
 - The decision must be approved before this is merged.
+
+## Summary of Changes
+
+Added the Swift-only whole-file fallback, clear human and JSON reporting, and check/review recovery guidance. End-to-end tests cover retries, missing and ambiguous symbols, other languages and relinking after a parse error.

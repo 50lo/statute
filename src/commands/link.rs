@@ -26,6 +26,8 @@ pub struct LinkReport {
     pub fallback: Option<&'static str>,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub already_linked: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub requested_role: Option<LinkRole>,
 }
 
 /// Adds a link with the current fingerprint, and sets `built: built` when the rule becomes complete.
@@ -87,6 +89,7 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
                         requested,
                         fallback: Some("parse-error"),
                         already_linked: true,
+                        requested_role: (role != existing.role).then_some(role),
                     });
                 }
                 let mode = Mode::BytesSha256V1;
@@ -137,6 +140,7 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
         fallback: requested.as_ref().map(|_| "parse-error"),
         requested,
         already_linked: false,
+        requested_role: None,
     })
 }
 
@@ -169,6 +173,7 @@ pub fn remove(rule_id: &str, target: &str) -> Result<LinkReport> {
         requested: None,
         fallback: None,
         already_linked: false,
+        requested_role: None,
     })
 }
 

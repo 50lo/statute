@@ -70,7 +70,16 @@ fn collect<'t>(
                             parts.push(part);
                         }
                     }
-                    format!("{prefix}{}", parts.join("."))
+                    let name = match name.kind() {
+                        "array_type" => "Array".to_string(),
+                        "dictionary_type" => "Dictionary".to_string(),
+                        "optional_type" => "Optional".to_string(),
+                        _ => parts.join("."),
+                    };
+                    if name.is_empty() {
+                        continue;
+                    }
+                    format!("{prefix}{name}")
                 } else if let Ok(name) = name.utf8_text(source) {
                     format!("{prefix}{name}")
                 } else {
@@ -104,6 +113,7 @@ fn collect<'t>(
                 if !member && item.kind() != "function_declaration" {
                     continue;
                 }
+                let mut operator = false;
                 let name = match item.kind() {
                     "init_declaration" => Some("init"),
                     "deinit_declaration" => Some("deinit"),
@@ -111,7 +121,10 @@ fn collect<'t>(
                     _ => (0..item.child_count())
                         .find(|&i| item.field_name_for_child(i) == Some("name"))
                         .and_then(|i| item.child(i))
-                        .and_then(|n| n.utf8_text(source).ok()),
+                        .and_then(|n| {
+                            operator = !n.is_named();
+                            n.utf8_text(source).ok()
+                        }),
                 };
                 if let Some(name) = name {
                     let path = format!("{prefix}{name}");
@@ -125,14 +138,19 @@ fn collect<'t>(
                             else {
                                 continue;
                             };
-                            if let Some(label) = param
+                            let label = param
                                 .child_by_field_name("external_name")
-                                .or_else(|| param.child_by_field_name("name"))
+                                .or_else(|| {
+                                    if operator || item.kind() == "subscript_declaration" {
+                                        None
+                                    } else {
+                                        param.child_by_field_name("name")
+                                    }
+                                })
                                 .and_then(|n| n.utf8_text(source).ok())
-                            {
-                                labels.push_str(label);
-                                labels.push(':');
-                            }
+                                .unwrap_or("_");
+                            labels.push_str(label);
+                            labels.push(':');
                         }
                         found
                             .entry(format!("{path}({labels})"))
@@ -182,6 +200,13 @@ fn is_trailing_comma(node: Node) -> bool {
     if node.kind() != "," || node.child_count() != 0 {
         return false;
     }
+    let mut next = node.next_sibling();
+    while let Some(n) = next.filter(|n| is_comment(*n)) {
+        next = n.next_sibling();
+    }
+    if !next.is_some_and(|n| matches!(n.kind(), ")" | "]" | "}" | ">")) {
+        return false;
+    }
     let mut ancestor = node.parent();
     while let Some(n) = ancestor {
         if matches!(n.kind(), "macro_invocation" | "attribute") {
@@ -189,11 +214,7 @@ fn is_trailing_comma(node: Node) -> bool {
         }
         ancestor = n.parent();
     }
-    let mut next = node.next_sibling();
-    while let Some(n) = next.filter(|n| is_comment(*n)) {
-        next = n.next_sibling();
-    }
-    next.is_some_and(|n| matches!(n.kind(), ")" | "]" | "}" | ">"))
+    true
 }
 
 #[cfg(test)]
@@ -242,6 +263,13 @@ struct A {
  init(id: Int) {}
  subscript(_ n: Int) -> Int { n }
 }
+struct B {
+ subscript(index: Int) -> Int { index }
+ subscript(named index: Int) -> Int { index }
+}
+extension [Int] { func total() {} }
+extension [String: Int] { func total() {} }
+extension Swift.Array { func qualified() {} }
 #if DEBUG
 func repeated() {}
 #else
@@ -258,6 +286,11 @@ func repeated() {}
             "A.init(name:)",
             "A.init(id:)",
             "A.subscript(_:)",
+            "B.subscript(_:)",
+            "B.subscript(named:)",
+            "Array.total",
+            "Dictionary.total",
+            "Swift.Array.qualified",
         ] {
             assert!(one(source, name).is_ok(), "{name}: {:?}", one(source, name));
         }
@@ -266,7 +299,10 @@ func repeated() {}
         }
         let operators = "func +(lhs: Int, rhs: Int) -> Int { lhs }";
         assert!(one(operators, "+").is_ok());
-        assert!(one(operators, "+(lhs:rhs:)").is_ok());
+        assert!(one(operators, "+(_:_:)").is_ok());
+        assert_eq!(one(operators, "+(lhs:rhs:)"), Err(Missing::NoSymbol));
+        assert_eq!(one(source, "B.subscript(index:)"), Err(Missing::NoSymbol));
+        assert_eq!(one(source, ".total"), Err(Missing::NoSymbol));
         assert_eq!(one(operators, "Int"), Err(Missing::NoSymbol));
         for name in ["P.missing", "missing"] {
             assert_eq!(one(source, name), Err(Missing::NoSymbol));

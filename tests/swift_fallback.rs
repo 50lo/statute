@@ -65,9 +65,17 @@ fn fallback_reports_human_output_and_preserves_existing_link() {
     let before = repo.read("statute.lock");
     let retry = ok(repo.run(&["link", "BILL-001", target, "--test", "--json"])).json();
     assert_eq!(retry["role"], "code");
+    assert_eq!(retry["requested_role"], "test");
     assert_eq!(retry["target"], file);
     assert_eq!(retry["requested"], target);
     assert_eq!(retry["fallback"], "parse-error");
+    assert_eq!(repo.read("statute.lock"), before);
+    let retry = ok(repo.run(&["link", "BILL-001", target, "--test"]));
+    assert!(
+        retry
+            .stdout
+            .contains("existing link is a code link; no test link was added")
+    );
     assert_eq!(repo.read("statute.lock"), before);
 }
 
