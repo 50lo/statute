@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-11-08
+
 - Add Swift symbol links.
 - Add a Pi package that reuses Statute's four skills and reminds the agent to run `change` when links are stale or missing.
 - Add a Cursor plugin with the same four skills and a native stop hook, exposed via `.cursor-plugin/marketplace.json`.
