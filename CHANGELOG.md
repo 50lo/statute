@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a Pi package that reuses Statute's four skills and reminds the agent to run `change` when links are stale or missing.
+
 ## 0.2.0 - 2026-11-05
 
 - `statute ratify` is now `statute approve`, the `ratify` skill is now `approve`, and the decision field `ratified_by` is now `approved_by`. Rename the field in an existing `decisions.db`.
