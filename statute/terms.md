@@ -5,9 +5,6 @@ A word or phrase used in the product, with a definition and the names used for i
 ```yaml
 agreed: agreed
 code: [Term, TermMeta]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Rule
@@ -17,9 +14,6 @@ A statement of one thing that must be true about the product, and when. A person
 ```yaml
 agreed: agreed
 code: [Rule, RuleMeta]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Decision
@@ -29,9 +23,6 @@ A recorded choice about rules or terms, with the reason for it. It starts as a p
 ```yaml
 agreed: agreed
 code: [Decision, DecisionDraft]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Link
@@ -41,9 +32,6 @@ A connection from a rule to a code or test target, with a fingerprint used to de
 ```yaml
 agreed: agreed                   # proposed | agreed | retired
 code: [Link, LinkLine]
-not: []
-aliases: []
-avoid: []
 ```
 
 A reference to an issue in an external tracker, recorded in gaps.yml, is separate from a rule's code or test links.
@@ -55,9 +43,6 @@ A link to the implementation that makes a rule true. A change there brings the r
 ```yaml
 agreed: agreed
 code: ["LinkRole::Code"]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Test link
@@ -67,9 +52,6 @@ A link to a test that checks a rule's behavior. The test can catch a violation i
 ```yaml
 agreed: agreed
 code: ["LinkRole::Test"]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Manual check
@@ -79,9 +61,6 @@ A stated procedure for a person to verify a rule whose behavior an automated tes
 ```yaml
 agreed: agreed
 code: [manual_check]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Protected case
@@ -91,9 +70,6 @@ A concrete case showing behavior the rule must preserve. It gives a person or ag
 ```yaml
 agreed: agreed
 code: [protects]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Boundary case
@@ -103,9 +79,6 @@ A nearby case showing where the rule stops applying, so it does not reject valid
 ```yaml
 agreed: agreed
 code: [boundary]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Gap
@@ -115,9 +88,6 @@ A known mismatch between a rule and the implementation, tracked as an issue unti
 ```yaml
 agreed: agreed
 code: [Gap, GapStatus]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Agreement status
@@ -127,9 +97,6 @@ Whether a rule or term is proposed, agreed or retired. Agreement records accepta
 ```yaml
 agreed: agreed
 code: [Agreed, TermAgreed]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Build state
@@ -139,9 +106,6 @@ Whether a rule is planned or built, with an open gap indicating broken behavior.
 ```yaml
 agreed: agreed
 code: [Built]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Affected rule
@@ -151,9 +115,6 @@ A rule that a change brings up for review. Being affected means the rule needs a
 ```yaml
 agreed: agreed
 code: [RuleImpact]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Rule review
@@ -163,9 +124,6 @@ An assessment by the agent of whether an affected rule still holds after a chang
 ```yaml
 agreed: agreed
 code: ["review::Verdict", ReviewReport]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Approval
@@ -175,9 +133,6 @@ A person's explicit acceptance of a specific proposed decision. An agent can pre
 ```yaml
 agreed: agreed
 code: [ApprovedBy, approved_by]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Base
@@ -187,9 +142,7 @@ The commit that `check` compares against: the merge-base of `HEAD` with the defa
 ```yaml
 agreed: agreed
 code: [git::base]
-not: []
 aliases: [merge-base]
-avoid: []
 ```
 
 ## Stale link
@@ -199,9 +152,6 @@ A link whose target's current fingerprint differs from the one recorded in `stat
 ```yaml
 agreed: agreed
 code: [Health::Stale]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Missing link
@@ -211,9 +161,6 @@ A link whose target is not found, matches more than one symbol, or sits in a fil
 ```yaml
 agreed: agreed
 code: [Health::Missing]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Fingerprint
@@ -223,8 +170,6 @@ A hash of a link target, computed by the link's mode, recorded in `statute.lock`
 ```yaml
 agreed: agreed
 code: [fingerprint::sign, sig]
-not: []
-aliases: []
 avoid: [checksum]
 ```
 
@@ -235,9 +180,6 @@ A proposed rule that no decision establishes yet. It is a pending item that `sta
 ```yaml
 agreed: agreed
 code: [is_draft]
-not: []
-aliases: []
-avoid: []
 ```
 
 ## Proposed decision
@@ -247,7 +189,5 @@ A decision that a person has not approved yet. The rules it establishes or chang
 ```yaml
 agreed: agreed
 code: [DecisionStatus::Proposed]
-not: []
 aliases: [pending decision]
-avoid: []
 ```
