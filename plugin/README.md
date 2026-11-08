@@ -17,7 +17,22 @@ cargo install statute-cli --locked
 
 ## Claude Code
 
-Install this directory as a plugin; it brings the four skills and the Stop hook. The hook runs `statute check --json` at the end of each turn and, when links are stale or missing, asks the agent once to run the `change` skill. It does nothing outside a repository with `statute.yml`.
+Install the plugin from GitHub:
+
+```sh
+claude plugin install statute --marketplace 50lo/statute
+```
+
+This adds the `statute` marketplace and installs the plugin for all your projects. The command needs Claude Code 2.1.292 or later. On an older version, run two commands instead:
+
+```sh
+claude plugin marketplace add 50lo/statute
+claude plugin install statute@statute
+```
+
+To get a new release, run `claude plugin update statute@statute` and restart Claude Code.
+
+The plugin brings the four skills and the Stop hook. The hook runs `statute check --json` at the end of each turn and, when links are stale or missing, asks the agent once to run the `change` skill. It does nothing outside a repository with `statute.yml`.
 
 ## Codex
 
