@@ -1,8 +1,6 @@
 # Statute: keeping product rules true
 
-Oct 15, 2026 · @Anton Solo
-
-Statute keeps a product's important rules written down, linked to the code, and checked every time the code changes.
+Statute keeps a product's important **rules** written down, **linked to the code**, and **checked every time the code changes**.
 
 ## The problem
 
