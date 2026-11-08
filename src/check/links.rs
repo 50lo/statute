@@ -93,7 +93,11 @@ pub fn freshness(links: &[&Link], health: &[Health]) -> Vec<Finding> {
                 ),
             ),
             Health::Missing(why) => {
-                Finding::error("link.missing", format!("{} is missing: {why}", link.target))
+                let hint = state::swift_parse_hint(link, *why).unwrap_or_default();
+                Finding::error(
+                    "link.missing",
+                    format!("{} is missing: {why}{hint}", link.target),
+                )
             }
         };
         out.push(

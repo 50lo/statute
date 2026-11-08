@@ -358,6 +358,8 @@ pub enum Mode {
     PythonAstSha256V1,
     #[serde(rename = "rust-ast-sha256-v1")]
     RustAstSha256V1,
+    #[serde(rename = "swift-ast-sha256-v1")]
+    SwiftAstSha256V1,
 }
 
 /// Splits a target at the first `#` into its file and symbol. The symbol is opaque; its mode reads it.

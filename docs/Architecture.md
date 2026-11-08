@@ -118,7 +118,7 @@ The `ChangeSet` type exposes the changed paths. It is the place to add diff hunk
 ## 6. Fingerprints
 
 ```rust
-enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1, RustAstSha256V1 }
+enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1, RustAstSha256V1, SwiftAstSha256V1 }
 ```
 
 - `Mode` lives in `model`, because every link stores its mode; `fingerprint` imports it from there.
@@ -127,7 +127,7 @@ enum Mode { BytesSha256V1, GoAstSha256V1, PythonAstSha256V1, RustAstSha256V1 }
 - Each tree-sitter mode turns one parsed file into a map from symbol to hash, in one pass, so all links into a file cost one parse. Missing covers: no such symbol, more than one match, or a parse with errors.
 - One tree-sitter parser per rayon thread, created lazily per language.
 
-A new language, such as Swift or TypeScript, is a new variant with the same shape.
+A new language, such as TypeScript, is a new variant with the same shape.
 
 ### 6.1 Hash input
 
@@ -139,6 +139,10 @@ The hash input decides how many false alarms and missed changes links produce, s
 - **Go symbols.** `Func`, `Type` and `Type.Method`. A method's receiver type is named without `*` and without type parameters, so `func (p *Publisher[T]) Decide` is `Publisher.Decide`. `#Type` covers the type declaration only, not its methods.
 - **Python symbols.** `func`, `Class` and `Class.method`, with nested classes as dotted paths. Decorators are part of the symbol. `#Class` covers the whole class, methods included.
 - **Rust symbols.** Functions, and types (struct, enum, union, trait, type alias) as `func` and `Type`; functions in `impl` and trait bodies as `Type.method`; items of inline modules as dotted paths, such as `tests.decides`. An impl's type is named without generics, `&` or a path, so `impl<T> fmt::Display for &billing::Publisher<T>` adds methods to `Publisher`; inherent and trait impls share that namespace, and a name defined in two impls is ambiguous. `#Type` covers the type's own item, not its impl blocks; `#Trait` covers the whole trait. Constants, statics, macros, modules themselves and items inside functions are not symbols. Outer attributes directly above an item are part of it. A trailing comma before a closing delimiter is formatting and is dropped, except in a one-element tuple and in macro and attribute tokens, where a macro can match on it.
+
+- **Swift symbols.** Top-level functions and types (class, struct, enum, actor, protocol and typealias), nested types, and function, initializer, deinitializer, subscript and property members are symbols. Top-level properties and protocol requirements are not separate symbols. A type covers its primary declaration including its members, not its extensions. Extension members use the extended type's dotted name without generic arguments or a `where` clause; module qualifiers are kept, and array, dictionary and optional shorthand use `Array`, `Dictionary` and `Optional`. Base names match only when unique; Swift argument-label names distinguish overloads. Duplicate declarations, including across `#if` branches, are ambiguous.
+- **Swift known gaps.** No parse failures were found in the sampled macros, ownership modifiers, parameter packs, typed throws, noncopyable types, `sending`, `nonisolated(unsafe)`, regex and raw literals, if/switch expressions, or conditional members. Clean parses do not prove the grammar understands every Swift construct. The pinned parser loaded with tree-sitter 0.27.1 and built offline using its bundled generated parser.
+- **Swift hash input.** Drop comments and doc comments, keep attributes and modifiers, and drop trailing commas before closing delimiters except in macro arguments and attributes. Hash tokens with the shared token input, retaining semicolons. For every `statements` node, append the shared item-end marker after each named child, including in nested bodies. Swift line breaks can separate statements: `_ = f` followed by `(1)` on the next line discards a function value and does not call it, while `_ = f (1)` calls it; these have the same leaf tokens. The statement markers preserve this difference without hashing formatting whitespace.
 
 Grammar crate versions are pinned. Each mode has golden fixtures: edits that must keep the hash (a comment, reformatting, a change to another declaration) and edits that must change it (a body or signature change, a Go directive). A change to the hash input that alters any golden hash is a new mode version, never an edit to an existing one.
 

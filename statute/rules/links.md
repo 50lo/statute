@@ -68,3 +68,23 @@ protects:
 boundary:
   - Removing the missing link and linking the new location clears the finding.
 ```
+
+# LINKS-005 Swift symbol parse errors fall back to a whole-file link
+
+When `link` is asked to link a Swift symbol that the rule does not already link and the file does not parse cleanly, it records a whole-file link instead and reports the fallback. If the rule already links that whole file, it leaves the existing link unchanged and reports that it is already linked, regardless of the requested role.
+
+```yaml
+agreed: agreed            # proposed | agreed | retired
+built: built              # planned | built
+scope: Creating a Swift symbol link.
+terms: [Link]
+exceptions: []
+protects:
+  - A Swift symbol in a file the parser cannot read cleanly is linked as the whole file, with a bytes fingerprint, and the fallback is reported.
+  - Retrying when the same rule already links the whole file succeeds without refreshing or replacing that link.
+boundary:
+  - An existing link to the requested symbol is refused before attempting a fallback, even if the same rule also links the whole file.
+  - A Swift file that parses cleanly but has no matching symbol or more than one matching symbol is refused; it does not fall back.
+  - A parse error in a Go, Python or Rust symbol target is refused; it does not fall back.
+  - An existing Swift symbol link whose file no longer parses remains missing until it is removed or the file parses cleanly.
+```

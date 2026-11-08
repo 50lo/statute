@@ -222,3 +222,18 @@
   - Rule review
   - Affected rule
   - Link
+- id: D261108-53vdg
+  timestamp: 2026-11-08T11:16:21Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-08T11:47:54Z
+  summary: Fall back to a whole-file link when a requested Swift symbol file does not parse cleanly.
+  rationale: The Swift grammar can reject valid Swift. A whole-file link is conservative and remains useful when symbol parsing fails; refusing it would leave the agent to discover and create the whole-file link manually. Missing or ambiguous symbols still fail, and existing symbol links remain missing until relinked. The fallback does not retain the requested symbol in the lock; recording intent can be considered later if needed.
+  establishes:
+  - LINKS-005
+  changes: []
+  retires: []
+  terms: []

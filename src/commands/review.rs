@@ -77,9 +77,11 @@ pub fn run(rule_id: &str, verdict: Verdict) -> Result<ReviewReport> {
         .zip(&health)
         .find(|(_, h)| matches!(h, Health::Missing(_)))
     {
+        let hint = state::swift_parse_hint(link, *why).unwrap_or_else(|| format!(
+            "; fix the file, or relink the target with `statute link {rule_id} {} --remove` and `statute link`", link.target
+        ));
         bail!(
-            "{rule_id} has a missing link: {} ({why}); fix the file, or relink the target with `statute link {rule_id} {} --remove` and `statute link`",
-            link.target,
+            "{rule_id} has a missing link: {} ({why}){hint}",
             link.target
         );
     }

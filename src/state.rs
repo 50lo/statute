@@ -1,7 +1,7 @@
 //! Derived state, computed from the model and never stored.
 
 use crate::fingerprint::Missing;
-use crate::model::{Agreed, Built, GapStatus, Link, LinkRole, Model, Rule};
+use crate::model::{Agreed, Built, GapStatus, Link, LinkRole, Mode, Model, Rule};
 use std::collections::BTreeMap;
 
 /// For each rule ID, the decisions whose `establishes` lists it.
@@ -44,6 +44,27 @@ pub fn health(links: &[&Link], current: &[Result<String, Missing>]) -> Vec<Healt
             Err(why) => Health::Missing(*why),
         })
         .collect()
+}
+
+/// A way to recover when the Swift grammar cannot read an existing symbol link.
+pub fn swift_parse_hint(link: &Link, why: Missing) -> Option<String> {
+    if link.mode != Mode::SwiftAstSha256V1 || why != Missing::ParseError {
+        return None;
+    }
+    let target = link.target.replace('\'', "'\\''");
+    let test = if link.role == LinkRole::Test {
+        " --test"
+    } else {
+        ""
+    };
+    Some(format!(
+        ". If the Swift is valid, the parser may not support it yet: check the rule, then run `statute link --remove {} '{}'` and `statute link {} '{}'{}` to link the whole file.",
+        link.rule(),
+        target,
+        link.rule(),
+        target,
+        test
+    ))
 }
 
 /// A rule is complete when it has a code link, and a test link or a `manual_check`.

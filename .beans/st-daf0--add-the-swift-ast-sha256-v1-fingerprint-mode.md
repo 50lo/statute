@@ -1,10 +1,11 @@
 ---
 # st-daf0
 title: Add the swift-ast-sha256-v1 fingerprint mode
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:23:13Z
 parent: st-97ld
 blocked_by:
     - st-hqdq
@@ -77,16 +78,20 @@ Follow the Go, Python and Rust fixtures (docs/Architecture.md, sections 6.1 and 
 
 ## Acceptance criteria
 
-- [ ] `statute link RULE File.swift#Type.method --json` prints `"mode": "swift-ast-sha256-v1"` for a clean file.
+- [x] `statute link RULE File.swift#Type.method --json` prints `"mode": "swift-ast-sha256-v1"` for a clean file.
 - [ ] `statute link RULE Broken.swift#keep` still stops with `the file does not parse cleanly` (the fallback is st-4dc0).
-- [ ] Golden fixtures cover every case listed above, and `cargo test` passes.
-- [ ] Go, Python, Rust and bytes golden hashes are unchanged.
-- [ ] Grammar check results and known gaps are recorded in Architecture 6.1 and the PR description.
-- [ ] `tests/layering.rs` passes. `fingerprint` imports only `model` (the `Mode` type).
-- [ ] The `change` skill has run, and LINKS-001 and LINKS-004 have a verdict for this change.
-- [ ] AGENTS.md lists Swift symbol links.
+- [x] Golden fixtures cover every case listed above, and `cargo test` passes.
+- [x] Go, Python, Rust and bytes golden hashes are unchanged.
+- [x] Grammar check results and known gaps are recorded in Architecture 6.1 and the PR description.
+- [x] `tests/layering.rs` passes. `fingerprint` imports only `model` (the `Mode` type).
+- [x] The `change` skill has run, and LINKS-001 and LINKS-004 have a verdict for this change.
+- [x] AGENTS.md lists Swift symbol links.
 
 ## Dependencies
 
 - Blocked by st-hqdq: the symbol names and hash input must be written in the spec first. You may start the grammar checks earlier.
 - The decision from st-hqdq must be approved before this is merged.
+
+## Summary of Changes
+
+Added the pinned Swift grammar, symbol fingerprint mode, naming and parse-contract tests, golden hashes and documentation. The parse-error refusal was an intermediate requirement superseded by st-4dc0 in this combined PR: Swift parse errors now fall back to a whole-file link. No `parse_error_*.swift` fixtures for newer constructs were needed because the sampled constructs parsed cleanly; the real syntax-error fixture remains.

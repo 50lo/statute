@@ -1,10 +1,11 @@
 ---
 # st-97ld
 title: Swift symbol links with a whole-file fallback
-status: todo
+status: completed
 type: epic
+priority: normal
 created_at: 2026-11-08T10:15:10Z
-updated_at: 2026-11-08T10:15:10Z
+updated_at: 2026-11-08T11:48:13Z
 ---
 
 ## What
@@ -37,11 +38,11 @@ Today a Swift file can only be linked as a whole file. Then every edit anywhere 
 
 ## Acceptance criteria (epic)
 
-- [ ] `statute link RULE File.swift#Symbol` records a `swift-ast-sha256-v1` link when the file parses cleanly.
-- [ ] When the file does not parse cleanly, `link` records a whole-file `bytes-sha256-v1` link and says so in human and `--json` output.
-- [ ] A proposed decision with the new rule(s) has been approved by a person and recorded with `statute approve`.
-- [ ] The spec, the architecture doc and AGENTS.md list Swift as supported.
-- [ ] All child tasks are completed.
+- [x] `statute link RULE File.swift#Symbol` records a `swift-ast-sha256-v1` link when the file parses cleanly.
+- [x] When the file does not parse cleanly, `link` records a whole-file `bytes-sha256-v1` link and says so in human and `--json` output.
+- [x] A proposed decision with the new rule(s) has been approved by a person and recorded with `statute approve`.
+- [x] The spec, the architecture doc and AGENTS.md list Swift as supported.
+- [x] All child tasks are completed.
 
 ## Constraints
 
