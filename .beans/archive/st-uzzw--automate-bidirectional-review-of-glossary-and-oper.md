@@ -1,14 +1,14 @@
 ---
 # st-uzzw
 title: Automate bidirectional review of glossary and operational terms
-status: todo
+status: scrapped
 type: feature
 priority: normal
 tags:
     - statute
     - glossary
 created_at: 2026-10-18T09:52:23Z
-updated_at: 2026-10-18T12:09:14Z
+updated_at: 2026-11-08T10:02:19Z
 blocked_by:
     - st-25bl
 ---
