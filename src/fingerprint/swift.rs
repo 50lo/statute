@@ -109,7 +109,7 @@ fn collect<'t>(
                     "deinit_declaration" => Some("deinit"),
                     "subscript_declaration" => Some("subscript"),
                     _ => (0..item.child_count())
-                        .find(|&i| item.field_name_for_child(i as u32) == Some("name"))
+                        .find(|&i| item.field_name_for_child(i) == Some("name"))
                         .and_then(|i| item.child(i))
                         .and_then(|n| n.utf8_text(source).ok()),
                 };
