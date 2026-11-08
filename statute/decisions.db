@@ -199,3 +199,26 @@
   terms:
   - Approval
   - Proposed decision
+- id: D261108-4ssd6
+  timestamp: 2026-11-08T05:56:10Z
+  actor: agent
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-08T06:20:18Z
+  summary: List the code names that implement nine terms whose code lists were empty or missed the main type. Definitions do not change.
+  rationale: 'Eight terms had code: [] and Link listed only the private LinkLine struct, leaving out model::Link. The spec example lists a name identical to its term (Session -> Session), and nothing treats a term''s own name as a code name, so empty lists left these terms unconnected to code and check --all could not catch a rename. Every added name appears as written outside Markdown and statute/. Rejected: leaving same-name terms empty by convention, because the spec does not define one; adding the PR impact Verdict to Rule review''s not list, because no qualified name for it appears in the code and check --all would warn.'
+  establishes: []
+  changes: []
+  retires: []
+  terms:
+  - Term
+  - Rule
+  - Decision
+  - Gap
+  - Manual check
+  - Approval
+  - Rule review
+  - Affected rule
+  - Link
