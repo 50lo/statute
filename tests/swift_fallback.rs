@@ -29,15 +29,17 @@ fn existing_symbol_can_be_relinked_after_a_parse_error() {
         .find(|f| f["target"] == target)
         .unwrap();
     assert_eq!(finding["code"], "link.missing");
-    assert!(
-        finding["message"]
-            .as_str()
-            .unwrap()
-            .contains("statute link --remove BILL-001")
-    );
+    let message = finding["message"].as_str().unwrap();
+    assert!(message.contains("statute link --remove BILL-001"));
+    assert!(message.contains("the parser first fails near line 2, column 1. If"));
     let review = repo.run(&["review", "BILL-001", "ok"]);
     assert_eq!(review.code, 2);
     assert!(review.stderr.contains("parser may not support it yet"));
+    assert!(
+        review
+            .stderr
+            .contains("the parser first fails near line 2, column 1. If")
+    );
     assert_eq!(repo.read("statute.lock"), before);
 
     ok(repo.run(&["link", "--remove", "BILL-001", target]));
@@ -45,6 +47,10 @@ fn existing_symbol_can_be_relinked_after_a_parse_error() {
     assert_eq!(result["target"], file);
     assert_eq!(result["requested"], target);
     assert_eq!(result["fallback"], "parse-error");
+    assert_eq!(
+        result["parse_error_near"],
+        serde_json::json!({"line": 2, "column": 1})
+    );
     assert_eq!(result["mode"], "bytes-sha256-v1");
     let lock = repo.read("statute.lock");
     assert!(lock.contains("bytes-sha256-v1"));
@@ -62,6 +68,11 @@ fn fallback_reports_human_output_and_preserves_existing_link() {
     let result = ok(repo.run(&["link", "BILL-001", target]));
     assert!(result.stdout.contains("whole file"));
     assert!(result.stdout.contains("cannot read the file cleanly"));
+    assert!(
+        result
+            .stdout
+            .contains("it first fails near line 1, column 1\n")
+    );
     let before = repo.read("statute.lock");
     let retry = ok(repo.run(&["link", "BILL-001", target, "--test", "--json"])).json();
     assert_eq!(retry["role"], "code");
@@ -69,6 +80,10 @@ fn fallback_reports_human_output_and_preserves_existing_link() {
     assert_eq!(retry["target"], file);
     assert_eq!(retry["requested"], target);
     assert_eq!(retry["fallback"], "parse-error");
+    assert_eq!(
+        retry["parse_error_near"],
+        serde_json::json!({"line": 1, "column": 1})
+    );
     assert_eq!(repo.read("statute.lock"), before);
     let retry = ok(repo.run(&["link", "BILL-001", target, "--test"]));
     assert!(
@@ -139,4 +154,45 @@ fn recovery_hint_preserves_test_role() {
     let review = repo.run(&["review", "BILL-001", "ok"]);
     assert_eq!(review.code, 2);
     assert!(review.stderr.contains("'src/example.swift#keep' --test"));
+}
+
+#[test]
+fn multi_pattern_catch_reports_where_the_parser_fails() {
+    let repo = TestRepo::fixture("valid");
+    let file = "src/MultiCatch.swift";
+    repo.write(
+        file,
+        include_str!("fixtures/fingerprint/swift/multi_catch.swift"),
+    );
+    let target = "src/MultiCatch.swift#Decode.describe";
+    let result = ok(repo.run(&["link", "BILL-001", target, "--json"])).json();
+    assert_eq!(result["target"], file);
+    assert_eq!(result["fallback"], "parse-error");
+    assert_eq!(
+        result["parse_error_near"],
+        serde_json::json!({"line": 6, "column": 55})
+    );
+}
+
+#[test]
+fn clean_link_has_no_parse_error_location() {
+    let repo = TestRepo::fixture("valid");
+    repo.write("src/example.swift", "func keep() {}\n");
+    let result = ok(repo.run(&["link", "BILL-001", "src/example.swift#keep", "--json"])).json();
+    assert!(result.get("parse_error_near").is_none());
+    assert!(result.get("fallback").is_none());
+}
+
+#[test]
+fn other_missing_links_have_no_parse_error_location() {
+    let repo = TestRepo::fixture("valid");
+    let target = "src/example.swift#keep";
+    repo.write("src/example.swift", "func keep() {}\n");
+    ok(repo.run(&["link", "BILL-001", target]));
+    repo.commit("Link a Swift symbol");
+    repo.write("src/example.swift", "func other() {}\n");
+    let review = repo.run(&["review", "BILL-001", "ok"]);
+    assert_eq!(review.code, 2);
+    assert!(review.stderr.contains("the symbol is not found"));
+    assert!(!review.stderr.contains("near line"));
 }

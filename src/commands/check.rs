@@ -1,4 +1,4 @@
-use super::{SCHEMA, fingerprints};
+use super::{SCHEMA, fingerprints, swift_parse_errors};
 use crate::check;
 use crate::git;
 use crate::impact;
@@ -59,7 +59,8 @@ pub fn run(all: bool, md: bool) -> Result<CheckReport> {
                 .collect()
         };
         let health = state::health(&selected, &fingerprints(&repo, &selected)?);
-        findings.extend(check::freshness(&selected, &health));
+        let near = swift_parse_errors(&repo, &selected, &health)?;
+        findings.extend(check::freshness(&selected, &health, &near));
         link_health = selected
             .iter()
             .zip(&health)

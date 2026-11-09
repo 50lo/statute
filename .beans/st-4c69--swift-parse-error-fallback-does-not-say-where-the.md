@@ -1,14 +1,14 @@
 ---
 # st-4c69
 title: Swift parse-error fallback does not say where the parser failed
-status: todo
+status: completed
 type: feature
 priority: normal
 tags:
     - swift
     - parser
 created_at: 2026-11-09T00:00:56Z
-updated_at: 2026-11-09T00:39:35Z
+updated_at: 2026-11-09T00:51:30Z
 ---
 
 ## What

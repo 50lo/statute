@@ -38,6 +38,39 @@ pub fn sign(source: &[u8], symbols: &[&str]) -> Vec<Result<String, Missing>> {
         .collect()
 }
 
+/// Where the parser first fails in a Swift file: a 1-based line and character column.
+/// `None` when the file parses cleanly or the parser returns no tree.
+/// Tree-sitter recovers from errors, so the position is near the cause, not always at it.
+pub fn parse_error_at(source: &[u8]) -> Option<(usize, usize)> {
+    let tree = PARSER.with(|parser| parser.borrow_mut().parse(source, None))?;
+    let mut node = tree.root_node();
+    if !node.has_error() {
+        return None;
+    }
+    // Pre-order: the first error or missing node in document order.
+    'descend: loop {
+        if node.is_error() || node.is_missing() {
+            break;
+        }
+        for i in 0..node.child_count() {
+            if let Some(child) = node.child(i).filter(Node::has_error) {
+                node = child;
+                continue 'descend;
+            }
+        }
+        return None;
+    }
+    let start = node.start_byte().min(source.len());
+    let line_start = source[..start]
+        .iter()
+        .rposition(|b| *b == b'\n')
+        .map_or(0, |i| i + 1);
+    let column = String::from_utf8_lossy(&source[line_start..start])
+        .chars()
+        .count();
+    Some((node.start_position().row + 1, column + 1))
+}
+
 /// Collect declarations only in file and type bodies, never inside function bodies.
 fn collect<'t>(
     scope: Node<'t>,
@@ -314,6 +347,20 @@ func repeated() {}
             ),
             vec![Err(Missing::ParseError)]
         );
+    }
+
+    #[test]
+    fn parse_error_location() {
+        let multi_catch =
+            include_bytes!("../../tests/fixtures/fingerprint/swift/multi_catch.swift");
+        let broken = include_bytes!("../../tests/fixtures/fingerprint/swift/parse_error.swift");
+        // The second pattern of a multi-pattern `catch` starts at the comma.
+        assert_eq!(parse_error_at(multi_catch), Some((6, 55)));
+        assert_eq!(parse_error_at(broken), Some((2, 13)));
+        // A missing token counts, and the column counts characters, not bytes.
+        assert_eq!(parse_error_at("let é = (1".as_bytes()), Some((1, 11)));
+        assert_eq!(parse_error_at(BASE), None);
+        assert_eq!(parse_error_at(b""), None);
     }
 
     #[test]

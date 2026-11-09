@@ -1,4 +1,4 @@
-use super::{SCHEMA, fingerprints};
+use super::{SCHEMA, fingerprints, swift_parse_errors};
 use crate::model::{GapStatus, Link, paths};
 use crate::repo::Repo;
 use crate::state::{self, Health};
@@ -77,7 +77,8 @@ pub fn run(rule_id: &str, verdict: Verdict) -> Result<ReviewReport> {
         .zip(&health)
         .find(|(_, h)| matches!(h, Health::Missing(_)))
     {
-        let hint = state::swift_parse_hint(link, *why).unwrap_or_else(|| format!(
+        let near = swift_parse_errors(&repo, &[*link], &[Health::Missing(*why)])?[0];
+        let hint = state::swift_parse_hint(link, *why, near).unwrap_or_else(|| format!(
             "; fix the file, or relink the target with `statute link {rule_id} {} --remove` and `statute link`", link.target
         ));
         bail!(

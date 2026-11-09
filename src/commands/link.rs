@@ -24,10 +24,21 @@ pub struct LinkReport {
     pub requested: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallback: Option<&'static str>,
+    /// Where the Swift parser first fails, with a `parse-error` fallback. Tree-sitter recovers
+    /// from errors, so this is near the cause, not always at it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parse_error_near: Option<Position>,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub already_linked: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub requested_role: Option<LinkRole>,
+}
+
+/// A 1-based line and character column in a file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct Position {
+    pub line: usize,
+    pub column: usize,
 }
 
 /// Adds a link with the current fingerprint, and sets `built: built` when the rule becomes complete.
@@ -68,11 +79,16 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
         bail!("no fingerprint mode reads symbols in {file}; link the whole file");
     };
     let files = repo.read_files([file])?;
-    let (target, role, mode, sig, requested) =
+    let (target, role, mode, sig, requested, parse_error_near) =
         match fingerprint::sign(&files, &[(mode, target)]).remove(0) {
-            Ok(sig) => (target.to_string(), role, mode, sig, None),
+            Ok(sig) => (target.to_string(), role, mode, sig, None, None),
             Err(fingerprint::Missing::ParseError) if mode == Mode::SwiftAstSha256V1 => {
                 let requested = Some(target.to_string());
+                let parse_error_near = files
+                    .get(file)
+                    .and_then(Option::as_deref)
+                    .and_then(fingerprint::swift_parse_error_at)
+                    .map(|(line, column)| Position { line, column });
                 if let Some(existing) = links
                     .iter()
                     .find(|l| l.rule() == rule_id && l.target == file)
@@ -88,6 +104,7 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
                         built: false,
                         requested,
                         fallback: Some("parse-error"),
+                        parse_error_near,
                         already_linked: true,
                         requested_role: (role != existing.role).then_some(role),
                     });
@@ -96,7 +113,14 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
                 let sig = fingerprint::sign(&files, &[(mode, file)])
                     .remove(0)
                     .map_err(|why| anyhow::anyhow!("cannot link {file}: {why}"))?;
-                (file.to_string(), role, mode, sig, requested)
+                (
+                    file.to_string(),
+                    role,
+                    mode,
+                    sig,
+                    requested,
+                    parse_error_near,
+                )
             }
             Err(why) => bail!("cannot link {target}: {why}"),
         };
@@ -139,6 +163,7 @@ pub fn add(rule_id: &str, target: &str, role: LinkRole) -> Result<LinkReport> {
         built: becomes_built,
         fallback: requested.as_ref().map(|_| "parse-error"),
         requested,
+        parse_error_near,
         already_linked: false,
         requested_role: None,
     })
@@ -172,6 +197,7 @@ pub fn remove(rule_id: &str, target: &str) -> Result<LinkReport> {
         built: false,
         requested: None,
         fallback: None,
+        parse_error_near: None,
         already_linked: false,
         requested_role: None,
     })
