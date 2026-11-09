@@ -200,8 +200,12 @@ pub fn link(r: &LinkReport) -> String {
         } else {
             "Linked"
         };
+        let near = r
+            .parse_error_near
+            .map(|p| format!("; it first fails near line {}, column {}", p.line, p.column))
+            .unwrap_or_default();
         format!(
-            "{action} {} to {} (whole file, {}): {} could not be linked because the Swift parser cannot read the file cleanly\n",
+            "{action} {} to {} (whole file, {}): {} could not be linked because the Swift parser cannot read the file cleanly{near}\n",
             r.rule,
             r.target,
             role(r.role),

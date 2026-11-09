@@ -47,7 +47,8 @@ pub fn health(links: &[&Link], current: &[Result<String, Missing>]) -> Vec<Healt
 }
 
 /// A way to recover when the Swift grammar cannot read an existing symbol link.
-pub fn swift_parse_hint(link: &Link, why: Missing) -> Option<String> {
+/// `near` is where the parser first fails, as a 1-based line and column, when known.
+pub fn swift_parse_hint(link: &Link, why: Missing, near: Option<(usize, usize)>) -> Option<String> {
     if link.mode != Mode::SwiftAstSha256V1 || why != Missing::ParseError {
         return None;
     }
@@ -57,8 +58,11 @@ pub fn swift_parse_hint(link: &Link, why: Missing) -> Option<String> {
     } else {
         ""
     };
+    let near = near
+        .map(|(line, column)| format!("; the parser first fails near line {line}, column {column}"))
+        .unwrap_or_default();
     Some(format!(
-        ". If the Swift is valid, the parser may not support it yet: check the rule, then run `statute link --remove {} '{}'` and `statute link {} '{}'{}` to link the whole file.",
+        "{near}. If the Swift is valid, the parser may not support it yet: check the rule, then run `statute link --remove {} '{}'` and `statute link {} '{}'{}` to link the whole file.",
         link.rule(),
         target,
         link.rule(),

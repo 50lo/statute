@@ -5,6 +5,7 @@
 ## 0.3.2 - 2026-11-08
 
 - Fix release builds for Apple Silicon macOS.
+- When a Swift file does not parse cleanly, `link`, `check` and `review` say near which line and column the parser first fails. `link --json` adds `parse_error_near`.
 
 ## 0.3.1 - 2026-11-08
 

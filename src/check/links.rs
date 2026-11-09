@@ -78,10 +78,15 @@ pub fn completeness(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// A finding for each stale or missing link.
-pub fn freshness(links: &[&Link], health: &[Health]) -> Vec<Finding> {
+/// A finding for each stale or missing link. `near` gives, per link, where a Swift parse error
+/// starts (1-based line and column), when known.
+pub fn freshness(
+    links: &[&Link],
+    health: &[Health],
+    near: &[Option<(usize, usize)>],
+) -> Vec<Finding> {
     let mut out = Vec::new();
-    for (link, health) in links.iter().zip(health) {
+    for (i, (link, health)) in links.iter().zip(health).enumerate() {
         let finding = match health {
             Health::Fresh => continue,
             Health::Stale => Finding::error(
@@ -93,7 +98,8 @@ pub fn freshness(links: &[&Link], health: &[Health]) -> Vec<Finding> {
                 ),
             ),
             Health::Missing(why) => {
-                let hint = state::swift_parse_hint(link, *why).unwrap_or_default();
+                let near = near.get(i).copied().flatten();
+                let hint = state::swift_parse_hint(link, *why, near).unwrap_or_default();
                 Finding::error(
                     "link.missing",
                     format!("{} is missing: {why}{hint}", link.target),

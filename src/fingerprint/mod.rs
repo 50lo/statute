@@ -11,6 +11,8 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fmt;
 
+pub use swift::parse_error_at as swift_parse_error_at;
+
 /// Why a target has no fingerprint. Each makes the link missing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Missing {
