@@ -3,6 +3,8 @@ members = ["cargo:."]
 
 # Config for 'dist'
 [dist]
+# Keep the customized artifact retention in the release workflow.
+allow-dirty = ["ci"]
 # The preferred dist version to use in CI (Cargo.toml SemVer syntax)
 cargo-dist-version = "0.33.1"
 # CI backends to support
