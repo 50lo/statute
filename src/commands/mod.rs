@@ -16,6 +16,7 @@ use crate::model::{Link, Mode};
 use crate::repo::Repo;
 use crate::state::Health;
 use anyhow::Result;
+use std::collections::BTreeMap;
 
 /// The `schema` every `--json` report starts with.
 pub const SCHEMA: u32 = 1;
@@ -28,7 +29,8 @@ fn fingerprints(repo: &Repo, links: &[&Link]) -> Result<Vec<Result<String, Missi
 }
 
 /// Where the Swift parser first fails, for each link that is missing because of a Swift parse
-/// error, in link order. Only those files are read again; every other entry is `None`.
+/// error, in link order. Only those files are read again, and each is parsed once; every other
+/// entry is `None`.
 fn swift_parse_errors(
     repo: &Repo,
     links: &[&Link],
@@ -44,6 +46,13 @@ fn swift_parse_errors(
             .filter(|pair| broken(*pair))
             .map(|(l, _)| l.file()),
     )?;
+    let near: BTreeMap<&str, Option<(usize, usize)>> = files
+        .iter()
+        .map(|(file, bytes)| {
+            let at = bytes.as_deref().and_then(fingerprint::swift_parse_error_at);
+            (file.as_str(), at)
+        })
+        .collect();
     Ok(links
         .iter()
         .zip(health)
@@ -51,8 +60,7 @@ fn swift_parse_errors(
             if !broken(pair) {
                 return None;
             }
-            let bytes = files.get(pair.0.file())?.as_deref()?;
-            fingerprint::swift_parse_error_at(bytes)
+            near.get(pair.0.file()).copied().flatten()
         })
         .collect())
 }
