@@ -198,6 +198,26 @@ pub enum TermAgreed {
     Retired,
 }
 
+/// What a decision does to a term it names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TermAction {
+    /// Introduces or redefines the term: the decision lists it in `terms`.
+    Define,
+    /// Retires the term: the decision lists it in `retires_terms`.
+    Retire,
+}
+
+/// Why a term cannot take a `TermAction`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TermRefusal {
+    /// The term is retired, and a retired term never changes.
+    Retired,
+    /// The term's `yaml` block does not match the schema, so its `agreed` value is unknown.
+    Unreadable,
+    /// The term is not agreed, and only an agreed term can be retired.
+    NotAgreed,
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NotName {
