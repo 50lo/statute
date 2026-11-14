@@ -10,7 +10,7 @@ First run `statute --version`. If the command is missing, stop and tell the user
 ## Steps
 
 1. If the repository has no `statute.yml`, run `statute init`. It writes the layout and adds the Statute section to AGENTS.md.
-2. Read the existing docs, contracts, ADRs and decision logs. Apply the rule and term selection criteria in the Statute section of `AGENTS.md` before drafting. For each area with qualifying rules and no rule file, create `statute/rules/<area>.md` with a `prefix` in its frontmatter:
+2. Read the existing docs, contracts, ADRs and decision logs. Apply the rule and term criteria in the `decide` skill before drafting. For each area with qualifying rules and no rule file, create `statute/rules/<area>.md` with a `prefix` in its frontmatter:
 
    ```markdown
    ---
