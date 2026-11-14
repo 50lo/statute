@@ -1,6 +1,6 @@
 ---
 name: decide
-description: Use in a repository with statute.yml when a product choice passes the decision gates, or when a rule or an agreed term needs to change. Drafts the rules, terms and cases and records a proposed decision.
+description: Use in a repository with statute.yml when a product choice passes the decision gates, an existing rule or agreed term needs a change or retirement, or a new rule or term meets the selection criteria in AGENTS.md. Drafts the rules, terms and cases and records a proposed decision.
 ---
 
 # Statute: decide
@@ -9,14 +9,14 @@ First run `statute --version`. If the command is missing, stop and tell the user
 
 ## When
 
-- A rule or an agreed term has to change, a term should no longer be used, or a new rule is needed.
+- An existing rule or agreed term needs to change or be retired, or a new rule or term meets the selection criteria in the Statute section of `AGENTS.md`.
 - A choice passes the decision gates. If AGENTS.md has a decision policy, its gates apply. Otherwise a choice needs a decision when it changes behaviour that users or other teams rely on, is hard to reverse, or settles a question people disagreed about.
 
 ## Steps
 
 1. Run `statute show` on the rules, terms and files involved, and read what it returns.
 2. Write the decision's summary (one to three sentences) and rationale (why this option, and what was rejected).
-3. Draft the rules and terms:
+3. Apply the selection criteria in the Statute section of `AGENTS.md` before drafting any new rule or term. A decision can be recorded with zero new rules or terms. Draft the qualifying additions and any changes or retirements:
    - New rule: `statute rule new AREA "Title"` prints its ID. Write the statement, `scope`, `terms`, `protects` and `boundary` in the new section.
    - Changed rule: edit its statement and fields in place.
    - Retired rule: leave the text; the decision lists it in `retires`.
