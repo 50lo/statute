@@ -3,10 +3,10 @@ use crate::check;
 use crate::git;
 use crate::model::{
     Agreed, ApprovedBy, Built, Decision, DecisionStatus, Finding, Link, Model, Rule, Severity,
-    Term, TermAgreed, ids, paths,
+    TermAgreed, ids, paths,
 };
 use crate::repo::Repo;
-use crate::state;
+use crate::state::{self, TermAction, TermRefusal};
 use crate::store;
 use crate::txn::Txn;
 use anyhow::{Result, bail};
@@ -267,26 +267,28 @@ fn blocking_errors(
 /// is agreed, no term they name is retired, and no term is both defined and retired in the batch.
 fn refuse_invalid_term_actions(model: &Model, chosen: &[&Decision]) -> Result<()> {
     let term = |name: &str| model.terms.iter().find(|t| t.name == name);
+    let refused = |d: &Decision, name: &str, why: TermRefusal| match why {
+        TermRefusal::Retired => format!(
+            "nothing was approved; {} names term `{name}`, which is retired, and a retired term never changes",
+            d.id
+        ),
+        TermRefusal::Unreadable => format!(
+            "nothing was approved; term `{name}` has no readable `yaml` block; run `statute check`"
+        ),
+        TermRefusal::NotAgreed => format!(
+            "nothing was approved; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",
+            d.id
+        ),
+    };
     for d in chosen {
-        for name in d.all_terms() {
-            if term(name).is_some_and(Term::is_retired) {
-                bail!(
-                    "nothing was approved; {} names term `{name}`, which is retired, and a retired term never changes",
-                    d.id
-                );
+        for (name, action) in state::term_actions(&d.terms, &d.retires_terms) {
+            if let Some(why @ TermRefusal::Retired) = state::term_refusal(term(name), action) {
+                bail!("{}", refused(d, name, why));
             }
         }
         for name in &d.retires_terms {
-            if term(name).is_some_and(|t| t.meta.is_none()) {
-                bail!(
-                    "nothing was approved; term `{name}` has no readable `yaml` block; run `statute check`"
-                );
-            }
-            if term(name).and_then(Term::agreed) != Some(TermAgreed::Agreed) {
-                bail!(
-                    "nothing was approved; {} retires term `{name}`, which is not agreed; only an agreed term can be retired",
-                    d.id
-                );
+            if let Some(why) = state::term_refusal(term(name), TermAction::Retire) {
+                bail!("{}", refused(d, name, why));
             }
         }
     }

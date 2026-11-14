@@ -1,8 +1,9 @@
 use super::SCHEMA;
 use crate::model::{
-    Agreed, Decision, DecisionDraft, DecisionStatus, Model, Term, TermAgreed, ids, paths,
+    Agreed, Decision, DecisionDraft, DecisionStatus, Model, TermAgreed, ids, paths,
 };
 use crate::repo::Repo;
+use crate::state::{self, TermAction, TermRefusal};
 use crate::store;
 use crate::txn::{self, Txn};
 use anyhow::{Result, anyhow, bail};
@@ -205,18 +206,31 @@ fn refuse_retired(model: &Model, draft: &DecisionDraft) -> Result<()> {
 
 /// No term in `terms` or `retires_terms` is retired: a retired term never changes.
 fn refuse_retired_terms(model: &Model, draft: &DecisionDraft) -> Result<()> {
-    for name in draft.terms.iter().chain(&draft.retires_terms) {
-        if model
-            .terms
-            .iter()
-            .any(|t| &t.name == name && t.is_retired())
-        {
-            bail!(
-                "term `{name}` is retired, and a retired term never changes; give a new meaning a new term name"
-            );
+    for (name, action) in state::term_actions(&draft.terms, &draft.retires_terms) {
+        // Every term with the name counts: `check` reports a duplicate name, and `decide` does not
+        // wait for it.
+        for term in model.terms.iter().filter(|t| &t.name == name) {
+            if let Some(why @ TermRefusal::Retired) = state::term_refusal(Some(term), action) {
+                bail!("{}", term_refusal_message(name, why));
+            }
         }
     }
     Ok(())
+}
+
+/// Why `decide` refuses a term, in words.
+fn term_refusal_message(name: &str, why: TermRefusal) -> String {
+    match why {
+        TermRefusal::Retired => format!(
+            "term `{name}` is retired, and a retired term never changes; give a new meaning a new term name"
+        ),
+        TermRefusal::Unreadable => {
+            format!("term `{name}` has no readable `yaml` block; run `statute check`")
+        }
+        TermRefusal::NotAgreed => {
+            format!("term `{name}` is not agreed; only an agreed term can be retired")
+        }
+    }
 }
 
 /// Every term in `retires_terms` is agreed, and the decision does not also introduce or redefine it.
@@ -228,11 +242,8 @@ fn refuse_unagreed_retirement(model: &Model, draft: &DecisionDraft) -> Result<()
             );
         }
         let term = model.terms.iter().find(|t| &t.name == name);
-        if term.is_some_and(|t| t.meta.is_none()) {
-            bail!("term `{name}` has no readable `yaml` block; run `statute check`");
-        }
-        if term.and_then(Term::agreed) != Some(TermAgreed::Agreed) {
-            bail!("term `{name}` is not agreed; only an agreed term can be retired");
+        if let Some(why) = state::term_refusal(term, TermAction::Retire) {
+            bail!("{}", term_refusal_message(name, why));
         }
     }
     Ok(())
