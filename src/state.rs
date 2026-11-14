@@ -1,8 +1,43 @@
 //! Derived state, computed from the model and never stored.
 
 use crate::fingerprint::Missing;
-use crate::model::{Agreed, Built, GapStatus, Link, LinkRole, Mode, Model, Rule};
+use crate::model::{
+    Agreed, Built, GapStatus, Link, LinkRole, Mode, Model, Rule, Term, TermAction, TermAgreed,
+    TermRefusal,
+};
 use std::collections::BTreeMap;
+
+/// The terms a decision names, each with what the decision does to it: `defines` is its `terms` list
+/// and `retires` its `retires_terms` list, in that order.
+pub fn term_actions<'a>(
+    defines: &'a [String],
+    retires: &'a [String],
+) -> impl Iterator<Item = (&'a String, TermAction)> {
+    let defines = defines.iter().map(|name| (name, TermAction::Define));
+    let retires = retires.iter().map(|name| (name, TermAction::Retire));
+    defines.chain(retires)
+}
+
+/// Why a decision cannot take `action` on a term, judged by the term's own state; `None` when it can.
+/// A retired term takes no action, and only an agreed term can be retired. `term` is `None` when no
+/// term has the name: that does not stop a decision from defining it, but a term that does not exist
+/// is not agreed, so it cannot be retired. Whether one decision, or one `approve` call, both defines
+/// and retires a term is the caller's check.
+pub fn term_refusal(term: Option<&Term>, action: TermAction) -> Option<TermRefusal> {
+    if term.is_some_and(Term::is_retired) {
+        return Some(TermRefusal::Retired);
+    }
+    match action {
+        TermAction::Define => None,
+        TermAction::Retire if term.is_some_and(|t| t.meta.is_none()) => {
+            Some(TermRefusal::Unreadable)
+        }
+        TermAction::Retire if term.and_then(Term::agreed) != Some(TermAgreed::Agreed) => {
+            Some(TermRefusal::NotAgreed)
+        }
+        TermAction::Retire => None,
+    }
+}
 
 /// For each rule ID, the decisions whose `establishes` lists it.
 pub fn establishers(model: &Model) -> BTreeMap<&str, Vec<&str>> {
@@ -103,4 +138,73 @@ pub fn is_broken(rule: &Rule, model: &Model) -> bool {
             .iter()
             .flatten()
             .any(|g| g.rule == rule.id && g.status == GapStatus::Open)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{Span, TermMeta};
+
+    fn term(meta: Option<TermMeta>) -> Term {
+        Term {
+            name: "Session".to_string(),
+            line: 1,
+            definition: None,
+            meta,
+            span: Span {
+                heading: 0..0,
+                block: None,
+                end: 0,
+            },
+        }
+    }
+
+    fn with(agreed: Option<TermAgreed>) -> Term {
+        term(Some(TermMeta {
+            agreed,
+            ..TermMeta::default()
+        }))
+    }
+
+    #[test]
+    fn a_term_takes_an_action_only_from_the_states_that_allow_it() {
+        use TermAction::{Define, Retire};
+        use TermRefusal::{NotAgreed, Retired, Unreadable};
+        let cases = [
+            (None, None, Some(NotAgreed)),
+            (Some(term(None)), None, Some(Unreadable)),
+            (Some(with(None)), None, Some(NotAgreed)),
+            (
+                Some(with(Some(TermAgreed::Proposed))),
+                None,
+                Some(NotAgreed),
+            ),
+            (Some(with(Some(TermAgreed::Agreed))), None, None),
+            (
+                Some(with(Some(TermAgreed::Retired))),
+                Some(Retired),
+                Some(Retired),
+            ),
+        ];
+        for (term, define, retire) in cases {
+            assert_eq!(term_refusal(term.as_ref(), Define), define, "{term:?}");
+            assert_eq!(term_refusal(term.as_ref(), Retire), retire, "{term:?}");
+        }
+    }
+
+    #[test]
+    fn term_actions_lists_defined_terms_before_retired_ones() {
+        let defines = ["Commit".to_string()];
+        let retires = ["Session".to_string()];
+        let actions: Vec<_> = term_actions(&defines, &retires)
+            .map(|(name, action)| (name.as_str(), action))
+            .collect();
+        assert_eq!(
+            actions,
+            [
+                ("Commit", TermAction::Define),
+                ("Session", TermAction::Retire)
+            ]
+        );
+    }
 }
