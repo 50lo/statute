@@ -1,9 +1,10 @@
 use super::SCHEMA;
 use crate::model::{
-    Agreed, Decision, DecisionDraft, DecisionStatus, Model, TermAgreed, ids, paths,
+    Agreed, Decision, DecisionDraft, DecisionStatus, Model, TermAction, TermAgreed, TermRefusal,
+    ids, paths,
 };
 use crate::repo::Repo;
-use crate::state::{self, TermAction, TermRefusal};
+use crate::state;
 use crate::store;
 use crate::txn::{self, Txn};
 use anyhow::{Result, anyhow, bail};

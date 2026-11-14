@@ -1,28 +1,11 @@
 //! Derived state, computed from the model and never stored.
 
 use crate::fingerprint::Missing;
-use crate::model::{Agreed, Built, GapStatus, Link, LinkRole, Mode, Model, Rule, Term, TermAgreed};
+use crate::model::{
+    Agreed, Built, GapStatus, Link, LinkRole, Mode, Model, Rule, Term, TermAction, TermAgreed,
+    TermRefusal,
+};
 use std::collections::BTreeMap;
-
-/// What a decision does to a term it names.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TermAction {
-    /// Introduces or redefines the term: the decision lists it in `terms`.
-    Define,
-    /// Retires the term: the decision lists it in `retires_terms`.
-    Retire,
-}
-
-/// Why a term cannot take a `TermAction`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TermRefusal {
-    /// The term is retired, and a retired term never changes.
-    Retired,
-    /// The term's `yaml` block does not match the schema, so its `agreed` value is unknown.
-    Unreadable,
-    /// The term is not agreed, and only an agreed term can be retired.
-    NotAgreed,
-}
 
 /// The terms a decision names, each with what the decision does to it: `defines` is its `terms` list
 /// and `retires` its `retires_terms` list, in that order.

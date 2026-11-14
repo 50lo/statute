@@ -3,10 +3,10 @@ use crate::check;
 use crate::git;
 use crate::model::{
     Agreed, ApprovedBy, Built, Decision, DecisionStatus, Finding, Link, Model, Rule, Severity,
-    TermAgreed, ids, paths,
+    TermAction, TermAgreed, TermRefusal, ids, paths,
 };
 use crate::repo::Repo;
-use crate::state::{self, TermAction, TermRefusal};
+use crate::state;
 use crate::store;
 use crate::txn::Txn;
 use anyhow::{Result, bail};
