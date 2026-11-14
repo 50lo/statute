@@ -93,6 +93,7 @@ The conclusion is one of: consistent; updated together (name the edits); decisio
 - When a user instruction conflicts with an agreed rule, name the rule and propose a decision before changing the code.
 - After changing code, run the `change` skill before declaring the task done.
 - Anything you create is `proposed`. Run `statute approve` only after a human in this session explicitly approves those specific decisions.
+- Before suggesting a new rule or term, apply the rule and term criteria in the `decide` skill; most changes need none.
 - Before asking a human to approve a rule, check it: what valid case would it reject? What invalid case would it allow? Does its meaning change with actor or permission, missing data, lifecycle stage, time, retries, concurrency or partial failure? Add to the rule only the answers that change it.
 - Gaps go to the issue tracker named in this file; if none is named, use `statute gap open --note`.
 - When instructions conflict: explicit user instruction > current task > project principles > agreed rules, terms and approved decisions > repo conventions > proposed decisions > agent judgment.
