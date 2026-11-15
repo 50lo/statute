@@ -106,15 +106,29 @@ pub fn swift_parse_hint(link: &Link, why: Missing, near: Option<(usize, usize)>)
     ))
 }
 
-/// A rule is complete when it has a code link, and a test link or a `manual_check`.
-pub fn is_complete(rule: &Rule, links: &[Link]) -> bool {
-    let has = |role| links.iter().any(|l| l.rule() == rule.id && l.role == role);
-    let manual = rule
-        .meta
+/// The rule's stated manual check, when it is not empty. A stated manual check stays required
+/// whatever links the rule has: test links never replace or complete it.
+pub fn manual_check(rule: &Rule) -> Option<&str> {
+    rule.meta
         .as_ref()
         .and_then(|m| m.manual_check.as_deref())
-        .is_some_and(|c| !c.trim().is_empty());
-    has(LinkRole::Code) && (has(LinkRole::Test) || manual)
+        .map(str::trim)
+        .filter(|c| !c.is_empty())
+}
+
+/// The manual check that a report should show for the rule: none for a retired rule.
+pub fn required_manual_check(rule: &Rule) -> Option<String> {
+    (!rule.is_retired())
+        .then(|| manual_check(rule))
+        .flatten()
+        .map(str::to_string)
+}
+
+/// A rule is complete when it has a code link, and a test link, a `manual_check` or both. Being
+/// complete declares how the rule is verified; it does not show that a manual check was done.
+pub fn is_complete(rule: &Rule, links: &[Link]) -> bool {
+    let has = |role| links.iter().any(|l| l.rule() == rule.id && l.role == role);
+    has(LinkRole::Code) && (has(LinkRole::Test) || manual_check(rule).is_some())
 }
 
 /// Incomplete: not retired, `built: built`, and not complete. Unknown while the lock does not parse.

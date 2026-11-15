@@ -20,7 +20,7 @@ First run `statute --version`. If the command is missing, stop and tell the user
 
 3. Draft qualifying terms in `statute/terms.md` with their definitions, the code names that implement them (`code`) and the look-alike names that do not (`not`).
 4. Draft the rules per area. For each rule run `statute rule new AREA "Title"`, then write one statement of one thing that must be true, its `scope`, its `terms`, and the `protects` and `boundary` cases. Keep each rule small enough for one test to check it.
-5. Link each rule to the code that makes it true and to a test that checks it: `statute link RULE path#Symbol` and `statute link RULE path#TestName --test`. A rule that no automated test can judge gets a `manual_check` instead of a test link. Write missing tests, or list them for the person.
+5. Link each rule to the code that makes it true and to a test that checks it: `statute link RULE path#Symbol` and `statute link RULE path#TestName --test`. Behaviour that no automated test can judge gets a `manual_check`. A rule can have both: link tests for the part they can judge, and keep the manual check for the rest. A test link never replaces a manual check. Write missing tests, or list them for the person.
 6. Record one decision per area with qualifying rules or terms. Run `statute decide --summary "Adopt the <area> rules and terms." --rationale "…"`, adding `--establishes RULES` for rules and `--terms TERMS` for terms when present.
 7. Run `statute check` and fix what it reports until it passes.
 

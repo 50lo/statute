@@ -1,11 +1,11 @@
 ---
 # st-8j2x
 title: Preserve manual check requirements when a rule also has automated tests
-status: todo
+status: completed
 type: bug
 priority: high
 created_at: 2026-10-17T00:30:58Z
-updated_at: 2026-10-17T00:30:58Z
+updated_at: 2026-11-15T01:40:56Z
 ---
 
 A rule can contain behavior that automated tests can verify and behavior that needs a person to judge. Linking its mechanical tests must not hide or discharge its manual check requirement.
@@ -20,10 +20,14 @@ Examples from Statute's own rules:
 Partial test links for these rules are deferred until this bug is fixed. The tests remain available in tests/core_rule_cases.rs and tests/core_lifecycle.rs.
 
 Acceptance criteria:
-- [ ] Define mixed automated/manual verification in a proposed Statute decision and update the affected spec, rules and terms before changing their meaning.
-- [ ] A rule with both test links and manual_check still visibly requires its stated manual check. Automated checks must not imply that the entire rule has been verified.
-- [ ] Show the manual instructions in status and carry the manual requirement through change-review output, including when automated tests are linked.
-- [ ] Add regressions for automated-only, manual-only and mixed rules, including a mixed rule whose automated tests pass while manual review is still needed. Preserve the distinction between declared verification coverage and evidence that behavior holds.
-- [ ] Link the deferred mechanical tests to CORE-001, CORE-004 and CORE-005 once mixed verification is represented correctly; do not mark their human judgment as automated coverage.
+- [x] Define mixed automated/manual verification in a proposed Statute decision and update the affected spec, rules and terms before changing their meaning.
+- [x] A rule with both test links and manual_check still visibly requires its stated manual check. Automated checks must not imply that the entire rule has been verified.
+- [x] Show the manual instructions in status and carry the manual requirement through change-review output, including when automated tests are linked.
+- [x] Add regressions for automated-only, manual-only and mixed rules, including a mixed rule whose automated tests pass while manual review is still needed. Preserve the distinction between declared verification coverage and evidence that behavior holds.
+- [x] Link the deferred mechanical tests to CORE-001, CORE-004 and CORE-005 once mixed verification is represented correctly; do not mark their human judgment as automated coverage.
 
 Keep the existing requirement for a code link. This bug does not ask the CLI to infer human consent from Git identity or from a passing test suite.
+
+## Resolution
+
+Fixed in PR https://github.com/50lo/statute/pull/48. Decision D261115-ywulh (approved 2026-11-15) changes CORE-003 and the terms "Manual check" and "Build state": a rule is verified by test links, a manual check, or both, and test links never replace or complete a manual check. `status`, `review` and `check --md` show each rule's manual check. Regression tests are in `tests/mixed_verification.rs`. The deferred tests are linked to CORE-001, CORE-004 and CORE-005. CORE-005 stays planned until it gets a code link.

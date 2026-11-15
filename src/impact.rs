@@ -4,7 +4,7 @@ use crate::model::{
     Decision, DecisionStatus, Gap, GapStatus, Impact, Link, Model, PendingDecision, Reason,
     RuleImpact, TermImpact, Verdict,
 };
-use crate::state::Health;
+use crate::state::{self, Health};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Reasons by rule ID or term name.
@@ -37,6 +37,14 @@ pub fn compute<'a>(
             .map(|r| r.title.clone())
             .unwrap_or_default()
     };
+    // Only the current text counts: a rule removed since the base has no manual check to do.
+    let manual_check = |id: &str| {
+        model
+            .rules
+            .iter()
+            .find(|r| r.id == id)
+            .and_then(state::required_manual_check)
+    };
     let rule_impacts: Vec<RuleImpact> = rules
         .iter()
         .map(|(rule, reasons)| RuleImpact {
@@ -44,6 +52,7 @@ pub fn compute<'a>(
             title: title(rule),
             verdict: verdict(rule, reasons, &changed, &new_open),
             reasons: reasons.iter().cloned().collect(),
+            manual_check: manual_check(rule),
         })
         .collect();
     let term_impacts: Vec<TermImpact> = terms

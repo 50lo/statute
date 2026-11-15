@@ -237,3 +237,20 @@
   changes: []
   retires: []
   terms: []
+- id: D261115-ywulh
+  timestamp: 2026-11-15T01:07:56Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T01:39:40Z
+  summary: A rule is verified by test links, a manual check, or both; a manual check can be its only verification. Test links never replace or complete a manual check, so it stays required while stated. status, review and the PR "Rule impact" section show each listed rule's manual check.
+  rationale: 'Some rules have behaviour a test can check and behaviour only a person can judge (bug st-8j2x). When a manual check counted only in place of a test link, linking a test hid the manual requirement, and partial tests looked like coverage of the whole rule. The completeness condition stays the same (a code link, and a test link or a manual check), so existing built rules stay built. Rejected: requiring a test link on every rule, which breaks rules no test can judge; a new field or state that records that a person did the check, which would make Statute track human consent; and treating passing tests or a Git identity as evidence that the manual check was done.'
+  establishes: []
+  changes:
+  - CORE-003
+  retires: []
+  terms:
+  - Manual check
+  - Build state
