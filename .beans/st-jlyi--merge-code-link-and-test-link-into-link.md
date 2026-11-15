@@ -1,13 +1,14 @@
 ---
 # st-jlyi
 title: Merge Code link and Test link into Link
-status: in-progress
+status: completed
 type: task
+priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-11-15T03:02:15Z
-updated_at: 2026-11-15T03:02:15Z
+updated_at: 2026-11-15T03:03:19Z
 parent: st-uvvi
 ---
 
@@ -34,10 +35,10 @@ Both role terms are used by exactly the same two rules, have not changed since a
 
 ## Acceptance
 
-- [ ] One proposed decision lists Link in `terms`, Code link and Test link in `retires_terms`, and CORE-003 and LINKS-002 in `changes`.
-- [ ] `statute check --all` reports no findings, before and after approval.
-- [ ] A person explicitly approves the decision; then `statute approve` retires Code link and Test link and agrees Link, CORE-003 and LINKS-002.
-- [ ] `statute show CORE-003` prints Link with both roles; `statute show "Code link"` shows a retired term with no rules.
+- [x] One proposed decision lists Link in `terms`, Code link and Test link in `retires_terms`, and CORE-003 and LINKS-002 in `changes`.
+- [x] `statute check --all` reports no findings, before and after approval.
+- [x] A person explicitly approves the decision; then `statute approve` retires Code link and Test link and agrees Link, CORE-003 and LINKS-002.
+- [x] `statute show CORE-003` prints Link with both roles; `statute show "Code link"` shows a retired term with no rules.
 
 ## Dependencies and constraints
 

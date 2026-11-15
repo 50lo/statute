@@ -248,6 +248,11 @@ Do not file these until the owner approves the choices above.
 - **Merge Code link and Test link into Link:** one proposed decision that rewords Link, adds both `LinkRole` names to its `code`, retires Code link and Test link, and changes CORE-003 and LINKS-002, with the before/after `show` comparison in the PR.
 - **Merge Affected rule into Rule review:** one proposed decision that adds the affected-rule sentence to Rule review, moves `RuleImpact` to its `code`, and retires Affected rule.
 
+### Owner decisions (2026-11-15)
+
+- Approved and done: the Link merge (Bean st-jlyi, decision D261115-8tnxv) and the Rule review merge (Bean st-2lxt, decision D261115-hy140). Code link, Test link and Affected rule are now retired.
+- Still to discuss: keeping Proposed decision, keeping Protected case and Boundary case, and the optional reference addition (items 2, 4 and 5 below).
+
 ### What the owner needs to decide
 
 1. Accept the Link merge, including that `show Link` widens to CORE-003 and that four LINKS rules print the role text.

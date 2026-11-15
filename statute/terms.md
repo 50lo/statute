@@ -30,7 +30,7 @@ code: [Decision, DecisionDraft]
 A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target. A code link points to the implementation that makes the rule true; a change there brings the rule up for review and tells the reviewer where to look. A test link points to a test that checks the rule's behavior; the test can catch a violation introduced outside the linked implementation, and the project's CI runs it.
 
 ```yaml
-agreed: proposed                 # proposed | agreed | retired
+agreed: agreed                   # proposed | agreed | retired
 code: [Link, LinkLine, "LinkRole::Code", "LinkRole::Test"]
 ```
 
@@ -41,7 +41,7 @@ A reference to an issue in an external tracker, recorded in gaps.yml, is separat
 A link to the implementation that makes a rule true. A change there brings the rule up for review and tells the reviewer where to look.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: ["LinkRole::Code"]
 ```
 
@@ -50,7 +50,7 @@ code: ["LinkRole::Code"]
 A link to a test that checks a rule's behavior. The test can catch a violation introduced outside the linked implementation. The project's CI runs the test.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: ["LinkRole::Test"]
 ```
 
@@ -113,7 +113,7 @@ code: [Built]
 A rule that a change brings up for review. Being affected means the rule needs attention; it does not itself establish that the rule is broken.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [RuleImpact]
 ```
 
@@ -122,7 +122,7 @@ code: [RuleImpact]
 An assessment by the agent of whether an affected rule still holds after a change. A rule is affected when a change brings it up for review; being affected means the rule needs attention and does not itself establish that it is broken. The agent reads the rule and implementation, tries the protected and boundary cases, and records whether the rule holds, changes on purpose, or is broken. The tool finds changed links and performs mechanical checks; it does not judge the behavior. A person performs any manual check and approves decisions to change the rule.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: ["review::Verdict", ReviewReport, RuleImpact]
 ```
 

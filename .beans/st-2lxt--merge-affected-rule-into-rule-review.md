@@ -1,13 +1,14 @@
 ---
 # st-2lxt
 title: Merge Affected rule into Rule review
-status: in-progress
+status: completed
 type: task
+priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-11-15T03:02:15Z
-updated_at: 2026-11-15T03:02:15Z
+updated_at: 2026-11-15T03:03:19Z
 parent: st-uvvi
 ---
 
@@ -33,9 +34,9 @@ No rule lists Affected rule, and it always changed together with Rule review. Ru
 
 ## Acceptance
 
-- [ ] One proposed decision lists Rule review in `terms` and Affected rule in `retires_terms`.
-- [ ] `statute check --all` reports no findings, before and after approval; `RuleImpact` is still searched, now under Rule review.
-- [ ] A person explicitly approves the decision; then `statute approve` retires Affected rule and agrees Rule review.
+- [x] One proposed decision lists Rule review in `terms` and Affected rule in `retires_terms`.
+- [x] `statute check --all` reports no findings, before and after approval; `RuleImpact` is still searched, now under Rule review.
+- [x] A person explicitly approves the decision; then `statute approve` retires Affected rule and agrees Rule review.
 
 ## Dependencies and constraints
 

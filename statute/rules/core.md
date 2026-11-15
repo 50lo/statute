@@ -51,7 +51,7 @@ boundary:
 A built rule must have at least one code link, and at least one test link or a stated manual check. A rule can have both: its test links cover what an automated test can judge, and its manual check stays required for what only a person can judge.
 
 ```yaml
-agreed: proposed        # proposed | agreed | retired
+agreed: agreed          # proposed | agreed | retired
 built: built              # planned | built
 scope: Rules that are not retired.
 terms: [Rule, Build state, Link, Manual check]

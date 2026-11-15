@@ -23,7 +23,7 @@ boundary:
 `check` must report a link as stale when the current fingerprint of its target differs from the fingerprint recorded in `statute.lock`. This applies to code links and test links alike.
 
 ```yaml
-agreed: proposed          # proposed | agreed | retired
+agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Links whose target changed since the base, or every link with `check --all`.
 terms: [Link, Stale link, Base]
