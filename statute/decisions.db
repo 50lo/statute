@@ -294,8 +294,11 @@
 - id: D261115-8hxqc
   timestamp: 2026-11-15T03:37:15Z
   actor: user
-  status: proposed
-  approved_by: null
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T03:39:43Z
   summary: Merge Proposed decision into Decision. Decision's definition now states the proposal lifecycle, and DEC-001, DEC-002, DEC-004 and DEC-005 list Decision instead. Proposed decision is retired; Decision is its successor.
   rationale: 'Changes to how proposals work are rare, so holding Decision in a proposed decision for such a change costs little under DEC-001. The merged definition keeps every condition of Proposed decision and its code name, and gives CORE-005, HIST-001, HIST-004 and HIST-005, whose text already relies on proposal semantics, the definition in their rule views (review record in Bean st-uvvi). Cost: Decision grows from 26 to 79 words in 12 rule views. Rejected: keeping both terms and adding Proposed decision to those four rules, which keeps a second term for the same lifecycle.'
   establishes: []

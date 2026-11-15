@@ -251,7 +251,8 @@ Do not file these until the owner approves the choices above.
 ### Owner decisions (2026-11-15)
 
 - Approved and done: the Link merge (Bean st-jlyi, decision D261115-8tnxv) and the Rule review merge (Bean st-2lxt, decision D261115-hy140). Code link, Test link and Affected rule are now retired.
-- Still to discuss: keeping Proposed decision, keeping Protected case and Boundary case, and the optional reference addition (items 2, 4 and 5 below).
+- Approved and done, reversing this record's keep recommendation: the Proposed decision merge (Bean st-rgyl, decision D261115-8hxqc). The owner judged that changes to how proposals work are rare, so the DEC-001 contention cost is small. Proposed decision is now retired. This makes item 5 below unnecessary.
+- Still to discuss: keeping Protected case and Boundary case (item 4 below).
 
 ### What the owner needs to decide
 

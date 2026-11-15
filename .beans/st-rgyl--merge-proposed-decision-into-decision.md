@@ -1,13 +1,14 @@
 ---
 # st-rgyl
 title: Merge Proposed decision into Decision
-status: in-progress
+status: completed
 type: task
+priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-11-15T03:37:05Z
-updated_at: 2026-11-15T03:37:05Z
+updated_at: 2026-11-15T03:39:43Z
 parent: st-uvvi
 ---
 
@@ -35,9 +36,9 @@ The st-uvvi review record first recommended keeping both terms, because Proposed
 
 ## Acceptance
 
-- [ ] One proposed decision lists Decision in `terms`, Proposed decision in `retires_terms`, and DEC-001, DEC-002, DEC-004 and DEC-005 in `changes`.
-- [ ] `statute check --all` reports no findings, before and after approval; `DecisionStatus::Proposed` is still searched, now under Decision.
-- [ ] A person explicitly approves the decision; then `statute approve` retires Proposed decision and agrees Decision and the four rules.
+- [x] One proposed decision lists Decision in `terms`, Proposed decision in `retires_terms`, and DEC-001, DEC-002, DEC-004 and DEC-005 in `changes`.
+- [x] `statute check --all` reports no findings, before and after approval; `DecisionStatus::Proposed` is still searched, now under Decision.
+- [x] A person explicitly approves the decision; then `statute approve` retires Proposed decision and agrees Decision and the four rules.
 
 ## Dependencies and constraints
 
