@@ -254,3 +254,34 @@
   terms:
   - Manual check
   - Build state
+- id: D261115-8tnxv
+  timestamp: 2026-11-15T03:02:24Z
+  actor: user
+  status: proposed
+  approved_by: null
+  summary: Merge Code link and Test link into Link. Link's definition now states both roles, and CORE-003 and LINKS-002 list Link instead. Code link and Test link are retired; Link is their successor.
+  rationale: 'Both role terms were used by exactly CORE-003 and LINKS-002, never changed after adoption, and had one code name each, so their separate identities added no precision (review record in Bean st-uvvi). Link keeps every sentence of both roles and both LinkRole code names, so CORE-003 still explains code and test links. Cost: show Link now also returns CORE-003, and LINKS-001, LINKS-003, LINKS-004 and LINKS-005 print the role text. Rejected: keeping the roles as aliases, because aliases are not redirects; keeping both terms, because they add contention and duplicate text.'
+  establishes: []
+  changes:
+  - CORE-003
+  - LINKS-002
+  retires: []
+  terms:
+  - Link
+  retires_terms:
+  - Code link
+  - Test link
+- id: D261115-hy140
+  timestamp: 2026-11-15T03:02:24Z
+  actor: user
+  status: proposed
+  approved_by: null
+  summary: Merge Affected rule into Rule review. Rule review's definition now says what an affected rule is, and lists RuleImpact. Affected rule is retired; Rule review is its successor.
+  rationale: 'No rule listed Affected rule, and it always changed together with Rule review. Rule review already used the phrase, but rule views do not expand prose, so LINKS-003 and LINKS-004 used it without a definition; the merge makes Rule review self-contained (review record in Bean st-uvvi). RuleImpact names the impact result rather than the review, a small loss of precision that keeps the name checked. Rejected: keeping Affected rule, which no rule referenced.'
+  establishes: []
+  changes: []
+  retires: []
+  terms:
+  - Rule review
+  retires_terms:
+  - Affected rule
