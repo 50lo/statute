@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Remove the human glossary (`docs/Glossary.md`) and its manual consistency review.
 - A rule can have test links and a manual check together. Test links never replace or complete a manual check: it stays required. Decision D261115-ywulh records this and awaits approval.
 - `status` shows each rule's manual check. `status --json` adds `manual_check` to each rule.
 - `review` prints the rule's manual check as still required. `review --json` adds `manual_check`.
