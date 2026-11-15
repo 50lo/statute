@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove the human glossary (`docs/Glossary.md`) and its manual consistency review.
+
 ## 0.3.2 - 2026-11-08
 
 - Fix release builds for Apple Silicon macOS.

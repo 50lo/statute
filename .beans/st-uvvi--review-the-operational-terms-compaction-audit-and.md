@@ -8,7 +8,7 @@ tags:
     - statute
     - planning
 created_at: 2026-10-18T12:07:14Z
-updated_at: 2026-10-18T13:48:39Z
+updated_at: 2026-11-15T00:00:00Z
 ---
 
 ## What
@@ -23,7 +23,7 @@ The terms refactoring plan and proposal were removed from `docs/` before the pub
 
 ## Why
 
-Separating the human glossary (st-25bl) from the operational terms does not mean every current entry is well chosen. Entries whose separate identities add no operational precision cost agents context and people review effort; entries that combine meanings needing independent approval or retrieval should be split.
+Not every current entry in the operational terms is well chosen. Entries whose separate identities add no operational precision cost agents context and people review effort; entries that combine meanings needing independent approval or retrieval should be split.
 
 ## Where
 
@@ -39,12 +39,14 @@ Separating the human glossary (st-25bl) from the operational terms does not mean
 
 ## Dependencies and constraints
 
-- Can start now; it needs no code and does not wait for st-jycx, st-25bl or st-9flm.
-- Migrations that follow: every change to an agreed term goes through `statute decide` and explicit human approval; a migration that removes or retires a term waits for st-9flm; once st-25bl has landed, each migration PR includes a glossary consistency record.
+- Can start now; it needs no code and does not wait for st-jycx or st-9flm.
+- Migrations that follow: every change to an agreed term goes through `statute decide` and explicit human approval; a migration that removes or retires a term waits for st-9flm.
 
 ## Audit results and review boundary
 
 The audit covers all 21 agreed terms at the audited commit. Its findings and proposed definitions are recommendations for this task to assess, not human-approved migration choices. Accepting the need for compaction did not approve any specific merge, wording, or retirement. Keep this Bean open for the review and approval work described above.
+
+The human glossary (`docs/Glossary.md`) and its consistency review were removed on 2026-11-15. The audit below still mentions them. Ignore those parts; they ask for no work.
 
 - First-batch candidates: Proposed decision into Decision; Code link and Test link into Link. The report supplies proposed compact definitions, metadata to preserve, exact rule-reference remappings, and the wider lookup/approval scope to evaluate.
 - Later candidates requiring wording and retrieval trials: Protected case and Boundary case into Rule; Affected rule into Rule review.
