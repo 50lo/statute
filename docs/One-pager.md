@@ -47,7 +47,7 @@ Each built rule needs two kinds of links, and they do different jobs:
 - **Code links** show where the rule is made true: the function, check or query that enforces it. When that code changes, the rule is flagged, and a person or agent confirms it still holds. Code links also tell a reader where to look and what is dangerous to touch.
 - **Test links** point to tests that check the rule's behaviour. A test can catch a break even in code nobody linked, such as a new filter added somewhere else.
 
-Neither is enough alone. Code links catch changes to the places we know about but miss new code. Tests catch new code but say nothing about why it matters or who decides. **A rule counts as built only when it has both.** The rare rule that no test can observe carries a manual check instead of a test.
+Neither is enough alone. Code links catch changes to the places we know about but miss new code. Tests catch new code but say nothing about why it matters or who decides. **A rule counts as built only when it has both.** Behaviour that no test can observe carries a manual check: steps for a person to follow. A rule can have tests and a manual check, and the tests never replace it.
 
 Terms keep everyone using the same words. Each term records what a word means and what it is called in code, including code names that look alike but mean something else, such as the `sessions` table. A new term is approved like a rule, because the words in a term steer how agents name and structure code.
 

@@ -24,6 +24,8 @@ First run `statute --version`. If the command is missing, stop and tell the user
    - **Holds**: every case still behaves as the rule says. Run `statute review RULE ok`.
    - **Changing on purpose**: the user asked for behaviour that the rule forbids. Name the rule to the user, use the `decide` skill to propose the change, then run `statute review RULE changed D…` with the new decision's ID.
    - **Broken**: the code no longer does what the rule says, and nobody asked for that. Open a gap (below), then run `statute review RULE gap REF`. Tell the user, and fix the code if that is in scope.
+
+   If the rule has a `manual_check`, `review` prints it. Its test links and your review do not cover it, even when every test passes. Tell the user that a person must still do that check. Never say the rule is fully verified, and never say a person did the check unless they told you so.
 4. Reconcile tracker gaps. Run `statute status --json` and look at each rule's `open_gaps`. For each open gap that belongs to the issue tracker named in AGENTS.md (its ID is the tracker's, not `G…`), look up the issue with the tracker's tools. If the issue is closed, check the rule against the current code as in step 3, and run `statute gap close REF` only if the rule holds; otherwise tell the user the issue is closed but the rule still does not hold.
 5. If you fixed the code for an open gap, check the rule as in step 3 and run `statute gap close REF`.
 6. Run `statute check` again until it reports no stale or missing links.
@@ -36,6 +38,6 @@ First run `statute --version`. If the command is missing, stop and tell the user
 ## Ends with
 
 - One `statute review` per affected rule, plus any decision or gap it needed.
-- `statute check --md` pasted into the PR description, as the "Rule impact" section. Add a sentence per affected rule if the reason is not obvious, written so a PM or designer can follow it.
+- `statute check --md` pasted into the PR description, as the "Rule impact" section. Add a sentence per affected rule if the reason is not obvious, written so a PM or designer can follow it. Keep its "Manual checks" list: those checks still need a person.
 
 Never edit `agreed` or `built`, never change a rule's text to match the code, and never review a rule you did not check.

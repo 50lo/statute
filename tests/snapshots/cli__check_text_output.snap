@@ -40,7 +40,7 @@ warning[rule.avoid_word] ATTR-001: statement uses `chat`, which the term Session
   --> statute/rules/attribution.md:5
 error[rule.retired_linked] ATTR-007: ATTR-007 is retired but still links src/app.txt
   --> statute/rules/attribution.md:84
-error[rule.incomplete] ATTR-008: ATTR-008 is built but lacks a code link, or both a test link and a `manual_check`
+error[rule.incomplete] ATTR-008: ATTR-008 is built but lacks a code link, or has neither a test link nor a `manual_check`
   --> statute/rules/attribution.md:93
 error[term.duplicate] Session: term `Session` is also defined on line 3
   --> statute/terms.md:14

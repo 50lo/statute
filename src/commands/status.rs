@@ -32,8 +32,13 @@ pub struct RuleStatus {
     pub built: Option<Built>,
     /// Proposed, and no decision establishes it yet.
     pub draft: bool,
-    /// Built, not retired, and lacking a code link, or both a test link and a `manual_check`.
+    /// Built, not retired, and lacking a code link, or having neither a test link nor a
+    /// `manual_check`.
     pub incomplete: bool,
+    /// The procedure a person must follow to verify the rule, when the rule is not retired and
+    /// states one. It stays required when the rule has test links; Statute does not record whether
+    /// anyone followed it.
+    pub manual_check: Option<String>,
     /// Not retired, built, and with an open gap.
     pub broken: bool,
     /// IDs of the rule's open gaps.
@@ -45,7 +50,7 @@ pub struct RuleStatus {
 }
 
 /// Per area: every rule with its agreed and built state, drafts, incomplete and broken rules, open
-/// gaps, and stale and missing links, and the "Rule impact" section against the base. Unlike `check`, every link is
+/// gaps, stale and missing links, and manual checks, and the "Rule impact" section against the base. Unlike `check`, every link is
 /// fingerprinted, as with `check --all`.
 pub fn run(area: Option<&str>) -> Result<StatusReport> {
     let repo = Repo::discover()?;
@@ -85,6 +90,7 @@ pub fn run(area: Option<&str>) -> Result<StatusReport> {
                     built: rule.meta.as_ref().map(|m| m.built),
                     draft: state::is_draft(rule, &model, &establishers),
                     incomplete: state::is_incomplete(rule, &model),
+                    manual_check: state::required_manual_check(rule),
                     broken: state::is_broken(rule, &model),
                     open_gaps: model
                         .gaps

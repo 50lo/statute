@@ -16,6 +16,7 @@ expression: "repo.run(&[\"status\", \"--area\", \"billing\", \"--json\"]).json()
           "draft": true,
           "id": "BILL-001",
           "incomplete": false,
+          "manual_check": null,
           "missing": [],
           "open_gaps": [],
           "stale": [],

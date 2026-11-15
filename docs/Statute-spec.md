@@ -98,18 +98,22 @@ Each rule states one observable obligation: what must or must not happen, to wha
 
 The protected and boundary cases map onto the required tests: one test that fails when the protected case breaks, and one that keeps the boundary case permitted. `statute rule new` writes this skeleton.
 
-A rule whose behaviour needs a person to observe or judge it carries a manual check in place of a test link. For example, "The cancel link is as easy to find as the upgrade link":
+A rule whose behaviour needs a person to observe or judge it carries a manual check: a stated procedure for a person to follow. For example, "The cancel link is as easy to find as the upgrade link":
 
 ```yaml
 manual_check: "A designer compares the cancel and upgrade links in each release review."
 ```
 
-Use `manual_check` only for such rules. A metric's computation, for example, is tested against its agreed definition; choosing the definition is the decision.
+Use `manual_check` only for behaviour that a test cannot judge. A metric's computation, for example, is tested against its agreed definition; choosing the definition is the decision.
+
+A rule can mix both kinds of behaviour. Then it has test links for the part a test can judge, and a manual check for the part only a person can judge. A test link never replaces or completes a manual check: while the rule states one, it stays required, also when every linked test passes. `status` shows every rule's manual check, and `review` and the "Rule impact" section show it for each rule they list (5).
+
+Links and manual checks declare how a rule is verified. They are not evidence that it holds. Statute does not record whether a person did a manual check, and never takes passing tests or a Git identity as proof that a person did it.
 
 How fields change:
 
 - `agreed` is set by the CLI: `rule new` writes `proposed`, `decide` sets `proposed` on the rules a decision changes, and `approve` sets `agreed` or `retired` (4.2).
-- `built` is set by `link` and `approve` when the rule becomes complete: at least one code link, and at least one test link or a `manual_check`. Nobody edits `built` by hand.
+- `built` is set by `link` and `approve` when the rule becomes complete: at least one code link, and at least one test link, a `manual_check`, or both. Nobody edits `built` by hand. A built rule with a `manual_check` still needs its manual check.
 - The statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check` change only together with a proposed decision that lists the rule in `changes`. `decide` sets the rule back to `agreed: proposed` until that decision is approved. Pending items never block a merge, so the default branch can carry the proposed text; `status` and the PR "Rule impact" section show the rule as awaiting approval.
 - Retirement is final. A retired rule keeps its section, its statement and the fields above, and `agreed: retired`, whatever decision lists it. `decide` refuses to list it in `changes` or `retires`; new behaviour gets a new rule ID.
 
@@ -119,7 +123,7 @@ Checks (`statute check`):
 - `agreed` and `built` hold allowed values.
 - Every entry in `terms` resolves to a term (4.3).
 - `agreed: agreed` requires at least one `protects` and one `boundary` case. They are the safeguard against code, docs and tests that agree with each other and are all wrong.
-- A rule that is not retired and has `built: built` requires at least one `code` link and at least one `test` link, or a non-empty `manual_check` in place of the test link.
+- A rule that is not retired and has `built: built` requires at least one `code` link, and at least one `test` link or a non-empty `manual_check`. It can have both; test links do not replace the manual check.
 - Every agreed or retired rule is established by exactly one decision. A proposed rule that no decision establishes yet is a draft: it is a pending item, not a finding, and `status` lists it.
 - The statement, `scope`, `terms`, `exceptions`, `protects`, `boundary` and `manual_check` of a rule that is agreed in the base change only together with a decision that lists the rule in `changes` and is proposed or became active since the base. Notes and formatting are not compared.
 - A retired rule keeps its section and has no links.
@@ -296,7 +300,7 @@ Computed, never stored:
 Rules:
 
 - **in force**: `agreed: agreed`.
-- **incomplete**: a rule that is not retired, has `built: built`, and lacks a code link, or lacks both a test link and a `manual_check`. Reported as an error.
+- **incomplete**: a rule that is not retired, has `built: built`, and lacks a code link, or has neither a test link nor a `manual_check`. Reported as an error. A rule that is not incomplete can still need its manual check.
 - **broken**: a rule that is not retired, has `built: built`, and has at least one open gap.
 
 Links:
@@ -319,14 +323,14 @@ If a Statute file in the base cannot be parsed, `check` reports a `base.unreadab
 | `show X...` | Takes one or more files, symbols, rule IDs, terms or decision IDs, and prints each rule once. A file or symbol shows the rules linked to it, with their text and terms. A rule shows its text, links, terms, the decisions that established and changed it, and its gaps. A term shows its definition, the rules that use it, and the decisions that define or retire it. A retired term is labelled retired, also in a rule's term list. A decision shows its entry |
 | `check [--all] [--md]` | Runs every check in section 4, including append-only history against the base, and reports stale and missing links whose targets changed since the base. `--all` re-fingerprints every link and looks for the `code` and `not` names of current terms across the repo. `--md` prints the PR "Rule impact" section |
 | `link RULE TARGET [--test] [--remove]` | Adds a link with the current fingerprint, or removes one. Refuses an unknown rule and an existing link. Sets `built: built` when the rule becomes complete |
-| `review RULE ok\|changed D…\|gap REF` | Records one verdict for the rule (4.4) and refreshes every stale link of that rule |
+| `review RULE ok\|changed D…\|gap REF` | Records one verdict for the rule (4.4) and refreshes every stale link of that rule. Prints the rule's manual check, if it has one, as still required: a verdict does not record that a person did it |
 | `decide --summary … --rationale … [--establishes …] [--changes …] [--retires …] [--terms …] [--retires-terms …] [--actor user\|agent] [--edit]` | Appends a decision with `status: proposed`, sets `agreed: proposed` on the rules in `--changes` and the terms in `--terms`, and prints its ID. The terms in `--retires-terms` stay agreed until the decision is approved. Refuses an unknown rule or term, one already in a proposed decision, a retired rule in `--changes` or `--retires`, a retired term in `--terms` or `--retires-terms`, and a term in `--retires-terms` that is not agreed or is also in `--terms`. `--actor` records who initiated it (default `agent`); `--edit` opens it in `$EDITOR` for people |
 | `approve D...` | Activates the decisions and updates their rules and terms, retiring the terms in `retires_terms` (4.2) |
 | `gap open RULE [--ref REF] [--note …]` | Adds an open gap and prints its ID. Without `--ref` it writes a full entry and requires `--note`; with `--ref` it records a tracker issue (4.5) |
 | `gap close REF` | Closes a gap |
-| `status [--area]` | Per area: rules by agreed/built, broken, stale, incomplete, draft rules, pending decisions with the rules and terms awaiting approval, open gaps, and every manual check |
+| `status [--area]` | Per area: rules by agreed/built, broken, stale, incomplete, draft rules, pending decisions with the rules and terms awaiting approval, open gaps, and the manual check of every rule that is not retired, also when the rule has test links |
 
-The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, was added or removed, or was refreshed by `review` (its fingerprint in the lock differs from the base) since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed; a retirement that is still proposed is reported apart from a completed one, and a term keeps `agreed: agreed` until its retirement is approved. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions, which name the terms they retire apart from the terms they define.
+The "Rule impact" section (`check --md`) lists every rule and term the branch affects, why, and the verdict, in plain language a PM or designer can follow. A rule is affected when one of its links went stale or missing, was added or removed, or was refreshed by `review` (its fingerprint in the lock differs from the base) since the base, or when a decision or gap that names it was added or changed since the base. A term is affected when a decision that lists it was added or changed; a retirement that is still proposed is reported apart from a completed one, and a term keeps `agreed: agreed` until its retirement is approved. Verdicts are derived by comparing with the base, in this order: a link still stale or missing means unreviewed; a new open gap means broken; a new decision that establishes, changes or retires the rule means new, changed or retired; a link added or removed means relinked; otherwise the rule holds. Rules and terms awaiting approval are listed with their pending decisions, which name the terms they retire apart from the terms they define. Every listed rule that is not retired and has a `manual_check` is also listed under "Manual checks" with its procedure, whether or not it has test links, so the reviewer knows a person still has to do it.
 
 Approval: `approve` is run by the agent in the session, only after a human has explicitly approved the specific decisions. This is a convention, not an identity check. Pending items never block a merge, so contributors in other timezones are not held up.
 
@@ -422,7 +426,7 @@ Informational. These scenarios show how the commands and skills fit together in 
 
 **The feature needs a new term.** The product policy distinguishes an "Approver" from the person who requests the refund. That distinction determines who can satisfy BILL-004 and applies across implementations and user journeys. The agent adds an `Approver` entry to `terms.md` with its definition and `code: [Approver]`, lists it in BILL-004's `terms`, and adds `--terms Approver` to the same `decide` call, which marks the term proposed. When the PM approves and the agent runs `approve`, the rule and the term become agreed together. `check` confirms that the rule's reference resolves, and `check --all` later confirms that the code name exists in the repo.
 
-**A rule that cannot have an automated test.** A designer's rule in `subscriptions.md` says the cancel link is as easy to find as the upgrade link. No test can judge that, so the agent adds `manual_check: "A designer compares the cancel and upgrade links in each release review"` to the rule and links the code that renders both links, and `link` sets `built: built`. The manual check is part of the rule the decision establishes, so the designer approves both together, and `status` lists it with the area's manual checks.
+**A rule that cannot have an automated test.** A designer's rule in `subscriptions.md` says the cancel link is as easy to find as the upgrade link. No test can judge that, so the agent adds `manual_check: "A designer compares the cancel and upgrade links in each release review"` to the rule and links the code that renders both links, and `link` sets `built: built`. The manual check is part of the rule the decision establishes, so the designer approves both together, and `status` lists it with the area's manual checks. If the rule later gets a test for part of its behaviour, the agent links it with `--test` and keeps the manual check; `status` still lists it.
 
 **A rule needs to change.** The PM asks to raise the second-approval threshold to $1,000, which conflicts with BILL-004. The agent names the rule, edits it, and runs `decide --changes BILL-004 --summary … --rationale …`, which sets the rule back to proposed. It updates the code and the test; at the end of the turn `check` reports BILL-004's links as stale, and the agent runs `review BILL-004 changed D…`. The PM approves, and the agent runs `approve D…`. Until then, `status` and the PR's "Rule impact" section show BILL-004 as awaiting approval.
 

@@ -25,9 +25,8 @@ boundary:
   - A draft can remain proposed while its statement and cases are being written.
 ```
 
-Partial automated coverage is in `tests/core_rule_cases.rs`. Its test link is
-deferred until Beans bug `st-8j2x` supports rules that need both automated tests
-and a manual check.
+The test link to `tests/core_rule_cases.rs` covers the case requirements only.
+Whether a rule states one checkable requirement still needs the manual check.
 
 # CORE-002 Agreement and implementation are recorded separately
 
@@ -49,10 +48,10 @@ boundary:
 
 # CORE-003 A built rule has implementation and verification links
 
-A built rule must have at least one code link and at least one test link. A stated manual check can replace the test link when an automated test cannot judge the behavior.
+A built rule must have at least one code link, and at least one test link or a stated manual check. A rule can have both: its test links cover what an automated test can judge, and its manual check stays required for what only a person can judge.
 
 ```yaml
-agreed: agreed          # proposed | agreed | retired
+agreed: proposed        # proposed | agreed | retired
 built: built              # planned | built
 scope: Rules that are not retired.
 terms: [Rule, Build state, Code link, Test link, Manual check]
@@ -60,8 +59,10 @@ exceptions: []
 protects:
   - A built rule with test links but no code link is incomplete.
   - A built rule with a code link but neither a test link nor a manual check is incomplete.
+  - Linking a test to a rule with a manual check does not remove, replace or complete its manual check; `status` still shows it as required, and so do `review` and the PR "Rule impact" section when the rule is affected.
 boundary:
   - A rule with a code link and a stated manual check can be built without a test link when an automated test cannot judge its behavior.
+  - A rule with a code link, test links and a manual check is built; being built does not mean anyone has done the manual check.
   - A planned rule can have no links while its implementation is being prepared.
 ```
 
@@ -88,8 +89,8 @@ boundary:
   - A proposed rule or term can become agreed after a person explicitly approves the decision that names it.
 ```
 
-Partial automated coverage is in `tests/core_lifecycle.rs`. Its test link for
-this rule is deferred until Beans bug `st-8j2x` is fixed.
+The test link to `tests/core_lifecycle.rs` covers the proposed state of agent
+additions only. How the agent presents them still needs the manual check.
 
 # CORE-005 Only a person can approve a decision
 
@@ -114,5 +115,6 @@ boundary:
   - After a person explicitly approves a specific decision, the agent may run statute approve for that decision to record the approval.
 ```
 
-Partial automated coverage is in `tests/core_lifecycle.rs`. Its test link for
-this rule is deferred until Beans bug `st-8j2x` is fixed.
+The test links to `tests/core_lifecycle.rs` cover only that `approve` changes
+the decisions it names and nothing else. Whether a person approved them still
+needs the manual check. The rule stays planned until it has a code link.

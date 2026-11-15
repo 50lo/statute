@@ -57,7 +57,8 @@ pub fn retired(model: &Model, out: &mut Vec<Finding>) {
     }
 }
 
-/// A rule that is not retired and is `built: built` has a code link, and a test link or a `manual_check`.
+/// A rule that is not retired and is `built: built` has a code link, and a test link, a
+/// `manual_check` or both.
 pub fn completeness(model: &Model, out: &mut Vec<Finding>) {
     for rule in model
         .rules
@@ -68,7 +69,7 @@ pub fn completeness(model: &Model, out: &mut Vec<Finding>) {
             Finding::error(
                 "rule.incomplete",
                 format!(
-                    "{} is built but lacks a code link, or both a test link and a `manual_check`",
+                    "{} is built but lacks a code link, or has neither a test link nor a `manual_check`",
                     rule.id
                 ),
             )

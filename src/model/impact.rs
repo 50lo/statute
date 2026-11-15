@@ -16,6 +16,9 @@ pub struct RuleImpact {
     pub title: String,
     pub verdict: Verdict,
     pub reasons: Vec<Reason>,
+    /// The rule's manual check, when it is not retired and states one. A person must still follow
+    /// it, whatever the verdict and whether or not the rule has test links.
+    pub manual_check: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

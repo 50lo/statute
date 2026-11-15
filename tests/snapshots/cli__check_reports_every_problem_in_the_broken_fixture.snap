@@ -155,7 +155,7 @@ expression: run.json()
       "code": "rule.incomplete",
       "file": "statute/rules/attribution.md",
       "line": 93,
-      "message": "ATTR-008 is built but lacks a code link, or both a test link and a `manual_check`",
+      "message": "ATTR-008 is built but lacks a code link, or has neither a test link nor a `manual_check`",
       "rule": "ATTR-008",
       "severity": "error"
     },

@@ -102,6 +102,24 @@ pub fn impact(r: &Impact) -> String {
             let _ = writeln!(out, "| {} | {} |", cell(&term.term), reasons(&term.reasons));
         }
     }
+    let manual: Vec<_> = r
+        .rules
+        .iter()
+        .filter_map(|rule| Some((rule, rule.manual_check.as_deref()?)))
+        .collect();
+    if !manual.is_empty() {
+        out.push_str("\n### Manual checks\n\n");
+        out.push_str("A person must still do these checks. Linked tests do not replace them, and Statute does not record that they were done.\n\n");
+        for (rule, check) in manual {
+            let _ = writeln!(
+                out,
+                "- **{}** {}: {}",
+                rule.rule,
+                one_line(&rule.title),
+                one_line(check)
+            );
+        }
+    }
     if !r.awaiting_approval.is_empty() {
         out.push_str("\n### Awaiting approval\n\n");
         for d in &r.awaiting_approval {
@@ -229,17 +247,27 @@ pub fn link(r: &LinkReport) -> String {
 }
 
 pub fn review(r: &ReviewReport) -> String {
-    if r.refreshed.is_empty() {
-        return format!("{} has no stale links; nothing to refresh\n", r.rule);
-    }
-    let mut out = format!(
-        "Refreshed {} {} of {}:\n",
-        r.refreshed.len(),
-        plural(r.refreshed.len(), "link"),
-        r.rule
-    );
-    for target in &r.refreshed {
-        let _ = writeln!(out, "  {target}");
+    let mut out = if r.refreshed.is_empty() {
+        format!("{} has no stale links; nothing to refresh\n", r.rule)
+    } else {
+        let mut out = format!(
+            "Refreshed {} {} of {}:\n",
+            r.refreshed.len(),
+            plural(r.refreshed.len(), "link"),
+            r.rule
+        );
+        for target in &r.refreshed {
+            let _ = writeln!(out, "  {target}");
+        }
+        out
+    };
+    if let Some(check) = &r.manual_check {
+        let _ = writeln!(
+            out,
+            "{} also has a manual check. This verdict does not record it; a person must still do it:\n  {}",
+            r.rule,
+            one_line(check)
+        );
     }
     out
 }
@@ -303,6 +331,14 @@ pub fn status(r: &StatusReport) -> String {
                 "  {:width$}  {agreed:<8}  {built:<7}  {}{notes}",
                 rule.id, rule.title
             );
+            if let Some(check) = &rule.manual_check {
+                let _ = writeln!(
+                    out,
+                    "  {:width$}  manual check, still required: {}",
+                    "",
+                    one_line(check)
+                );
+            }
         }
     }
     out.push('\n');

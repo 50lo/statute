@@ -27,6 +27,9 @@ pub struct ReviewReport {
     pub verdict: Verdict,
     /// Targets whose fingerprint this review refreshed.
     pub refreshed: Vec<String>,
+    /// The rule's manual check, when it is not retired and states one. The verdict does not record
+    /// that a person followed it, so it is still required.
+    pub manual_check: Option<String>,
 }
 
 /// Records one verdict for a rule: checks it against the decisions and gaps, then refreshes every
@@ -34,9 +37,10 @@ pub struct ReviewReport {
 pub fn run(rule_id: &str, verdict: Verdict) -> Result<ReviewReport> {
     let repo = Repo::discover()?;
     let model = repo.load()?;
-    if !model.rules.iter().any(|r| r.id == rule_id) {
+    let Some(rule) = model.rules.iter().find(|r| r.id == rule_id) else {
         bail!("no rule {rule_id}");
-    }
+    };
+    let manual_check = state::required_manual_check(rule);
     let Some(mut links) = model.links.clone() else {
         bail!("{} does not parse; run `statute check`", paths::LOCK);
     };
@@ -110,5 +114,6 @@ pub fn run(rule_id: &str, verdict: Verdict) -> Result<ReviewReport> {
         rule: rule_id.to_string(),
         verdict,
         refreshed: fresh.into_iter().map(|(t, _)| t).collect(),
+        manual_check,
     })
 }
