@@ -7,10 +7,10 @@ prefix: CORE
 An agreed rule must describe one requirement that a person or test can check. It must include a protected case showing behavior to preserve and a boundary case showing where the requirement stops applying.
 
 ```yaml
-agreed: agreed          # proposed | agreed | retired
+agreed: proposed        # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Protected case, Boundary case]
+terms: [Rule]
 exceptions: []
 manual_check: >-
   Before approving a new or changed rule, a person reads its statement and cases.

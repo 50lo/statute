@@ -9,11 +9,11 @@ code: [Term, TermMeta]
 
 ## Rule
 
-A statement of one thing that must be true about the product, and when. A person or test can check whether the product follows it.
+A statement of one thing that must be true about the product, and when. A person or test can check whether the product follows it. Its protected cases are concrete cases showing behavior it must preserve; they give a person or agent cases to try when checking whether it still holds. Its boundary cases are nearby cases showing where it stops applying, so it does not reject valid behavior outside its intended scope.
 
 ```yaml
-agreed: agreed
-code: [Rule, RuleMeta]
+agreed: proposed
+code: [Rule, RuleMeta, protects, boundary]
 ```
 
 ## Decision
