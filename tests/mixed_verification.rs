@@ -1,6 +1,6 @@
 //! Automated, manual and mixed verification (bug st-8j2x, decision D261115-ywulh).
 //!
-//! A manual check is a standing requirement for a person. Test links never replace or complete it,
+//! A manual check can be a rule's only verification. Test links never replace or complete it,
 //! so `status`, `review` and the "Rule impact" section keep showing it when a rule also has test
 //! links. Links and manual checks declare how a rule is verified; none of these reports claims that
 //! a person did a manual check.
