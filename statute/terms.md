@@ -59,7 +59,7 @@ code: ["LinkRole::Test"]
 A stated procedure for a person to verify the behavior of a rule that an automated test cannot judge. It can be the rule's only verification or sit beside test links. A test link never replaces or completes it, so it stays required while it is stated. The rule still needs a code link. Statute records the procedure, not whether a person has followed it.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [manual_check]
 ```
 
@@ -104,7 +104,7 @@ code: [Agreed, TermAgreed]
 Whether a rule is planned or built, with an open gap indicating broken behavior. A built rule needs a code link, and a test link, a manual check or both. These records do not guarantee that the rule holds, and do not show that a manual check was done.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [Built]
 ```
 
