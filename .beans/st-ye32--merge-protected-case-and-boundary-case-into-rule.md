@@ -23,7 +23,7 @@ Merge the agreed terms Protected case and Boundary case into Rule through one pr
 
 ## Why
 
-The st-uvvi review record first recommended keeping both terms, because only CORE-001 lists them and the merge adds text to Rule in 10 rule views. On 2026-11-15 the owner chose to merge: both case terms describe fields of a rule, have one code name each, and have not changed since adoption. Cost: Rule grows from 25 to about 69 words in the views of CORE-001 to CORE-004, DEC-001, DEC-003, DEC-005, GAPS-001, HIST-002 and HIST-004. Term definitions have no length limit.
+The st-uvvi review record first recommended keeping both terms, because only CORE-001 lists them and the merge adds text to Rule in 10 rule views. On 2026-11-15 the owner chose to merge: both case terms describe fields of a rule, have one code name each, and have not changed since adoption. Cost: Rule grows from 25 to 73 words in the views of CORE-001 to CORE-004, DEC-001, DEC-003, DEC-005, GAPS-001, HIST-002 and HIST-004. Term definitions have no length limit.
 
 ## Where
 

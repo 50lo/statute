@@ -318,7 +318,7 @@
   status: proposed
   approved_by: null
   summary: Merge Protected case and Boundary case into Rule. Rule's definition now states what its protected and boundary cases are, and CORE-001 lists Rule only. Protected case and Boundary case are retired; Rule is their successor.
-  rationale: 'Both case terms describe fields of a rule, were listed only by CORE-001, never changed after adoption, and had one code name each (review record in Bean st-uvvi). Rule keeps both meanings apart: a protected case is behavior to preserve, a boundary case is nearby valid behavior outside scope. Cost: Rule grows from 25 to about 69 words in 10 rule views. Rejected: keeping both terms, the review record''s first recommendation; one umbrella case term, which would blur the two purposes.'
+  rationale: 'Both case terms describe fields of a rule, were listed only by CORE-001, never changed after adoption, and had one code name each (review record in Bean st-uvvi). Rule keeps both meanings apart: a protected case is behavior to preserve, a boundary case is nearby valid behavior outside scope. Cost: Rule grows from 25 to 73 words in 10 rule views. Rejected: keeping both terms, the review record''s first recommendation; one umbrella case term, which would blur the two purposes.'
   establishes: []
   changes:
   - CORE-001
