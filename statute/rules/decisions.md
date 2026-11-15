@@ -7,10 +7,10 @@ prefix: DEC
 A rule or term must not be listed in more than one proposed decision. `decide` refuses a decision that lists a rule or term already in a proposed decision, and `check` reports an overlap that arrives through a merge.
 
 ```yaml
-agreed: agreed            # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Term, Proposed decision]
+terms: [Rule, Term, Decision]
 exceptions: []
 protects:
   - "`decide --terms Commit` is refused while another proposed decision lists `Commit`."
@@ -24,10 +24,10 @@ boundary:
 `statute approve` must make active only the decisions named on its command line, and change the agreement status only of the rules and terms those decisions list. Other proposed decisions and their rules and terms stay proposed.
 
 ```yaml
-agreed: agreed            # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Decision, Proposed decision, Agreement status, Approval]
+terms: [Decision, Agreement status, Approval]
 exceptions: []
 protects:
   - Approving one of two proposed decisions leaves the other decision and the rules it changes proposed.
@@ -60,10 +60,10 @@ boundary:
 `decide` and `approve` must refuse, and write nothing, when a term listed in `retires_terms` is not agreed, or is also listed in `terms` by the same decision or, for `approve`, by another decision in the same call.
 
 ```yaml
-agreed: agreed            # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: built              # planned | built
 scope: Decisions drafted with `decide`, and decisions named to `approve`.
-terms: [Decision, Term, Agreement status, Proposed decision]
+terms: [Decision, Term, Agreement status]
 exceptions: []
 protects:
   - "`decide --retires-terms Repository` is refused while Repository is proposed and was never agreed, and nothing is written."
@@ -78,10 +78,10 @@ boundary:
 `check` must report an error when a rule that is not retired lists a retired term in `terms`, or a proposed decision lists a retired term in `terms` or `retires_terms`, and `approve` must refuse a decision that names a retired term.
 
 ```yaml
-agreed: agreed            # proposed | agreed | retired
+agreed: proposed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Term, Decision, Proposed decision, Agreement status]
+terms: [Rule, Term, Decision, Agreement status]
 exceptions: []
 protects:
   - A proposed rule that lists a retired term in `terms` is reported as an error.

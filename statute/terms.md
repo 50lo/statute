@@ -18,11 +18,12 @@ code: [Rule, RuleMeta]
 
 ## Decision
 
-A recorded choice about rules or terms, with the reason for it. It starts as a proposal and records who approved it when it becomes active.
+A recorded choice about rules or terms, with the reason for it. It starts as a proposed decision, which a person has not approved yet: the rules it establishes or changes and the terms it introduces or redefines stay proposed, while a rule or term it retires stays agreed and in force. A proposed decision can be edited or deleted, and it never blocks a merge. Once a person approves it, it becomes active and records who approved it.
 
 ```yaml
-agreed: agreed
-code: [Decision, DecisionDraft]
+agreed: proposed
+code: [Decision, DecisionDraft, "DecisionStatus::Proposed"]
+aliases: [pending decision]
 ```
 
 ## Link
