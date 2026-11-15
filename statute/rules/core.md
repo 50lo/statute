@@ -7,7 +7,7 @@ prefix: CORE
 An agreed rule must describe one requirement that a person or test can check. It must include a protected case showing behavior to preserve and a boundary case showing where the requirement stops applying.
 
 ```yaml
-agreed: proposed        # proposed | agreed | retired
+agreed: agreed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
 terms: [Rule]

@@ -1,14 +1,14 @@
 ---
 # st-uvvi
 title: Review the operational terms compaction audit and choose migrations
-status: todo
+status: completed
 type: task
 priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-10-18T12:07:14Z
-updated_at: 2026-11-15T00:00:00Z
+updated_at: 2026-11-15T03:53:19Z
 ---
 
 ## What
@@ -35,7 +35,7 @@ Not every current entry in the operational terms is well chosen. Entries whose s
 - [x] Every candidate in the audit has a choice (keep, merge, split, reword) answered against the five questions in the proposal's compaction section.
 - [x] For each merge or split: the rules that reference the affected terms, their `code` and `not` names, and the expected effect on `statute show` and `statute check --all` results (does the merge widen what they return?).
 - [x] Each migration is classed as keeping every existing term (can proceed after review, through proposed decisions) or retiring a term (through `retires_terms`, under the retirement contract in `docs/Statute-spec.md` section 4.3 and rules DEC-004, DEC-005 and HIST-005), with the retirement steps it needs.
-- [ ] A person has reviewed the record; follow-up Beans are filed for the approved migrations.
+- [x] A person has reviewed the record; follow-up Beans are filed for the approved migrations.
 
 ## Dependencies and constraints
 
@@ -252,7 +252,8 @@ Do not file these until the owner approves the choices above.
 
 - Approved and done: the Link merge (Bean st-jlyi, decision D261115-8tnxv) and the Rule review merge (Bean st-2lxt, decision D261115-hy140). Code link, Test link and Affected rule are now retired.
 - Approved and done, reversing this record's keep recommendation: the Proposed decision merge (Bean st-rgyl, decision D261115-8hxqc). The owner judged that changes to how proposals work are rare, so the DEC-001 contention cost is small. Proposed decision is now retired. This makes item 5 below unnecessary.
-- Still to discuss: keeping Protected case and Boundary case (item 4 below).
+- Approved and done, reversing this record's keep recommendation: the Protected case and Boundary case merge (Bean st-ye32, decision D261115-kj2d6). Both are now retired, and Rule states what its protected and boundary cases are.
+- Every candidate is now settled. Net result: 21 terms, of which 15 are agreed and 6 are retired (Code link, Test link, Affected rule, Proposed decision, Protected case, Boundary case).
 
 ### What the owner needs to decide
 

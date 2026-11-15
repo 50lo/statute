@@ -1,13 +1,14 @@
 ---
 # st-ye32
 title: Merge Protected case and Boundary case into Rule
-status: in-progress
+status: completed
 type: task
+priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-11-15T03:49:48Z
-updated_at: 2026-11-15T03:49:48Z
+updated_at: 2026-11-15T03:53:19Z
 parent: st-uvvi
 ---
 
@@ -31,10 +32,10 @@ The st-uvvi review record first recommended keeping both terms, because only COR
 
 ## Acceptance
 
-- [ ] One proposed decision lists Rule in `terms`, Protected case and Boundary case in `retires_terms`, and CORE-001 in `changes`.
-- [ ] `statute check --all` reports no findings, before and after approval; `protects` and `boundary` are still searched, now under Rule.
-- [ ] A person explicitly approves the decision; then `statute approve` retires Protected case and Boundary case and agrees Rule and CORE-001.
-- [ ] `statute show CORE-001` prints Rule with both case meanings, and they stay distinct: a protected case is behavior to preserve, a boundary case is nearby valid behavior outside scope.
+- [x] One proposed decision lists Rule in `terms`, Protected case and Boundary case in `retires_terms`, and CORE-001 in `changes`.
+- [x] `statute check --all` reports no findings, before and after approval; `protects` and `boundary` are still searched, now under Rule.
+- [x] A person explicitly approves the decision; then `statute approve` retires Protected case and Boundary case and agrees Rule and CORE-001.
+- [x] `statute show CORE-001` prints Rule with both case meanings, and they stay distinct: a protected case is behavior to preserve, a boundary case is nearby valid behavior outside scope.
 
 ## Dependencies and constraints
 

@@ -12,7 +12,7 @@ code: [Term, TermMeta]
 A statement of one thing that must be true about the product, and when. A person or test can check whether the product follows it. Its protected cases are concrete cases showing behavior it must preserve; they give a person or agent cases to try when checking whether it still holds. Its boundary cases are nearby cases showing where it stops applying, so it does not reject valid behavior outside its intended scope.
 
 ```yaml
-agreed: proposed
+agreed: agreed
 code: [Rule, RuleMeta, protects, boundary]
 ```
 
@@ -69,7 +69,7 @@ code: [manual_check]
 A concrete case showing behavior the rule must preserve. It gives a person or agent a case to try when checking whether the rule still holds.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [protects]
 ```
 
@@ -78,7 +78,7 @@ code: [protects]
 A nearby case showing where the rule stops applying, so it does not reject valid behavior outside its intended scope.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [boundary]
 ```
 
