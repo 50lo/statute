@@ -26,7 +26,7 @@ boundary:
 agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Links whose target changed since the base, or every link with `check --all`.
-terms: [Link, Stale link, Code link, Test link, Base]
+terms: [Link, Stale link, Base]
 exceptions: []
 protects:
   - Changing the body of a linked Go function makes its code link stale.

@@ -1,14 +1,14 @@
 ---
 # st-uvvi
 title: Review the operational terms compaction audit and choose migrations
-status: todo
+status: completed
 type: task
 priority: normal
 tags:
     - statute
     - planning
 created_at: 2026-10-18T12:07:14Z
-updated_at: 2026-11-15T00:00:00Z
+updated_at: 2026-11-15T03:53:19Z
 ---
 
 ## What
@@ -28,33 +28,240 @@ Not every current entry in the operational terms is well chosen. Entries whose s
 ## Where
 
 - Read: `statute/terms.md`, the `terms` lists in `statute/rules/*.md`, `statute show TERM` for each candidate (its rules), and `statute check --all` for code-name hits.
-- Write: a review record, as a document in `docs/` or in this Bean, whichever the reviewer prefers. No changes to `statute/` files.
+- Write: the review record, in this Bean (section "Review record (2026-11-15)"). No document under `docs/`, and no changes to `statute/` files.
 
 ## Acceptance
 
-- [ ] Every candidate in the audit has a choice (keep, merge, split, reword) answered against the five questions in the proposal's compaction section.
-- [ ] For each merge or split: the rules that reference the affected terms, their `code` and `not` names, and the expected effect on `statute show` and `statute check --all` results (does the merge widen what they return?).
-- [ ] Each migration is classed as keeping every existing term (can proceed after review, through proposed decisions) or removing/retiring a term (waits for st-9flm).
-- [ ] A person has reviewed the record; follow-up Beans are filed for the approved migrations.
+- [x] Every candidate in the audit has a choice (keep, merge, split, reword) answered against the five questions in the proposal's compaction section.
+- [x] For each merge or split: the rules that reference the affected terms, their `code` and `not` names, and the expected effect on `statute show` and `statute check --all` results (does the merge widen what they return?).
+- [x] Each migration is classed as keeping every existing term (can proceed after review, through proposed decisions) or retiring a term (through `retires_terms`, under the retirement contract in `docs/Statute-spec.md` section 4.3 and rules DEC-004, DEC-005 and HIST-005), with the retirement steps it needs.
+- [x] A person has reviewed the record; follow-up Beans are filed for the approved migrations.
 
 ## Dependencies and constraints
 
-- Can start now; it needs no code and does not wait for st-jycx or st-9flm.
-- Migrations that follow: every change to an agreed term goes through `statute decide` and explicit human approval; a migration that removes or retires a term waits for st-9flm.
+- Can start now; it needs no code. st-jycx (whole-section protection) and st-9flm (term retirement) are completed, so nothing blocks it.
+- Migrations that follow: every change to an agreed term goes through `statute decide` and explicit human approval. A migration that retires a term uses `decide --retires-terms` and must change, in the same `approve` call, every rule that still uses the term (see the review record).
 
 ## Audit results and review boundary
 
 The audit covers all 21 agreed terms at the audited commit. Its findings and proposed definitions are recommendations for this task to assess, not human-approved migration choices. Accepting the need for compaction did not approve any specific merge, wording, or retirement. Keep this Bean open for the review and approval work described above.
 
-The human glossary (`docs/Glossary.md`) and its consistency review were removed on 2026-11-15. The audit below still mentions them. Ignore those parts; they ask for no work.
+The human glossary (`docs/Glossary.md`), its consistency review and its automation Bean `st-uzzw` were removed or scrapped on 2026-11-15 (PR #49). The audit below still mentions them. Ignore those parts; they ask for no work. The audit's "ratify" command is now `statute approve`.
 
 - First-batch candidates: Proposed decision into Decision; Code link and Test link into Link. The report supplies proposed compact definitions, metadata to preserve, exact rule-reference remappings, and the wider lookup/approval scope to evaluate.
 - Later candidates requiring wording and retrieval trials: Protected case and Boundary case into Rule; Affected rule into Rule review.
 - Keep initially: the core entries and specialized meanings including Agreement status, Build state, Approval, Manual check, Stale link, Missing link, Fingerprint, Base, and Draft rule. The report gives an operational reason for each.
-- There is no target term count. The first candidates would remove three active identities if chosen; that count is a consequence, not a goal. Retirement may retain historical headings.
+- There is no target term count. The first candidates would remove three active identities if chosen; that count is a consequence, not a goal. Retirement keeps the retired term's heading.
 - Reuse the documented inventory and experiments. Add new evidence only where the current head differs or an open question needs testing. Account explicitly for `code`, `not`, `aliases`, and `avoid`, lookup behavior, historical identities, and independent approval.
 
-The report describes behavior at its audited commit. In particular, its first-paragraph definition/history and retrieval observations are baseline facts, not a requirement to retain that policy: st-jycx plans whole-section protection and rule-context retrieval. Revalidate these and retirement/lookup assumptions on the migration PR's actual head, including any implemented st-9flm behavior. The original local copy at `/private/tmp/terms_compaction_audit.md` is optional; all audit content is preserved here.
+The report describes behavior at its audited commit. Its first-paragraph definition and retrieval observations are out of date: st-jycx made the whole section (except the heading and the `yaml` block) the compared definition, and rule views print all of it. st-9flm implemented term retirement. The review record below lists what changed. The original local copy at `/private/tmp/terms_compaction_audit.md` is optional; all audit content is preserved here.
+
+## Review record (2026-11-15)
+
+This record is a recommendation for the owner. It approves no migration, wording or retirement. Each migration needs its own proposed decision and a person's explicit approval.
+
+Checked against commit `b8df322` (main after PR #48 and PR #49). All 21 terms are still in `statute/terms.md`, all `agreed: agreed`. `statute check --all` reports no findings.
+
+### Summary of choices
+
+| Candidate | Audit said | Choice | Class |
+| --- | --- | --- | --- |
+| Code link and Test link into Link | Merge, first batch | **Merge** | Retires two terms |
+| Proposed decision into Decision | Merge, first batch | **Keep** both | Keeps every term |
+| Affected rule into Rule review | Merge, second batch | **Merge**, lower priority | Retires one term |
+| Protected case and Boundary case into Rule | Merge, second batch | **Keep** all three | Keeps every term |
+| The 15 other terms | Keep | **Keep** | Keeps every term |
+
+No split and no stand-alone reword is recommended. The Link and Rule review merges reword the surviving term as part of the merge.
+
+### What changed since the audit
+
+The audit's section "What the tool does today" is wrong on these points at `b8df322`:
+
+| Audit claim | Now |
+| --- | --- |
+| The first paragraph is the definition. Rule views embed only it. History compares only it. | The definition is the whole section except the heading and the `yaml` block (`definition` in `src/store/terms.rs`). History compares all of it with whitespace collapsed, plus `code` and `not` (`same_term` in `src/check/history.rs`). Rule and file views of `show` print all of it. So "all meaning must fit in the first paragraph" no longer applies. The new cost: every added sentence prints in every rule view that lists the term. |
+| There is no retired term status. | `TermAgreed::Retired` exists (`src/model/mod.rs`). |
+| Deleting a term is not a supported migration. | Deletion is still refused. Retirement is the supported way to remove a term's active identity (see "Retirement steps" below). |
+| The command is `ratify`. | It is `statute approve`. |
+| Proposed decision is used by DEC-001 and DEC-002. Decision has 7 rules; Rule has 8. | Proposed decision: DEC-001, DEC-002, DEC-004, DEC-005. Decision: 11 rules. Rule: 10 rules. Link: 5 rules (LINKS-005 is new). |
+| Link's `code` is `[LinkLine]`. | `[Link, LinkLine]` (decision D261108-4ssd6). |
+| Glossary steps (consistency records, showing glossary sections). | The glossary was removed. These steps are void. |
+
+These audit claims still hold:
+
+- A term's identity is its exact heading. `show` matches the exact name only: `statute show "code link"` and `statute show "pending decision"` both exit 2.
+- Aliases are not redirects. `show` does not resolve them, and a rule that lists `pending decision` in `terms` gets `rule.term_unknown` (re-run in the disposable clone).
+- References are direct. `show TERM` returns only rules that list that exact term. A rule view prints only the terms the rule lists; it does not follow terms named in a definition's prose.
+- Approval boundaries are per term: a rule or term is in at most one proposed decision (DEC-001).
+- `check --all` searches `code` and `not` names as whole identifiers. It skips retired terms, and their `avoid` words give no warnings.
+- Impact from code names is not implemented. "Term matching" is listed under "Ideas for v2" in `docs/Statute-spec.md` section 7. A term is affected only when a decision that lists it is added or changed.
+
+PR #48 (Bean st-8j2x, decision D261115-ywulh) is merged and approved. It changed CORE-003 and the terms Manual check and Build state. No proposed decision holds them now, so DEC-001 does not block any migration below. Its effect on wording is covered under "Code link and Test link into Link".
+
+### Retirement steps (current contract)
+
+Source: `docs/Statute-spec.md` section 4.3, rules DEC-004, DEC-005 and HIST-005.
+
+1. Record one decision with `--terms SURVIVOR --retires-terms OLD --changes RULES`. RULES are every rule that is not retired and lists OLD. Only an agreed term can be retired, and the decision cannot also list it in `--terms`.
+2. Edit the survivor's definition and `code`, and replace OLD with SURVIVOR in each rule's `terms`. Leave OLD's section unchanged. OLD stays `agreed: agreed`, and its references stay valid, until approval.
+3. A person approves. `statute approve` sets OLD to `agreed: retired`. It refuses while any rule that is not retired still lists OLD, so the rule changes must be in the same `approve` call.
+4. After approval: OLD keeps its heading, definition, `code`, `not` and `agreed: retired` for ever. Its name is never reused. `show OLD` still finds it, labels it retired, and lists no rules. `check --all` no longer searches its `code` and `not` names, so any name that still matters must move to the survivor. There is no replacement field; the decision's summary or rationale names the successor.
+
+Prototype: in a disposable clone of `b8df322` (scratchpad, never pushed), recording `--retires-terms "Code link,Test link"` without changing CORE-003 and LINKS-002 was accepted by `decide`, and then `approve` refused with four `rule.term_retired` errors and wrote nothing. This confirms step 3. All `approve` runs in this record are simulations in that clone, not human approvals.
+
+### Code link and Test link into Link: merge
+
+The five questions from the proposal:
+
+1. **Independent approval?** No evidence for it. Code link and Test link were defined once, in D261016-f5ieq, and never changed. Link changed twice without them (D261017-6x46f, D261108-4ssd6). The recent change to verification policy (D261115-ywulh) went into Manual check and Build state, not into the two roles. Merging does not serialize real work.
+2. **Separate rule references?** No. Both are used by exactly CORE-003 and LINKS-002. Neither rule needs one role without the other.
+3. **Independent retrieval, code names, naming guidance?** Each role has one code name. Neither has `not`, `aliases` or `avoid`. One flat `code` list keeps both names searched.
+4. **One compact definition without losing distinctions?** Yes. The prototype definition below keeps every sentence of both roles. Cost: Link grows from 42 to 99 words, and LINKS-001, LINKS-003, LINKS-004 and LINKS-005 print the role text, which they do not need.
+5. **Do references keep resolving?** Yes, through retirement. D261016-f5ieq keeps naming both retired terms, which DEC-005 allows.
+
+Facts today:
+
+| Term | Rules | `code` | `not` | `aliases` | `avoid` | Decisions |
+| --- | --- | --- | --- | --- | --- | --- |
+| Link | LINKS-001 to LINKS-005 | `Link`, `LinkLine` | none | none | none | f5ieq, 6x46f, 4ssd6 |
+| Code link | CORE-003, LINKS-002 | `LinkRole::Code` | none | none | none | f5ieq |
+| Test link | CORE-003, LINKS-002 | `LinkRole::Test` | none | none | none | f5ieq |
+
+Proposed surviving definition (prototyped; the tracker paragraph is unchanged):
+
+> A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target. A code link points to the implementation that makes the rule true; a change there brings the rule up for review and tells the reviewer where to look. A test link points to a test that checks the rule's behavior; the test can catch a violation introduced outside the linked implementation, and the project's CI runs it.
+>
+> A reference to an issue in an external tracker, recorded in gaps.yml, is separate from a rule's code or test links.
+
+`code: [Link, LinkLine, "LinkRole::Code", "LinkRole::Test"]`. No `not`, `aliases` or `avoid`. The retired sections keep their own `code` as a record.
+
+Rule remapping:
+
+| Rule | `terms` today | `terms` after |
+| --- | --- | --- |
+| CORE-003 | Rule, Build state, Code link, Test link, Manual check | Rule, Build state, Link, Manual check |
+| LINKS-002 | Link, Stale link, Code link, Test link, Base | Link, Stale link, Base |
+
+Decision: `statute decide --terms Link --retires-terms "Code link,Test link" --changes CORE-003,LINKS-002`.
+
+Effect (measured in the prototype):
+
+| Command | Before | After |
+| --- | --- | --- |
+| `show Link` | 5 rules | 6 rules (adds CORE-003) |
+| `show "Code link"`, `show "Test link"` | CORE-003, LINKS-002 | Retired section, labelled retired, no rules. No redirect to Link. |
+| `show CORE-003` | 529 words | 580 words |
+| `show LINKS-002` | 355 words | 362 words |
+| `show LINKS-003` (and LINKS-001, 004, 005) | Link at 42 words | Link at 99 words (+57 each) |
+| `show src/state.rs` | 2,987 words | 3,218 words |
+| `check --all` | No findings | No findings. `LinkRole::Code` and `LinkRole::Test` are still searched, now under Link. |
+
+Wording interaction with PR #48: CORE-003's statement and cases, and the definitions of Manual check and Build state, say "code link" and "test link" in plain prose. After the merge, Link's definition defines both phrases, and CORE-003 lists Link, so `show CORE-003` still explains them. `show "Manual check"` and `show "Build state"` alone do not print Link, but that was already true for Code link and Test link, because prose is not expanded. No rule or term needs rewording for this merge.
+
+Acceptance checks for the migration PR: an agent given CORE-003 still sees both roles, knows CI runs linked tests, and knows a manual check never replaces a code link. An agent given LINKS-002 sees that stale applies to both roles.
+
+### Proposed decision into Decision: keep both
+
+This reverses the audit's first-batch recommendation. The evidence changed after the audit.
+
+1. **Independent approval?** Yes, and this question decides the choice. Proposed decision was introduced in D261017-rlpdd and changed in its meaning once without Decision: D261018-m21p6 added that a retiring term stays agreed and in force until approval. D261028-qy5et also changed it, but only to rename "ratify" to "approve", so it is weak evidence. Decision changed only once after adoption, for code names (D261108-4ssd6). Merged, each future change to the proposal lifecycle would hold Decision in a proposed decision, blocking any other change to it (DEC-001), and every term-impact report would name Decision.
+2. **Separate rule references?** Partly. DEC-001, DEC-002, DEC-004 and DEC-005 list Proposed decision. Four rules that list only Decision also use proposal semantics in their prose or cases: CORE-005 ("approve a proposed decision"), HIST-001 (a proposed decision can be edited or deleted), HIST-004 and HIST-005 (a rule or term that a proposed decision retires stays agreed until approval). DEC-003, HIST-002, HIST-003 and LINKS-003 do not depend on the lifecycle.
+3. **Independent retrieval?** Mixed. The prototype Decision grows from 26 to 79 words and prints in 12 rule views. For the four rules named in question 2 the merge would help, because prose is not expanded (the same reason given for the Affected rule merge). For DEC-003, HIST-002, HIST-003 and LINKS-003 it adds text they do not need. Questions 2 and 3 do not settle the choice on their own.
+4. **One compact definition?** Possible (prototyped below), but it bundles the most-changed lifecycle text into a central term.
+5. **References keep resolving?** Yes, through retirement; this is not the blocker.
+
+Facts today:
+
+| Term | Rules | `code` | `not` | `aliases` | `avoid` |
+| --- | --- | --- | --- | --- | --- |
+| Decision | CORE-005, DEC-002 to DEC-005, HIST-001 to HIST-005, LINKS-003 (11) | `Decision`, `DecisionDraft` | none | none | none |
+| Proposed decision | DEC-001, DEC-002, DEC-004, DEC-005 | `DecisionStatus::Proposed` | none | `pending decision` | none |
+
+Prototype, for the record only (the tool accepted it and `check --all` stayed clean): `decide --terms Decision --retires-terms "Proposed decision" --changes DEC-001,DEC-002,DEC-004,DEC-005`, with Proposed decision replaced by Decision in DEC-001 and removed from DEC-002, DEC-004 and DEC-005. The decision changes the retirement rules DEC-004 and DEC-005 themselves. `show Decision` widened from 11 to 12 rules. `show DEC-001` grew from 346 to 377 words.
+
+Class: keeps every term. No follow-up needed for the keep choice.
+
+Option for the owner (not a recommendation): keep both terms and add Proposed decision to the `terms` of CORE-005, HIST-001, HIST-004 and HIST-005, through one decision with `--changes` for those four rules. This gives those rule views the lifecycle definition without widening Decision. It keeps every term. File a Bean for it only if the owner wants it.
+
+### Affected rule into Rule review: merge, lower priority
+
+1. **Independent approval?** No. Both were defined in D261016-f5ieq and changed together in D261108-4ssd6.
+2. **Separate rule references?** No rule lists Affected rule.
+3. **Independent retrieval?** Rule review's definition already starts with "whether an affected rule still holds", but LINKS-003 and LINKS-004 do not list Affected rule, so their views use the phrase without defining it. The merge makes Rule review self-contained. Cost: +28 words in two rule views.
+4. **Code names?** `RuleImpact` moves to Rule review. It names the impact result, not the review, so attribution gets a little looser. It is still searched.
+5. **References keep resolving?** Yes. D261016-f5ieq and D261108-4ssd6 keep naming the retired term.
+
+| Term | Rules | `code` | `not` | `aliases` | `avoid` |
+| --- | --- | --- | --- | --- | --- |
+| Rule review | LINKS-003, LINKS-004 | `review::Verdict`, `ReviewReport` | none | none | none |
+| Affected rule | none | `RuleImpact` | none | none | none |
+
+Proposed surviving definition (prototyped):
+
+> An assessment by the agent of whether an affected rule still holds after a change. A rule is affected when a change brings it up for review; being affected means the rule needs attention and does not itself establish that it is broken. The agent reads the rule and implementation, tries the protected and boundary cases, and records whether the rule holds, changes on purpose, or is broken. The tool finds changed links and performs mechanical checks; it does not judge the behavior. A person performs any manual check and approves decisions to change the rule.
+
+`code: ["review::Verdict", ReviewReport, RuleImpact]`. Rule remapping: none.
+
+Decision: `statute decide --terms "Rule review" --retires-terms "Affected rule"`. In the prototype `approve` accepted it with no rule changes, and `check --all` stayed clean.
+
+Effect: `show "Rule review"` still returns LINKS-003 and LINKS-004. `show "Affected rule"` returns the retired section with no rules (it had none before). Rule review grows from 68 to 96 words.
+
+Risk: if a later rule is about impact only, it would have to list Rule review and carry the review text. Re-check this choice if such a rule is proposed.
+
+### Protected case and Boundary case into Rule: keep
+
+1. **Independent approval?** They changed only at adoption. No evidence either way.
+2. **Separate rule references?** Only CORE-001 lists them. Rule is listed by 10 rules.
+3. **Independent retrieval?** No gain. Merging adds about 30 to 46 words to Rule (the two definitions are 46 words; a compact version is about 30) in 10 rule views to remove two entries used by one rule.
+4. **Code names?** `protects` and `boundary` are distinct field names. Each now maps to one meaning; a merged list would lose that.
+5. **References keep resolving?** It would work through retirement, but the cost in question 3 decides it.
+
+The audit itself said that keeping both is better than a too-broad Rule. Class: keeps every term.
+
+### Terms kept as they are
+
+| Term | Reason to keep |
+| --- | --- |
+| Term, Rule | Core reference and approval objects. |
+| Decision | Kept apart from Proposed decision (see above). |
+| Manual check | A human procedure, not a link target. Its policy changed on its own in D261115-ywulh. |
+| Gap | Own lifecycle and remedy. |
+| Agreement status | Shared by rules and terms; changes apart from build state (CORE-002). Now also covers retired terms. |
+| Build state | Separate from agreement; changed on its own in D261115-ywulh. |
+| Approval | Human authority event, apart from the agent recording it. |
+| Base | Specific fallback and working-tree rules a plain Git word does not carry. |
+| Stale link, Missing link | Different conditions and remedies; precise code names. |
+| Fingerprint | Mode-dependent hashing; owns `avoid: [checksum]`. |
+| Draft rule | Not every proposed rule; pending, not a finding. |
+
+### Order and interaction with PR #48
+
+1. **Link merge** first. PR #48 is merged, so CORE-003 is free. Do not run it while another proposed decision lists CORE-003, LINKS-002, Link, Code link or Test link; `decide` would refuse it (DEC-001).
+2. **Rule review merge** second, or at the same time. It touches no rule and shares no term with the Link merge, so the two decisions do not overlap.
+3. No step for Proposed decision, Protected case or Boundary case.
+
+### Follow-up Beans to file after approval
+
+Do not file these until the owner approves the choices above.
+
+- **Merge Code link and Test link into Link:** one proposed decision that rewords Link, adds both `LinkRole` names to its `code`, retires Code link and Test link, and changes CORE-003 and LINKS-002, with the before/after `show` comparison in the PR.
+- **Merge Affected rule into Rule review:** one proposed decision that adds the affected-rule sentence to Rule review, moves `RuleImpact` to its `code`, and retires Affected rule.
+
+### Owner decisions (2026-11-15)
+
+- Approved and done: the Link merge (Bean st-jlyi, decision D261115-8tnxv) and the Rule review merge (Bean st-2lxt, decision D261115-hy140). Code link, Test link and Affected rule are now retired.
+- Approved and done, reversing this record's keep recommendation: the Proposed decision merge (Bean st-rgyl, decision D261115-8hxqc). The owner judged that changes to how proposals work are rare, so the DEC-001 contention cost is small. Proposed decision is now retired. This makes item 5 below unnecessary.
+- Approved and done, reversing this record's keep recommendation: the Protected case and Boundary case merge (Bean st-ye32, decision D261115-kj2d6). Both are now retired, and Rule states what its protected and boundary cases are.
+- Every candidate is now settled. Net result: 21 terms, of which 15 are agreed and 6 are retired (Code link, Test link, Affected rule, Proposed decision, Protected case, Boundary case).
+
+### What the owner needs to decide
+
+1. Accept the Link merge, including that `show Link` widens to CORE-003 and that four LINKS rules print the role text.
+2. Accept keeping Proposed decision, against the audit's first-batch recommendation.
+3. Accept the lower-priority Rule review merge, or keep Affected rule.
+4. Accept keeping Protected case and Boundary case.
+5. Optional: whether to add Proposed decision to the `terms` of CORE-005, HIST-001, HIST-004 and HIST-005 (see the Proposed decision section). If yes, file a Bean for it.
 
 ## Recorded compaction audit
 

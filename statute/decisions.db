@@ -254,3 +254,80 @@
   terms:
   - Manual check
   - Build state
+- id: D261115-8tnxv
+  timestamp: 2026-11-15T03:02:24Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T03:03:11Z
+  summary: Merge Code link and Test link into Link. Link's definition now states both roles, and CORE-003 and LINKS-002 list Link instead. Code link and Test link are retired; Link is their successor.
+  rationale: 'Both role terms were used by exactly CORE-003 and LINKS-002, never changed after adoption, and had one code name each, so their separate identities added no precision (review record in Bean st-uvvi). Link keeps every sentence of both roles and both LinkRole code names, so CORE-003 still explains code and test links. Cost: show Link now also returns CORE-003, and LINKS-001, LINKS-003, LINKS-004 and LINKS-005 print the role text. Rejected: keeping the roles as aliases, because aliases are not redirects; keeping both terms, because they add contention and duplicate text.'
+  establishes: []
+  changes:
+  - CORE-003
+  - LINKS-002
+  retires: []
+  terms:
+  - Link
+  retires_terms:
+  - Code link
+  - Test link
+- id: D261115-hy140
+  timestamp: 2026-11-15T03:02:24Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T03:03:11Z
+  summary: Merge Affected rule into Rule review. Rule review's definition now says what an affected rule is, and lists RuleImpact. Affected rule is retired; Rule review is its successor.
+  rationale: 'No rule listed Affected rule, and it always changed together with Rule review. Rule review already used the phrase, but rule views do not expand prose, so LINKS-003 and LINKS-004 used it without a definition; the merge makes Rule review self-contained (review record in Bean st-uvvi). RuleImpact names the impact result rather than the review, a small loss of precision that keeps the name checked. Rejected: keeping Affected rule, which no rule referenced.'
+  establishes: []
+  changes: []
+  retires: []
+  terms:
+  - Rule review
+  retires_terms:
+  - Affected rule
+- id: D261115-8hxqc
+  timestamp: 2026-11-15T03:37:15Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T03:39:43Z
+  summary: Merge Proposed decision into Decision. Decision's definition now states the proposal lifecycle, and DEC-001, DEC-002, DEC-004 and DEC-005 list Decision instead. Proposed decision is retired; Decision is its successor.
+  rationale: 'Changes to how proposals work are rare, so holding Decision in a proposed decision for such a change costs little under DEC-001. The merged definition keeps every condition of Proposed decision and its code name, and gives CORE-005, HIST-001, HIST-004 and HIST-005, whose text already relies on proposal semantics, the definition in their rule views (review record in Bean st-uvvi). Cost: Decision grows from 26 to 79 words in 12 rule views. Rejected: keeping both terms and adding Proposed decision to those four rules, which keeps a second term for the same lifecycle.'
+  establishes: []
+  changes:
+  - DEC-001
+  - DEC-002
+  - DEC-004
+  - DEC-005
+  retires: []
+  terms:
+  - Decision
+  retires_terms:
+  - Proposed decision
+- id: D261115-kj2d6
+  timestamp: 2026-11-15T03:49:57Z
+  actor: user
+  status: active
+  approved_by:
+    name: Anton Solo
+    email: anton@50lo.me
+    at: 2026-11-15T03:53:19Z
+  summary: Merge Protected case and Boundary case into Rule. Rule's definition now states what its protected and boundary cases are, and CORE-001 lists Rule only. Protected case and Boundary case are retired; Rule is their successor.
+  rationale: 'Both case terms describe fields of a rule, were listed only by CORE-001, never changed after adoption, and had one code name each (review record in Bean st-uvvi). Rule keeps both meanings apart: a protected case is behavior to preserve, a boundary case is nearby valid behavior outside scope. Cost: Rule grows from 25 to 73 words in 10 rule views. Rejected: keeping both terms, the review record''s first recommendation; one umbrella case term, which would blur the two purposes.'
+  establishes: []
+  changes:
+  - CORE-001
+  retires: []
+  terms:
+  - Rule
+  retires_terms:
+  - Protected case
+  - Boundary case

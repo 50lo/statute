@@ -9,29 +9,30 @@ code: [Term, TermMeta]
 
 ## Rule
 
-A statement of one thing that must be true about the product, and when. A person or test can check whether the product follows it.
+A statement of one thing that must be true about the product, and when. A person or test can check whether the product follows it. Its protected cases are concrete cases showing behavior it must preserve; they give a person or agent cases to try when checking whether it still holds. Its boundary cases are nearby cases showing where it stops applying, so it does not reject valid behavior outside its intended scope.
 
 ```yaml
 agreed: agreed
-code: [Rule, RuleMeta]
+code: [Rule, RuleMeta, protects, boundary]
 ```
 
 ## Decision
 
-A recorded choice about rules or terms, with the reason for it. It starts as a proposal and records who approved it when it becomes active.
+A recorded choice about rules or terms, with the reason for it. It starts as a proposed decision, which a person has not approved yet: the rules it establishes or changes and the terms it introduces or redefines stay proposed, while a rule or term it retires stays agreed and in force. A proposed decision can be edited or deleted, and it never blocks a merge. Once a person approves it, it becomes active and records who approved it.
 
 ```yaml
 agreed: agreed
-code: [Decision, DecisionDraft]
+code: [Decision, DecisionDraft, "DecisionStatus::Proposed"]
+aliases: [pending decision]
 ```
 
 ## Link
 
-A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target.
+A connection from a rule to a code or test target, with a fingerprint used to detect changes to that target. A code link points to the implementation that makes the rule true; a change there brings the rule up for review and tells the reviewer where to look. A test link points to a test that checks the rule's behavior; the test can catch a violation introduced outside the linked implementation, and the project's CI runs it.
 
 ```yaml
 agreed: agreed                   # proposed | agreed | retired
-code: [Link, LinkLine]
+code: [Link, LinkLine, "LinkRole::Code", "LinkRole::Test"]
 ```
 
 A reference to an issue in an external tracker, recorded in gaps.yml, is separate from a rule's code or test links.
@@ -41,7 +42,7 @@ A reference to an issue in an external tracker, recorded in gaps.yml, is separat
 A link to the implementation that makes a rule true. A change there brings the rule up for review and tells the reviewer where to look.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: ["LinkRole::Code"]
 ```
 
@@ -50,7 +51,7 @@ code: ["LinkRole::Code"]
 A link to a test that checks a rule's behavior. The test can catch a violation introduced outside the linked implementation. The project's CI runs the test.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: ["LinkRole::Test"]
 ```
 
@@ -68,7 +69,7 @@ code: [manual_check]
 A concrete case showing behavior the rule must preserve. It gives a person or agent a case to try when checking whether the rule still holds.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [protects]
 ```
 
@@ -77,7 +78,7 @@ code: [protects]
 A nearby case showing where the rule stops applying, so it does not reject valid behavior outside its intended scope.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [boundary]
 ```
 
@@ -113,17 +114,17 @@ code: [Built]
 A rule that a change brings up for review. Being affected means the rule needs attention; it does not itself establish that the rule is broken.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [RuleImpact]
 ```
 
 ## Rule review
 
-An assessment by the agent of whether an affected rule still holds after a change. The agent reads the rule and implementation, tries the protected and boundary cases, and records whether the rule holds, changes on purpose, or is broken. The tool finds changed links and performs mechanical checks; it does not judge the behavior. A person performs any manual check and approves decisions to change the rule.
+An assessment by the agent of whether an affected rule still holds after a change. A rule is affected when a change brings it up for review; being affected means the rule needs attention and does not itself establish that it is broken. The agent reads the rule and implementation, tries the protected and boundary cases, and records whether the rule holds, changes on purpose, or is broken. The tool finds changed links and performs mechanical checks; it does not judge the behavior. A person performs any manual check and approves decisions to change the rule.
 
 ```yaml
 agreed: agreed
-code: ["review::Verdict", ReviewReport]
+code: ["review::Verdict", ReviewReport, RuleImpact]
 ```
 
 ## Approval
@@ -187,7 +188,7 @@ code: [is_draft]
 A decision that a person has not approved yet. The rules it establishes or changes and the terms it introduces or redefines stay proposed until it is approved, while a rule or term it retires stays agreed and in force until then. It can be edited or deleted, and it never blocks a merge.
 
 ```yaml
-agreed: agreed
+agreed: retired
 code: [DecisionStatus::Proposed]
 aliases: [pending decision]
 ```

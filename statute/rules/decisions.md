@@ -10,7 +10,7 @@ A rule or term must not be listed in more than one proposed decision. `decide` r
 agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Term, Proposed decision]
+terms: [Rule, Term, Decision]
 exceptions: []
 protects:
   - "`decide --terms Commit` is refused while another proposed decision lists `Commit`."
@@ -27,7 +27,7 @@ boundary:
 agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Decision, Proposed decision, Agreement status, Approval]
+terms: [Decision, Agreement status, Approval]
 exceptions: []
 protects:
   - Approving one of two proposed decisions leaves the other decision and the rules it changes proposed.
@@ -63,7 +63,7 @@ boundary:
 agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: Decisions drafted with `decide`, and decisions named to `approve`.
-terms: [Decision, Term, Agreement status, Proposed decision]
+terms: [Decision, Term, Agreement status]
 exceptions: []
 protects:
   - "`decide --retires-terms Repository` is refused while Repository is proposed and was never agreed, and nothing is written."
@@ -81,7 +81,7 @@ boundary:
 agreed: agreed            # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Term, Decision, Proposed decision, Agreement status]
+terms: [Rule, Term, Decision, Agreement status]
 exceptions: []
 protects:
   - A proposed rule that lists a retired term in `terms` is reported as an error.

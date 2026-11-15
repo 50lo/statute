@@ -10,7 +10,7 @@ An agreed rule must describe one requirement that a person or test can check. It
 agreed: agreed          # proposed | agreed | retired
 built: built              # planned | built
 scope: ""
-terms: [Rule, Protected case, Boundary case]
+terms: [Rule]
 exceptions: []
 manual_check: >-
   Before approving a new or changed rule, a person reads its statement and cases.
@@ -54,7 +54,7 @@ A built rule must have at least one code link, and at least one test link or a s
 agreed: agreed          # proposed | agreed | retired
 built: built              # planned | built
 scope: Rules that are not retired.
-terms: [Rule, Build state, Code link, Test link, Manual check]
+terms: [Rule, Build state, Link, Manual check]
 exceptions: []
 protects:
   - A built rule with test links but no code link is incomplete.
